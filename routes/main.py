@@ -122,64 +122,81 @@ def index():
             except Exception as e:
                 print(f"Error fetching latest tutorial: {e}")
                 latest_tutorial = None
-            # Fetch latest attendance data
+            # Fetch today's attendance data (show current week's Tuesday until next Tuesday)
             latest_attendance = None
             try:
-                # Get all attendance records for this leader
+                from datetime import datetime, timedelta
+                today = datetime.now().date()
+                
+                # Calculate the current week's Tuesday (the Tuesday we're currently in)
+                days_since_tuesday = (today.weekday() - 1) % 7
+                if today.weekday() == 1:  # Today is Tuesday
+                    current_tuesday = today
+                else:
+                    current_tuesday = today - timedelta(days=days_since_tuesday)
+                
+                # Get attendance records for the current week's Tuesday
+                current_tuesday_str = current_tuesday.strftime('%Y-%m-%d')
+                
+                # Get all attendance records for this leader for the current Tuesday
                 attendance_result = supabase.table('attendance')\
                     .select('meeting_date, status')\
                     .eq('leader_id', leader_id)\
+                    .eq('meeting_date', current_tuesday_str)\
                     .execute()
+                
                 if attendance_result.data:
-                    # Group by meeting date and calculate totals
-                    from collections import defaultdict
-                    attendance_by_date = defaultdict(lambda: {'present': 0, 'absent': 0, 'total': 0})
-                    for record in attendance_result.data:
-                        date = record['meeting_date']
-                        status = record['status']
-                        attendance_by_date[date]['total'] += 1
-                        if status == 'present':
-                            attendance_by_date[date]['present'] += 1
-                        elif status == 'absent':
-                            attendance_by_date[date]['absent'] += 1
-                    # Get the most recent date
-                    if attendance_by_date:
-                        latest_date = max(attendance_by_date.keys())
-                        latest_data = attendance_by_date[latest_date]
-                        latest_attendance = {
-                            'meeting_date': latest_date,
-                            'present_count': latest_data['present'],
-                            'absent_count': latest_data['absent'],
-                            'total_members': latest_data['total']
-                        }
-                        print(f"Latest attendance data: {latest_attendance}")
+                    # Calculate totals for current Tuesday
+                    present_count = sum(1 for record in attendance_result.data if record['status'] == 'present')
+                    absent_count = sum(1 for record in attendance_result.data if record['status'] == 'absent')
+                    total_count = len(attendance_result.data)
+                    
+                    latest_attendance = {
+                        'meeting_date': current_tuesday.strftime('%B %d, %Y'),
+                        'present_count': present_count,
+                        'absent_count': absent_count,
+                        'total_members': total_count,
+                        'is_current_week': True
+                    }
+                    print(f"Current week attendance data: {latest_attendance}")
                 else:
-                    latest_attendance = None
-                    print("No attendance records found")
+                    # No attendance data for current Tuesday, show fallback
+                    latest_attendance = {
+                        'meeting_date': current_tuesday.strftime('%B %d, %Y'),
+                        'present_count': 0,
+                        'absent_count': 0,
+                        'total_members': member_count,
+                        'is_current_week': True,
+                        'is_fallback': True
+                    }
+                    print(f"No attendance data for current Tuesday: {current_tuesday_str}")
                 print(f"Leader ID: {leader_id}")
             except Exception as e:
-                print(f"Error fetching latest attendance: {e}")
+                print(f"Error fetching current week attendance: {e}")
                 latest_attendance = None
-            # If no attendance data, create a fallback with the most recent Tuesday
+            # Ensure we always have current week's Tuesday data
             if not latest_attendance:
                 from datetime import datetime, timedelta
-                today = datetime.now()
-                # Get the most recent Tuesday
+                today = datetime.now().date()
+                
+                # Calculate the current week's Tuesday
                 days_since_tuesday = (today.weekday() - 1) % 7
-                if days_since_tuesday == 0 and today.weekday() == 1:  # Today is Tuesday
-                    recent_tuesday = today.date()
+                if today.weekday() == 1:  # Today is Tuesday
+                    current_tuesday = today
                 else:
-                    recent_tuesday = (today - timedelta(days=days_since_tuesday)).date()
-                # Create fallback attendance data
+                    current_tuesday = today - timedelta(days=days_since_tuesday)
+                
+                # Create fallback attendance data for current Tuesday
                 latest_attendance = {
-                    'meeting_date': recent_tuesday.strftime('%B %d, %Y'),
+                    'meeting_date': current_tuesday.strftime('%B %d, %Y'),
                     'present_count': 0,
                     'absent_count': 0,
                     'total_members': member_count,
                     'is_fallback': True,
+                    'is_current_week': True,
                     'is_complete': False
                 }
-                print(f"Using fallback attendance data: {latest_attendance}")
+                print(f"Using fallback attendance data for current week: {latest_attendance}")
             else:
                 # Determine if attendance is complete
                 present_count = latest_attendance.get('present_count', 0)
@@ -199,23 +216,26 @@ def index():
         # Ensure latest_attendance is never None - create fallback if needed
         if not latest_attendance:
             from datetime import datetime, timedelta
-            today = datetime.now()
-            # Get the most recent Tuesday
+            today = datetime.now().date()
+            
+            # Calculate the current week's Tuesday
             days_since_tuesday = (today.weekday() - 1) % 7
-            if days_since_tuesday == 0 and today.weekday() == 1:  # Today is Tuesday
-                recent_tuesday = today.date()
+            if today.weekday() == 1:  # Today is Tuesday
+                current_tuesday = today
             else:
-                recent_tuesday = (today - timedelta(days=days_since_tuesday)).date()
-            # Create fallback attendance data
+                current_tuesday = today - timedelta(days=days_since_tuesday)
+            
+            # Create fallback attendance data for current Tuesday
             latest_attendance = {
-                'meeting_date': recent_tuesday.strftime('%B %d, %Y'),
+                'meeting_date': current_tuesday.strftime('%B %d, %Y'),
                 'present_count': 0,
                 'absent_count': 0,
                 'total_members': member_count,
                 'is_fallback': True,
+                'is_current_week': True,
                 'is_complete': False
             }
-            print(f"Using final fallback attendance data: {latest_attendance}")
+            print(f"Using final fallback attendance data for current week: {latest_attendance}")
         else:
             # Ensure completion status is set for existing data
             if 'is_complete' not in latest_attendance:
@@ -225,7 +245,7 @@ def index():
                 is_complete = (present_count + absent_count) == total_members and total_members > 0
                 latest_attendance['is_complete'] = is_complete
         past_tuesdays = get_past_tuesdays()
-        today = datetime.now().date()
+        today = datetime.now()
         return render_template('main/dashboard.html',
                              user=session['user'], 
                              next_meeting_date=next_meeting_date.strftime("%B %d, %Y"),

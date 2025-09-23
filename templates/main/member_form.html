@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% import 'macros/responsive.html' as responsive %}
+
 {% block title %}Add New Member{% endblock %}
+
 
 <!-- Reusable Form Partial -->
 {% macro render_member_form(is_mobile=false) %}
         <form id="memberForm" action="{{ url_for('main.add_member') }}" method="POST" novalidate>
             <!-- Hidden fields for auto-generated data -->
             <input type="hidden" name="leader_id" value="{{ session.user.id if session.user else '' }}">
+            
             <!-- Full Name - Required Field -->
     <div style="margin-bottom: {{ '20px' if is_mobile else '24px' }};">
         <label for="name" style="display: block; color: #B1BAC4; font-weight: 600; margin-bottom: {{ '10px' if is_mobile else '12px' }}; font-size: {{ '16px' if is_mobile else '16px' }}; line-height: 1.4;">
@@ -29,6 +32,7 @@
             <div style="color: #F85149; font-size: {{ '14px' if is_mobile else '14px' }}; margin-top: {{ '6px' if is_mobile else '8px' }}; font-weight: 500;">{{ form_errors.name }}</div>
                 {% endif %}
             </div>
+            
     <!-- Age - Optional Field -->
     <div style="margin-bottom: {{ '12px' if is_mobile else '16px' }};">
         <label for="age" style="display: block; color: #B1BAC4; font-weight: 600; margin-bottom: {{ '6px' if is_mobile else '8px' }}; font-size: {{ '15px' if is_mobile else '16px' }};">
@@ -49,180 +53,355 @@
             <div style="color: #F85149; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">{{ form_errors.age }}</div>
                     {% endif %}
                 </div>
+
     <!-- Gender - Optional Field -->
     <div style="margin-bottom: {{ '12px' if is_mobile else '16px' }};">
         <label for="gender" style="display: block; color: #B1BAC4; font-weight: 600; margin-bottom: {{ '6px' if is_mobile else '8px' }}; font-size: {{ '15px' if is_mobile else '16px' }};">
-            <i class="fas fa-venus-mars" style="margin-right: 8px; color: #1F6FEB;"></i>Gender
+                        <i class="fas fa-venus-mars" style="margin-right: 8px; color: #1F6FEB;"></i>Gender
                     </label>
-                    <select id="gender" 
-                            name="gender"
-                            style="width: 100%; padding: {{ '10px 14px' if is_mobile else '12px 16px' }}; border: 2px solid #30363D; border-radius: 8px; background: #0D1117; color: #B1BAC4; font-size: {{ '15px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box;"
+        <select id="gender" 
+                name="gender" 
+                style="width: 100%; padding: {{ '10px 14px' if is_mobile else '12px 16px' }}; border: 2px solid #30363D; border-radius: 8px; background: #0D1117; color: #B1BAC4; font-size: {{ '15px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box;"
                             onfocus="this.style.borderColor='#1F6FEB'; this.style.background='#161B22';"
                             onblur="this.style.borderColor='#30363D'; this.style.background='#0D1117';">
-                        <option value="">Select gender</option>
-                        <option value="Male" {% if request.form.gender == 'Male' %}selected{% endif %}>Male</option>
-                        <option value="Female" {% if request.form.gender == 'Female' %}selected{% endif %}>Female</option>
-                        <option value="Other" {% if request.form.gender == 'Other' %}selected{% endif %}>Other</option>
+            <option value="">Select gender</option>
+            <option value="Male" {{ 'selected' if request.form.gender == 'Male' else '' }}>Male</option>
+            <option value="Female" {{ 'selected' if request.form.gender == 'Female' else '' }}>Female</option>
+            <option value="Other" {{ 'selected' if request.form.gender == 'Other' else '' }}>Other</option>
                     </select>
         <div style="color: #6E7681; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">Optional - Select gender</div>
-                    {% if form_errors and 'gender' in form_errors %}
-            <div style="color: #F85149; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">{{ form_errors.gender }}</div>
-                    {% endif %}
-                </div>
+            </div>
+            
     <!-- Phone Number - Optional Field -->
     <div style="margin-bottom: {{ '12px' if is_mobile else '16px' }};">
         <label for="phone_number" style="display: block; color: #B1BAC4; font-weight: 600; margin-bottom: {{ '6px' if is_mobile else '8px' }}; font-size: {{ '15px' if is_mobile else '16px' }};">
-            <i class="fas fa-phone" style="margin-right: 8px; color: #1F6FEB;"></i>Phone Number
-                    </label>
-                    <input type="tel" 
-                           id="phone_number" 
-                           name="phone_number" 
+                    <i class="fas fa-phone" style="margin-right: 8px; color: #1F6FEB;"></i>Phone Number
+                </label>
+                <input type="tel" 
+                       id="phone_number" 
+                       name="phone_number" 
                placeholder="Enter phone number" 
-                           pattern="[0-9]{10}" 
-                           title="Enter 10-digit phone number"
-                           value="{{ request.form.phone_number if request.form.phone_number else '' }}"
+                       pattern="[0-9]{10,15}" 
+                       title="Phone number must be 10-15 digits"
+                       value="{{ request.form.phone_number if request.form.phone_number else '' }}"
                style="width: 100%; padding: {{ '10px 14px' if is_mobile else '12px 16px' }}; border: 2px solid #30363D; border-radius: 8px; background: #0D1117; color: #B1BAC4; font-size: {{ '15px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box;"
-                           onfocus="this.style.borderColor='#1F6FEB'; this.style.background='#161B22';"
-                           onblur="this.style.borderColor='#30363D'; this.style.background='#0D1117';">
-        <div style="color: #6E7681; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">Optional - 10-digit phone number</div>
-                    {% if form_errors and 'phone_number' in form_errors %}
+                       onfocus="this.style.borderColor='#1F6FEB'; this.style.background='#161B22';"
+                       onblur="this.style.borderColor='#30363D'; this.style.background='#0D1117';">
+        <div style="color: #6E7681; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">Optional - 10-15 digits only</div>
+                {% if form_errors and 'phone_number' in form_errors %}
             <div style="color: #F85149; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">{{ form_errors.phone_number }}</div>
-                    {% endif %}
-                </div>
+                {% endif %}
+            </div>
+            
     <!-- Ministry - Optional Field -->
     <div style="margin-bottom: {{ '12px' if is_mobile else '16px' }};">
         <label for="ministry" style="display: block; color: #B1BAC4; font-weight: 600; margin-bottom: {{ '6px' if is_mobile else '8px' }}; font-size: {{ '15px' if is_mobile else '16px' }};">
-            <i class="fas fa-briefcase" style="margin-right: 8px; color: #1F6FEB;"></i>Ministry
+                        <i class="fas fa-church" style="margin-right: 8px; color: #1F6FEB;"></i>Ministry
                     </label>
-                    <select id="ministry" 
-                            name="ministry"
-                            style="width: 100%; padding: {{ '10px 14px' if is_mobile else '12px 16px' }}; border: 2px solid #30363D; border-radius: 8px; background: #0D1117; color: #B1BAC4; font-size: {{ '15px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box;"
+        <select id="ministry" 
+                name="ministry" 
+                style="width: 100%; padding: {{ '10px 14px' if is_mobile else '12px 16px' }}; border: 2px solid #30363D; border-radius: 8px; background: #0D1117; color: #B1BAC4; font-size: {{ '15px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box;"
                             onfocus="this.style.borderColor='#1F6FEB'; this.style.background='#161B22';"
                             onblur="this.style.borderColor='#30363D'; this.style.background='#0D1117';">
-                        <option value="">Select ministry</option>
-                        <option value="Worship" {% if request.form.ministry == 'Worship' %}selected{% endif %}>Worship</option>
-                        <option value="Prayer" {% if request.form.ministry == 'Prayer' %}selected{% endif %}>Prayer</option>
-                        <option value="Evangelism" {% if request.form.ministry == 'Evangelism' %}selected{% endif %}>Evangelism</option>
-                        <option value="Discipleship" {% if request.form.ministry == 'Discipleship' %}selected{% endif %}>Discipleship</option>
-                        <option value="Fellowship" {% if request.form.ministry == 'Fellowship' %}selected{% endif %}>Fellowship</option>
-                        <option value="Service" {% if request.form.ministry == 'Service' %}selected{% endif %}>Service</option>
-                        <option value="Administration" {% if request.form.ministry == 'Administration' %}selected{% endif %}>Administration</option>
-                        <option value="Other" {% if request.form.ministry == 'Other' %}selected{% endif %}>Other</option>
+            <option value="">Select ministry</option>
+            <option value="Worship" {{ 'selected' if request.form.ministry == 'Worship' else '' }}>Worship</option>
+            <option value="Prayer" {{ 'selected' if request.form.ministry == 'Prayer' else '' }}>Prayer</option>
+            <option value="Evangelism" {{ 'selected' if request.form.ministry == 'Evangelism' else '' }}>Evangelism</option>
+            <option value="Discipleship" {{ 'selected' if request.form.ministry == 'Discipleship' else '' }}>Discipleship</option>
+            <option value="Fellowship" {{ 'selected' if request.form.ministry == 'Fellowship' else '' }}>Fellowship</option>
+            <option value="Service" {{ 'selected' if request.form.ministry == 'Service' else '' }}>Service</option>
                     </select>
-        <div style="color: #6E7681; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">Optional - Select ministry</div>
-                    {% if form_errors and 'ministry' in form_errors %}
-            <div style="color: #F85149; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">{{ form_errors.ministry }}</div>
-                    {% endif %}
+        <div style="color: #6E7681; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">Optional - Select ministry area</div>
                 </div>
+
     <!-- Zone - Optional Field -->
-    <div style="margin-bottom: {{ '20px' if is_mobile else '24px' }};">
+    <div style="margin-bottom: {{ '12px' if is_mobile else '16px' }};">
         <label for="zone" style="display: block; color: #B1BAC4; font-weight: 600; margin-bottom: {{ '6px' if is_mobile else '8px' }}; font-size: {{ '15px' if is_mobile else '16px' }};">
-            <i class="fas fa-map-marker-alt" style="margin-right: 8px; color: #1F6FEB;"></i>Zone
+                        <i class="fas fa-map-marker-alt" style="margin-right: 8px; color: #1F6FEB;"></i>Zone
                     </label>
-                    <select id="zone" 
-                            name="zone"
-                            style="width: 100%; padding: {{ '10px 14px' if is_mobile else '12px 16px' }}; border: 2px solid #30363D; border-radius: 8px; background: #0D1117; color: #B1BAC4; font-size: {{ '15px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box;"
+        <select id="zone" 
+                name="zone" 
+                style="width: 100%; padding: {{ '10px 14px' if is_mobile else '12px 16px' }}; border: 2px solid #30363D; border-radius: 8px; background: #0D1117; color: #B1BAC4; font-size: {{ '15px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box;"
                             onfocus="this.style.borderColor='#1F6FEB'; this.style.background='#161B22';"
                             onblur="this.style.borderColor='#30363D'; this.style.background='#0D1117';">
-                        <option value="">Select zone</option>
-                        <option value="Zone 1" {% if request.form.zone == 'Zone 1' %}selected{% endif %}>Zone 1</option>
-                        <option value="Zone 2" {% if request.form.zone == 'Zone 2' %}selected{% endif %}>Zone 2</option>
-                        <option value="Zone 3" {% if request.form.zone == 'Zone 3' %}selected{% endif %}>Zone 3</option>
-                        <option value="Zone 4" {% if request.form.zone == 'Zone 4' %}selected{% endif %}>Zone 4</option>
-                        <option value="Zone 5" {% if request.form.zone == 'Zone 5' %}selected{% endif %}>Zone 5</option>
-                        <option value="Other" {% if request.form.zone == 'Other' %}selected{% endif %}>Other</option>
+            <option value="">Select zone</option>
+            <option value="Zone A" {{ 'selected' if request.form.zone == 'Zone A' else '' }}>Zone A</option>
+            <option value="Zone B" {{ 'selected' if request.form.zone == 'Zone B' else '' }}>Zone B</option>
+            <option value="Zone C" {{ 'selected' if request.form.zone == 'Zone C' else '' }}>Zone C</option>
+            <option value="Zone D" {{ 'selected' if request.form.zone == 'Zone D' else '' }}>Zone D</option>
                     </select>
         <div style="color: #6E7681; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">Optional - Select zone</div>
-                    {% if form_errors and 'zone' in form_errors %}
-            <div style="color: #F85149; font-size: {{ '12px' if is_mobile else '14px' }}; margin-top: {{ '3px' if is_mobile else '4px' }};">{{ form_errors.zone }}</div>
-                    {% endif %}
-                </div>
-    <!-- Submit Button -->
-    <div style="margin-top: {{ '24px' if is_mobile else '28px' }};">
-        <button type="submit" 
-                class="btn btn-primary btn-lg w-100" 
-                style="padding: {{ '14px' if is_mobile else '16px' }}; font-size: {{ '16px' if is_mobile else '18px' }}; font-weight: 600; border-radius: {{ '12px' if is_mobile else '10px' }}; background: linear-gradient(135deg, #1F6FEB 0%, #0969da 100%); border: none; transition: all 0.3s ease;"
-                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(31, 111, 235, 0.3)';"
-                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <i class="fas fa-plus me-2"></i>Add Member
-        </button>
-    </div>
-        </form>
+            </div>
+            
+            <!-- Form Actions -->
+    <div style="display: flex; gap: {{ '16px' if is_mobile else '20px' }}; justify-content: {{ 'stretch' if is_mobile else 'flex-end' }}; padding-top: {{ '20px' if is_mobile else '24px' }}; border-top: 1px solid #30363D;">
+                <a href="{{ url_for('main.members') }}" 
+                   style="padding: {{ '16px 24px' if is_mobile else '14px 28px' }}; border: 2px solid #30363D; border-radius: {{ '12px' if is_mobile else '10px' }}; background: transparent; color: #B1BAC4; font-size: {{ '16px' if is_mobile else '16px' }}; font-weight: 600; text-decoration: none; transition: all 0.3s ease; min-height: {{ '52px' if is_mobile else '48px' }}; display: flex; align-items: center; justify-content: center; flex: {{ '1' if is_mobile else 'auto' }};"
+                   onmouseover="this.style.background='#161B22'; this.style.borderColor='#6E7681'; this.style.transform='translateY(-2px)';"
+                   onmouseout="this.style.background='transparent'; this.style.borderColor='#30363D'; this.style.transform='translateY(0)';">
+                    <i class="fas fa-times" style="margin-right: 8px;"></i>Cancel
+                </a>
+                <button type="submit" 
+                        id="submitBtn"
+                        style="padding: {{ '16px 24px' if is_mobile else '14px 28px' }}; border: 2px solid #1F6FEB; border-radius: {{ '12px' if is_mobile else '10px' }}; background: #1F6FEB; color: white; font-size: {{ '16px' if is_mobile else '16px' }}; font-weight: 600; cursor: pointer; transition: all 0.3s ease; min-height: {{ '52px' if is_mobile else '48px' }}; display: flex; align-items: center; justify-content: center; flex: {{ '1' if is_mobile else 'auto' }};"
+                        onmouseover="this.style.background='#2c7bb6'; this.style.borderColor='#2c7bb6'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(31, 111, 235, 0.3)';"
+                        onmouseout="this.style.background='#1F6FEB'; this.style.borderColor='#1F6FEB'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    <i class="fas fa-plus" style="margin-right: 8px;"></i>Add Member
+                </button>
+            </div>
+            </form>
 {% endmacro %}
 
 {% block mobile_content %}
-<div class="text-center mb-4">
-    <div class="feature-icon mx-auto mb-3">
-        <i class="fas fa-user-plus"></i>
-    </div>
-    <h2 class="page-title">Add New Member</h2>
-    <p class="page-subtitle">Fill in the member details below</p>
-</div>
-
-<div class="card">
-    <div class="card-body">
+<!-- Mobile Form Wrapper -->
+<div class="feature-card" style="background: #161B22; border: 1px solid #30363D; border-radius: 12px; padding: 15px; margin: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); position: relative; z-index: 1;">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <h3 style="color: #B1BAC4; font-size: 1.2rem; margin-bottom: 15px; text-align: center;">Add New Member</h3>
         {{ render_member_form(is_mobile=true) }}
     </div>
 </div>
 {% endblock %}
 
 {% block desktop_content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="text-center mb-4">
-            <div class="feature-icon mx-auto mb-3">
-                <i class="fas fa-user-plus"></i>
+<!-- Desktop Form Wrapper -->
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('main.members') }}">Members</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Add Member</li>
+                    </ol>
+                </nav>
             </div>
-            <h2 class="page-title">Add New Member</h2>
-            <p class="page-subtitle">Fill in the member details below</p>
         </div>
+        <h2 class="page-title">Add New Member</h2>
+        <p class="page-subtitle">Register a new cell group member</p>
+    </div>
+</div>
 
-        <div class="card">
-            <div class="card-body">
-                {{ render_member_form(is_mobile=false) }}
-            </div>
-        </div>
+<div class="feature-card" style="background: #161B22; border: 1px solid #30363D; border-radius: 12px; padding: 30px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+    <div style="max-width: 600px; margin: 0 auto;">
+        {{ render_member_form(is_mobile=false) }}
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block bottom_nav %}
+<div class="bottom-nav">
+    <a href="{{ url_for('main.index') }}" class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-item active">
+        <i class="fas fa-users"></i>
+        <span>Members</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block tablet_nav %}
+<a href="{{ url_for('main.index') }}" class="text-decoration-none">
+    <i class="fas fa-home me-1"></i>Dashboard
+</a>
+<a href="{{ url_for('main.profile') }}" class="text-decoration-none">
+    <i class="fas fa-user me-1"></i>Profile
+</a>
+<a href="{{ url_for('main.members') }}" class="text-decoration-none active">
+    <i class="fas fa-users me-1"></i>Members
+</a>
+<a href="{{ url_for('auth.logout') }}" class="text-decoration-none">
+    <i class="fas fa-sign-out-alt me-1"></i>Logout
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Form Styling for Dark Theme */
+.form-label {
+    color: var(--text-dark) !important;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-control, .form-select {
+    background-color: var(--bg-card) !important;
+    border: 2px solid var(--border-color) !important;
+    color: var(--text-dark) !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    transition: all 0.3s ease !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-hover) !important;
+    border-color: var(--accent-color) !important;
+    color: var(--text-dark) !important;
+    box-shadow: 0 0 0 0.2rem rgba(31, 111, 235, 0.25) !important;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+}
+
+.form-text {
+    color: var(--text-muted) !important;
+    font-size: 0.875rem;
+    margin-top: 4px;
+}
+
+.text-danger {
+    color: #F85149 !important;
+}
+
+.btn-primary {
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #2c7bb6 !important;
+    border-color: #2c7bb6 !important;
+    transform: translateY(-1px);
+}
+
+.btn-outline-secondary {
+    color: var(--text-dark) !important;
+    border-color: var(--border-color) !important;
+    background-color: transparent !important;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--bg-hover) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-dark) !important;
+}
+
+.breadcrumb {
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.breadcrumb-item a {
+    color: var(--accent-color) !important;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: var(--text-muted) !important;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: var(--text-muted) !important;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .feature-card {
+        margin: 16px;
+        padding: 20px;
+    }
+    
+    .form-control, .form-select {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('memberForm');
-    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitBtn = document.getElementById('submitBtn');
     
-    // Form validation
-    form.addEventListener('submit', function(e) {
-        const name = form.querySelector('#name').value.trim();
-        
-        if (!name) {
-            e.preventDefault();
-            alert('Please enter a name');
-            return;
-        }
-        
-        if (name.length < 2) {
-            e.preventDefault();
-            alert('Name must be at least 2 characters long');
-            return;
-        }
-        
-        // Show loading state
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding Member...';
-        submitBtn.disabled = true;
-    });
+    // Auto-format phone number
+    const phoneInput = document.getElementById('phone_number');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 15) {
+                value = value.substring(0, 15);
+            }
+            e.target.value = value;
+        });
+    }
     
-    // Real-time validation
-    const nameInput = form.querySelector('#name');
-    nameInput.addEventListener('input', function() {
-        const value = this.value.trim();
-        if (value.length >= 2) {
-            this.style.borderColor = '#238636';
-        } else {
-            this.style.borderColor = '#30363D';
-        }
-    });
+    // Form submission with loading state
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const name = document.getElementById('name').value.trim();
+            const age = document.getElementById('age').value;
+            const phone = document.getElementById('phone_number').value;
+            
+            // Validate required fields
+            if (!name) {
+                e.preventDefault();
+                alert('Please enter the member\'s full name.');
+                document.getElementById('name').focus();
+                return;
+            }
+            
+            // Validate name pattern
+            if (!/^[A-Za-z\s]{2,100}$/.test(name)) {
+                e.preventDefault();
+                alert('Name must be 2-100 characters and contain only letters and spaces.');
+                document.getElementById('name').focus();
+                return;
+            }
+            
+            // Validate age if provided
+            if (age && (age < 1 || age > 120)) {
+                e.preventDefault();
+                alert('Please enter a valid age between 1 and 120.');
+                document.getElementById('age').focus();
+                return;
+            }
+            
+            // Validate phone if provided
+            if (phone && !/^[0-9]{10,15}$/.test(phone)) {
+                e.preventDefault();
+                alert('Please enter a valid phone number (10-15 digits).');
+                document.getElementById('phone_number').focus();
+                return;
+            }
+            
+            // Show loading state
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+            submitBtn.disabled = true;
+            
+            // Re-enable button after 10 seconds (in case of error)
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 10000);
+        });
+    }
 });
+
 </script>
+
+
 {% endblock %}

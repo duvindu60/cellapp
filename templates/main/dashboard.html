@@ -60,31 +60,52 @@
         </a>
     </div>
     <div class="col-6">
-        <div class="feature-card text-center" style="padding: 1.5rem; height: 100%;">
-            <!-- Status in top left corner -->
-            {% if latest_attendance %}
-                <div class="position-absolute" style="top: 10px; left: 10px;">
-                    {% if latest_attendance.get('is_complete') %}
-                        <span class="badge bg-success" style="font-size: 0.75rem; padding: 3px 6px;">Complete</span>
-                    {% else %}
-                        <span class="badge bg-warning" style="font-size: 0.75rem; padding: 3px 6px;">Incomplete</span>
-                    {% endif %}
+        <a href="{% if latest_attendance %}{{ url_for('main.attendance_detail', meeting_date=latest_attendance.meeting_date) }}{% else %}#{% endif %}" class="text-decoration-none">
+            <div class="feature-card text-center" style="padding: 1.5rem; height: 100%; position: relative;">
+                <!-- Status in top left corner -->
+                {% if latest_attendance %}
+                    <div class="position-absolute" style="top: 10px; left: 10px;">
+                        {% if latest_attendance.get('is_complete') %}
+                            <span class="badge bg-success" style="font-size: 0.75rem; padding: 3px 6px;">Complete</span>
+                        {% else %}
+                            <span class="badge bg-warning" style="font-size: 0.75rem; padding: 3px 6px;">Incomplete</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <div class="feature-icon mx-auto mb-3" style="width: 40px; height: 40px; font-size: 20px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-user-check"></i>
                 </div>
-            {% endif %}
-            <div class="feature-icon mx-auto mb-3" style="width: 40px; height: 40px; font-size: 20px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-user-check"></i>
+                <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Attendance</h6>
+                {% if latest_attendance %}
+                    <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">{{ latest_attendance.meeting_date }}</p>
+                    {% if latest_attendance.get('present_count') is defined %}
+                        <small class="text-muted">{{ latest_attendance.present_count }}/{{ latest_attendance.total_members }} present</small>
+                        {% if latest_attendance.get('is_current_week') %}
+                            <br><small class="text-success">Current Week</small>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">No data</p>
+                {% endif %}
+                <!-- Dropdown button in top right corner -->
+                <div class="position-relative">
+                    <button onclick="event.preventDefault(); event.stopPropagation(); toggleAttendanceDropdown()" style="position: absolute; top: -10px; right: -10px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1rem; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)'">
+                        <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
+                    </button>
+                    <!-- Dropdown menu -->
+                    <div id="attendanceDropdown" class="position-absolute" style="top: 35px; right: -10px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; min-width: 150px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                        <div class="dropdown-item" style="padding: 4px 8px; color: var(--text-primary); font-size: 0.8rem; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='{{ url_for('main.meeting_dates') }}'">
+                            <i class="fas fa-calendar me-2"></i>All Meetings
+                        </div>
+                        {% if latest_attendance %}
+                        <div class="dropdown-item" style="padding: 4px 8px; color: var(--text-primary); font-size: 0.8rem; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='{{ url_for('main.attendance_detail', meeting_date=latest_attendance.meeting_date) }}'">
+                            <i class="fas fa-eye me-2"></i>View Details
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Attendance</h6>
-            {% if latest_attendance %}
-                <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">{{ latest_attendance.meeting_date }}</p>
-            {% else %}
-                <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">No data</p>
-            {% endif %}
-            <!-- Dropdown button in top right corner -->
-            <button onclick="event.stopPropagation(); toggleAttendanceDropdown()" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1rem; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)'">
-                <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
-            </button>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -173,7 +194,7 @@
                     </div>
                     <div class="flex-grow-1">
                         <h6 class="mb-1" style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600;">{{ activity.activity_type }}</h6>
-                        <p class="mb-0" style="font-size: 0.8rem; color: var(--text-secondary);">{{ activity.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        <p class="mb-0" style="font-size: 0.8rem; color: var(--text-secondary);">{{ activity.created_at }}</p>
                     </div>
                 </div>
             </div>
@@ -237,31 +258,52 @@
         </a>
     </div>
     <div class="col-md-3">
-        <div class="feature-card text-center" style="padding: 2rem; height: 100%; position: relative; cursor: pointer; transition: all 0.3s ease;" onclick="viewLatestAttendance()" data-latest-date="{{ latest_attendance.meeting_date if latest_attendance else '' }}" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
-            <!-- Status in top left corner -->
-            {% if latest_attendance %}
-                <div class="position-absolute" style="top: 15px; left: 15px;">
-                    {% if latest_attendance.get('is_complete') %}
-                        <span>Complete</span>
-                    {% else %}
-                        <span>Incomplete</span>
-                    {% endif %}
+        <a href="{% if latest_attendance %}{{ url_for('main.attendance_detail', meeting_date=latest_attendance.meeting_date) }}{% else %}#{% endif %}" class="text-decoration-none" style="display: block; height: 100%;">
+            <div class="feature-card text-center" style="padding: 2rem; height: 100%; position: relative; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
+                <!-- Status in top left corner -->
+                {% if latest_attendance %}
+                    <div class="position-absolute" style="top: 15px; left: 15px;">
+                        {% if latest_attendance.get('is_complete') %}
+                            <span class="badge bg-success" style="font-size: 0.8rem; padding: 4px 8px;">Complete</span>
+                        {% else %}
+                            <span class="badge bg-warning" style="font-size: 0.8rem; padding: 4px 8px;">Incomplete</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-user-check"></i>
                 </div>
-            {% endif %}
-            <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-user-check"></i>
+                <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Attendance</h6>
+                {% if latest_attendance %}
+                    <p class="mb-0" style="font-size: 1.4rem; font-weight: 600; color: var(--text-dark);">{{ latest_attendance.meeting_date }}</p>
+                    {% if latest_attendance.get('present_count') is defined %}
+                        <small class="text-muted">{{ latest_attendance.present_count }}/{{ latest_attendance.total_members }} present</small>
+                        {% if latest_attendance.get('is_current_week') %}
+                            <br><small class="text-success">Current Week</small>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <p class="mb-0">No data</p>
+                {% endif %}
+                <!-- Dropdown button in top right corner -->
+                <div class="position-relative">
+                    <button onclick="event.preventDefault(); event.stopPropagation(); toggleAttendanceDropdown()" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)'">
+                        <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
+                    </button>
+                    <!-- Dropdown menu -->
+                    <div id="attendanceDropdownDesktop" class="position-absolute" style="top: 50px; right: 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; min-width: 150px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                        <div class="dropdown-item" style="padding: 4px 8px; color: var(--text-primary); font-size: 0.8rem; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='{{ url_for('main.meeting_dates') }}'">
+                            <i class="fas fa-calendar me-2"></i>All Meetings
+                        </div>
+                        {% if latest_attendance %}
+                        <div class="dropdown-item" style="padding: 4px 8px; color: var(--text-primary); font-size: 0.8rem; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='{{ url_for('main.attendance_detail', meeting_date=latest_attendance.meeting_date) }}'">
+                            <i class="fas fa-eye me-2"></i>View Details
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Attendance</h6>
-            {% if latest_attendance %}
-                <p class="mb-0" style="font-size: 1.4rem; font-weight: 600; color: var(--text-dark);">{{ latest_attendance.meeting_date }}</p>
-            {% else %}
-                <p class="mb-0">No data</p>
-            {% endif %}
-            <!-- Dropdown button in top right corner -->
-            <button onclick="event.stopPropagation(); toggleAttendanceDropdown()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)'">
-                <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
-            </button>
-        </div>
+        </a>
     </div>
 </div>
 <!-- Main Content Row -->
@@ -364,13 +406,54 @@
 {% block scripts %}
 <script>
 function toggleAttendanceDropdown() {
-    // Toggle dropdown functionality if needed
-    console.log('Attendance dropdown toggled');
+    // Toggle dropdown functionality
+    const dropdown = document.getElementById('attendanceDropdown');
+    const dropdownDesktop = document.getElementById('attendanceDropdownDesktop');
+    const icon = document.getElementById('attendanceDropdownIcon');
+    
+    // Toggle mobile dropdown
+    if (dropdown) {
+        if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+            dropdown.style.display = 'block';
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            dropdown.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+    
+    // Toggle desktop dropdown
+    if (dropdownDesktop) {
+        if (dropdownDesktop.style.display === 'none' || dropdownDesktop.style.display === '') {
+            dropdownDesktop.style.display = 'block';
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            dropdownDesktop.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
 }
 
 function viewLatestAttendance() {
-    // View latest attendance functionality if needed
-    console.log('View latest attendance');
+    // This function is no longer needed as the card is now clickable
+    console.log('Attendance card clicked - redirecting to attendance details');
 }
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('attendanceDropdown');
+    const dropdownDesktop = document.getElementById('attendanceDropdownDesktop');
+    const icon = document.getElementById('attendanceDropdownIcon');
+    
+    if (dropdown && !dropdown.contains(event.target) && !event.target.closest('button[onclick*="toggleAttendanceDropdown"]')) {
+        dropdown.style.display = 'none';
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+    
+    if (dropdownDesktop && !dropdownDesktop.contains(event.target) && !event.target.closest('button[onclick*="toggleAttendanceDropdown"]')) {
+        dropdownDesktop.style.display = 'none';
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+});
 </script>
 {% endblock %}
