@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Login - CellApp{% endblock %}
+{% block header_title %}Welcome Back{% endblock %}
+
+{% block mobile_content %}
+<div class="text-center mb-4">
+    <div class="feature-icon mx-auto mb-3">
+        <i class="fas fa-mobile-alt"></i>
+    </div>
+    <h2 class="page-title">Sign In</h2>
+    <p class="page-subtitle">Enter your mobile number and password</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" id="loginForm">
+            <div class="mb-4">
+                <label for="mobile" class="form-label fw-semibold">Mobile Number</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
+                    <input type="tel" class="form-control" id="mobile" name="mobile" placeholder="Enter your mobile number" required>
+                </div>
+                <small class="text-muted">Enter your 10-digit mobile number</small>
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label fw-semibold">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <small class="text-muted">Enter your password (use 123456 for testing)</small>
+            </div>
+            
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                    <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block desktop_content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="text-center mb-4">
+            <div class="feature-icon mx-auto mb-3">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h2 class="page-title">Sign In</h2>
+            <p class="page-subtitle">Enter your mobile number and password</p>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" id="loginForm">
+                    <div class="mb-4">
+                        <label for="mobile" class="form-label fw-semibold">Mobile Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
+                            <input type="tel" class="form-control" id="mobile" name="mobile" placeholder="Enter your mobile number" required>
+                        </div>
+                        <small class="text-muted">Enter your 10-digit mobile number</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-semibold">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
+                        <small class="text-muted">Enter your password (use 123456 for testing)</small>
+                    </div>
+                    
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% import 'macros/responsive.html' as responsive %}
+{% block title %}Meeting Tutorials - {{ meeting_date }}{% endblock %}
+{% block header_title %}Meeting Tutorials{% endblock %}
+{% block mobile_content %}
+<!-- Meeting Header -->
+<div class="feature-card mb-4" style="padding: 1.5rem;">
+    <div class="text-center">
+        <div class="feature-icon mx-auto mb-3" style="width: 60px; height: 60px; font-size: 24px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-calendar-day"></i>
+        </div>
+        <h4 class="mb-2" style="color: var(--text-dark);">{{ meeting_date }}</h4>
+        <p>Cell Meeting Tutorials</p>
+    </div>
+</div>
+<!-- Tutorials List -->
+{% if tutorials %}
+    <div class="tutorials-list">
+        {% for tutorial in tutorials %}
+        {{ responsive.tutorial_card(
+            tutorial.title,
+            tutorial.pdf_url,
+            tutorial.meeting_date,
+            tutorial.uploaded_at,
+            is_mobile=true
+        ) }}
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="feature-card text-center" style="padding: 3rem 1.5rem;">
+        <div class="feature-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 32px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <h2>No Tutorials Available</h2>
+        <p class="text-muted mb-0">Tutorials for this meeting date will be available soon.</p>
+    </div>
+{% endif %}
+<!-- Back Button -->
+<div class="text-center mt-4">
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+{% block desktop_content %}
+<!-- Meeting Header -->
+<div class="feature-card mb-4" style="padding: 2rem;">
+    <div class="text-center">
+        <div class="feature-icon mx-auto mb-4" style="width: 80px; height: 80px; font-size: 32px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-calendar-day"></i>
+        </div>
+        <h3 class="mb-3" style="color: var(--text-dark);">{{ meeting_date }}</h3>
+        <p class="text-muted mb-0" style="font-size: 1.1rem;">Cell Meeting Tutorials & Guidelines</p>
+    </div>
+</div>
+<!-- Tutorials Grid -->
+{% if tutorials %}
+    <div class="row g-4">
+        {% for tutorial in tutorials %}
+        <div class="col-md-6">
+            {{ responsive.tutorial_card(
+                tutorial.title,
+                tutorial.pdf_url,
+                tutorial.meeting_date,
+                tutorial.uploaded_at,
+                is_mobile=false
+            ) }}
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="feature-card text-center" style="padding: 4rem 2rem;">
+        <div class="feature-icon mx-auto mb-4" style="width: 100px; height: 100px; font-size: 40px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <h2>No Tutorials Available</h2>
+        <p class="text-muted mb-0" style="font-size: 1.1rem;">Tutorials for this meeting date will be available soon.</p>
+    </div>
+{% endif %}
+<!-- Back Button -->
+<div class="text-center mt-5">
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+{% block extra_css %}
+<style>
+/* Tutorial Card Styling */
+.tutorial-card {
+    border-radius: 16px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid var(--border-color) !important;
+    transition: all 0.3s ease !important;
+    height: 100%;
+}
+.tutorial-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2) !important;
+}
+.tutorial-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+}
+.tutorial-type-badge {
+    font-size: 0.7rem !important;
+    text-transform: capitalize !important;
+    padding: 4px 8px !important;
+}
+/* Mobile specific improvements */
+@media (max-width: 768px) {
+    .tutorial-card {
+        margin-bottom: 1rem !important;
+    }
+}
+/* Desktop specific improvements */
+@media (min-width: 992px) {
+    .tutorial-card {
+        margin-bottom: 1.5rem !important;
+    }
+}
+</style>
+{% endblock %}
+{% block tablet_nav %}
+<a href="{{ url_for('main.profile') }}" class="text-decoration-none">
+    <i class="fas fa-user me-1"></i>Profile
+</a>
+<a href="{{ url_for('main.members') }}" class="text-decoration-none">
+    <i class="fas fa-users me-1"></i>Members
+</a>
+<a href="{{ url_for('auth.logout') }}" class="text-decoration-none">
+    <i class="fas fa-sign-out-alt me-1"></i>Logout
+</a>
+{% endblock %}
+{% block desktop_nav %}
+<a href="{{ url_for('main.profile') }}" class="text-decoration-none">
+    <i class="fas fa-user me-1"></i>Profile
+</a>
+<a href="{{ url_for('main.members') }}" class="text-decoration-none">
+    <i class="fas fa-users me-1"></i>Members
+</a>
+<a href="{{ url_for('auth.logout') }}" class="text-decoration-none">
+    <i class="fas fa-sign-out-alt me-1"></i>Logout
+</a>
+{% endblock %}
+{% block bottom_nav %}
+<div class="nav-responsive">
+    <a href="{{ url_for('main.index') }}" class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>Members</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</div>
+{% endblock %}

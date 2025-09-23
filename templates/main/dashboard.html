@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% import 'macros/responsive.html' as responsive %}
+{% block title %}Dashboard - CellApp{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block tablet_nav %}
+<div class="d-flex justify-content-center">
+    <a href="{{ url_for('main.index') }}" class="nav-link me-3">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-link me-3">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-link me-3">
+        <i class="fas fa-users"></i>
+        <span>Members</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-link">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block desktop_nav %}
+<div class="d-flex justify-content-center">
+    <a href="{{ url_for('main.index') }}" class="nav-link me-4">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-link me-4">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-link me-4">
+        <i class="fas fa-users"></i>
+        <span>Members</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-link">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block mobile_content %}
+<!-- Stats Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6">
+        <a href="{{ url_for('main.members') }}" class="text-decoration-none">
+            <div class="feature-card text-center" style="padding: 1.5rem; height: 100%;">
+                <div class="feature-icon mx-auto mb-3" style="width: 40px; height: 40px; font-size: 20px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Members</h6>
+                <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">{{ member_count }} total</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-6">
+        <div class="feature-card text-center" style="padding: 1.5rem; height: 100%;">
+            <!-- Status in top left corner -->
+            {% if latest_attendance %}
+                <div class="position-absolute" style="top: 10px; left: 10px;">
+                    {% if latest_attendance.get('is_complete') %}
+                        <span class="badge bg-success" style="font-size: 0.75rem; padding: 3px 6px;">Complete</span>
+                    {% else %}
+                        <span class="badge bg-warning" style="font-size: 0.75rem; padding: 3px 6px;">Incomplete</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div class="feature-icon mx-auto mb-3" style="width: 40px; height: 40px; font-size: 20px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Attendance</h6>
+            {% if latest_attendance %}
+                <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">{{ latest_attendance.meeting_date }}</p>
+            {% else %}
+                <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">No data</p>
+            {% endif %}
+            <!-- Dropdown button in top right corner -->
+            <button onclick="event.stopPropagation(); toggleAttendanceDropdown()" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1rem; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)'">
+                <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Ministry Card -->
+<div class="feature-card mb-4" style="padding: 2rem;">
+    <div class="d-flex align-items-center mb-4">
+        <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #8b5cf6, #a855f7); color: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);">
+            <i class="fas fa-church"></i>
+        </div>
+        <div>
+            <h5 class="mb-1" style="font-size: 1.5rem; color: #ffffff; font-weight: 700; letter-spacing: -0.5px;">Ministry</h5>
+            <p>Your ministry assignments</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <div class="border-end" style="border-color: #444 !important; padding-right: 1.5rem;">
+                <h2>Current Role</h2>
+                <div class="text-white" style="font-size: 1.3rem; font-weight: 700;">Cell Leader</div>
+            </div>
+        </div>
+        <div class="col-6" style="padding-left: 1.5rem;">
+            <h2>Zone</h2>
+            <div class="text-success" style="font-size: 1.3rem; font-weight: 700; color: #10b981 !important;">Zone A</div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Card -->
+<div class="feature-card mb-4" style="padding: 2rem;">
+    <h5 class="mb-4" style="font-size: 1.5rem; color: #ffffff; font-weight: 700; letter-spacing: -0.5px;">Schedule</h5>
+    <div class="row g-4">
+        <div class="col-12">
+            <a href="{{ url_for('main.meeting_tutorials', meeting_date=next_meeting_date) }}" class="text-decoration-none">
+                <div class="d-flex align-items-center p-4 rounded" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 40px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(59, 130, 246, 0.3)'">
+                    <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 20px; color: white; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1" style="font-size: 1.2rem; color: white; font-weight: 700;">
+                            {% if next_meeting_date == today.strftime("%B %d, %Y") %}
+                                Today's Meeting - {{ next_meeting_date }}
+                            {% else %}
+                                Next Meeting - {{ next_meeting_date }}
+                            {% endif %}
+                        </h6>
+                        <p class="mb-0" style="font-size: 1rem; color: #ffffff !important; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Cell Meeting - Click to view tutorials</p>
+                    </div>
+                    <div class="ms-auto">
+                        <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-12">
+            <a href="{{ url_for('main.meeting_dates') }}" class="text-decoration-none">
+                <div class="d-flex align-items-center p-4 rounded" style="background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 40px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(16, 185, 129, 0.3)'">
+                    <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 20px; color: white; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h2>Weekly Schedule</h2>
+                        <p>Every Tuesday</p>
+                    </div>
+                    <div class="ms-auto">
+                        <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="feature-card mb-4" style="padding: 1.5rem; cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('main.activity_list') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h2>Recent Activities</h2>
+    </div>
+    {% if recent_activities %}
+        <div class="row g-3">
+            {% for activity in recent_activities[:3] %}
+            <div class="col-12">
+                <div class="d-flex align-items-center p-3 rounded" style="background-color: var(--bg-hover); border-radius: 12px;">
+                    <div class="feature-icon me-3" style="width: 35px; height: 35px; font-size: 16px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-{{ activity.activity_type.lower() }}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1" style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600;">{{ activity.activity_type }}</h6>
+                        <p class="mb-0" style="font-size: 0.8rem; color: var(--text-secondary);">{{ activity.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-4">
+            <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-book"></i>
+            </div>
+            <h6 class="mb-1" style="color: var(--text-secondary);">No recent activities</h6>
+            <p class="mb-0" style="font-size: 0.85rem; color: var(--text-muted);">Activities will appear here once they are logged</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block desktop_content %}
+<!-- Stats Cards Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <!-- Activity Card - Clickable -->
+        <div class="feature-card text-center" style="padding: 2rem; cursor: pointer; transition: all 0.3s ease; height: 100%;" onclick="window.location.href='{{ url_for('main.activity_list') }}'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
+            <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h2>Recent Activities</h2>
+            <p class="mb-1" style="font-size: 1.4rem; font-weight: 600; color: var(--text-dark);">{{ todays_activities|length if todays_activities else 0 }} today</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        {% if latest_tutorial %}
+        <a href="{{ url_for('main.meeting_tutorials', meeting_date=current_week_date) }}" class="text-decoration-none" style="display: block; height: 100%;">
+            <div class="feature-card text-center" style="padding: 2rem; height: 100%;">
+                <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #17a2b8, #20c997); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h2>Tutorials</h2>
+                <p class="mb-0" style="font-size: 1.4rem; font-weight: 600; color: var(--accent-color);">{{ latest_tutorial.title[:20] + "..." if latest_tutorial.title|length > 20 else latest_tutorial.title }}</p>
+            </div>
+        </a>
+        {% else %}
+            <div class="feature-card text-center" style="padding: 2rem; height: 100%;">
+                <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h2>Tutorials</h2>
+                <p class="mb-0">No tutorials available</p>
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('main.members') }}" class="text-decoration-none" style="display: block; height: 100%; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
+            <div class="feature-card text-center" style="padding: 2rem; height: 100%;">
+                <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #6f42c1, #8e44ad); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h2>Members</h2>
+                <p class="mb-0" style="font-size: 1.4rem; font-weight: 600; color: var(--accent-color);">{{ member_count }} total</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <div class="feature-card text-center" style="padding: 2rem; height: 100%; position: relative; cursor: pointer; transition: all 0.3s ease;" onclick="viewLatestAttendance()" data-latest-date="{{ latest_attendance.meeting_date if latest_attendance else '' }}" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
+            <!-- Status in top left corner -->
+            {% if latest_attendance %}
+                <div class="position-absolute" style="top: 15px; left: 15px;">
+                    {% if latest_attendance.get('is_complete') %}
+                        <span>Complete</span>
+                    {% else %}
+                        <span>Incomplete</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Attendance</h6>
+            {% if latest_attendance %}
+                <p class="mb-0" style="font-size: 1.4rem; font-weight: 600; color: var(--text-dark);">{{ latest_attendance.meeting_date }}</p>
+            {% else %}
+                <p class="mb-0">No data</p>
+            {% endif %}
+            <!-- Dropdown button in top right corner -->
+            <button onclick="event.stopPropagation(); toggleAttendanceDropdown()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)'">
+                <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Main Content Row -->
+<div class="row g-4">
+<!-- Ministry Card -->
+    <div class="col-md-6">
+    <div class="feature-card" style="padding: 2.5rem; height: 100%; background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #333; box-shadow: 0 12px 40px rgba(0,0,0,0.4);">
+        <div class="d-flex align-items-center mb-5">
+            <div class="feature-icon me-4" style="width: 70px; height: 70px; font-size: 32px; background: linear-gradient(135deg, #8b5cf6, #a855f7); color: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);">
+        <i class="fas fa-church"></i>
+    </div>
+    <div>
+                <h2>Ministry</h2>
+                <p>Your ministry assignments</p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-6">
+                <div class="border-end" style="border-color: #444 !important; padding-right: 2rem;">
+                    <h2>Current Role</h2>
+                    <div class="text-white" style="font-size: 1.4rem; font-weight: 700;" >Cell Leader</div>
+        </div>
+    </div>
+            <div class="col-6" style="padding-left: 2rem;">
+                <h2>Zone</h2>
+                <div class="text-success" style="font-size: 1.4rem; font-weight: 700; color: #10b981 !important;" >Zone A</div>
+            </div>
+    </div>
+</div>
+    </div>
+<div class="col-md-6">
+    <div class="feature-card" style="padding: 2.5rem; height: 100%; background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #333; box-shadow: 0 12px 40px rgba(0,0,0,0.4);">
+        <h2 class="mb-4">Schedule</h2>
+        <div class="row g-4">
+            <div class="col-12">
+                <a href="{{ url_for('main.meeting_tutorials', meeting_date=next_meeting_date) }}" class="text-decoration-none">
+                    <div class="d-flex align-items-center p-4 rounded" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 40px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(59, 130, 246, 0.3)'">
+                        <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 20px; color: white; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1" style="font-size: 1.2rem; color: white; font-weight: 700;">
+                                {% if next_meeting_date == today.strftime("%B %d, %Y") %}
+                                    Today's Meeting - {{ next_meeting_date }}
+                                {% else %}
+                                    Next Meeting - {{ next_meeting_date }}
+                                {% endif %}
+                            </h6>
+                            <p class="mb-0" style="font-size: 1rem; color: #ffffff !important; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Cell Meeting - Click to view tutorials</p>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12">
+                <a href="{{ url_for('main.meeting_dates') }}" class="text-decoration-none">
+                    <div class="d-flex align-items-center p-4 rounded" style="background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 40px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(16, 185, 129, 0.3)'">
+                        <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 20px; color: white; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h2>Weekly Schedule</h2>
+                            <p>Every Tuesday</p>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block bottom_nav %}
+<div class="nav-responsive">
+    <a href="{{ url_for('main.index') }}" class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>Members</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleAttendanceDropdown() {
+    // Toggle dropdown functionality if needed
+    console.log('Attendance dropdown toggled');
+}
+
+function viewLatestAttendance() {
+    // View latest attendance functionality if needed
+    console.log('View latest attendance');
+}
+</script>
+{% endblock %}

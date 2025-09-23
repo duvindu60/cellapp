@@ -1,0 +1,183 @@
+<!-- Responsive Design Macros for CellApp -->
+<!-- This file contains reusable macros for consistent responsive design across the application -->
+<!-- Feature Card Macro -->
+{% macro feature_card(title, subtitle, icon, gradient, is_mobile=false, extra_classes="") %}
+<div class="feature-card {{ extra_classes }}" style="padding: {{ '1.5rem' if is_mobile else '2rem' }}; margin-bottom: {{ '1rem' if is_mobile else '1.5rem' }};">
+    <div class="d-flex align-items-center mb-3">
+        <div class="feature-icon me-3" style="width: {{ '50px' if is_mobile else '60px' }}; height: {{ '50px' if is_mobile else '60px' }}; font-size: {{ '24px' if is_mobile else '28px' }}; background: {{ gradient }}; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="{{ icon }}"></i>
+        </div>
+        <div>
+            <h5 class="mb-1" style="font-size: {{ '1.3rem' if is_mobile else '1.5rem' }}; color: var(--text-dark);">{{ title }}</h5>
+            <p class="text-muted mb-0" style="font-size: {{ '0.95rem' if is_mobile else '1.1rem' }};">{{ subtitle }}</p>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+<!-- Stats Card Macro -->
+{% macro stats_card(title, value, icon, gradient, is_mobile=false) %}
+<div class="feature-card text-center" style="padding: {{ '1.5rem' if is_mobile else '2rem' }}; height: 100%;">
+    <div class="feature-icon mx-auto mb-3" style="width: {{ '50px' if is_mobile else '60px' }}; height: {{ '50px' if is_mobile else '60px' }}; font-size: {{ '24px' if is_mobile else '28px' }}; background: {{ gradient }}; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+        <i class="{{ icon }}"></i>
+    </div>
+    <h6 class="mb-1" style="font-size: {{ '1.1rem' if is_mobile else '1.3rem' }}; color: var(--text-dark);">{{ title }}</h6>
+    <p class="mb-0" style="font-size: {{ '1.2rem' if is_mobile else '1.4rem' }}; font-weight: 600; color: var(--accent-color);">{{ value }}</p>
+</div>
+{% endmacro %}
+<!-- Attendance Card Macro -->
+{% macro attendance_card(title, status, date, icon, gradient, is_mobile=false, is_complete=false) %}
+<div class="feature-card text-center" style="padding: {{ '1.5rem' if is_mobile else '2rem' }}; height: 100%; position: relative; cursor: pointer; transition: all 0.3s ease;" onclick="viewLatestAttendance()" data-latest-date="{{ date }}" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
+    <div class="feature-icon mx-auto mb-3" style="width: {{ '50px' if is_mobile else '60px' }}; height: {{ '50px' if is_mobile else '60px' }}; font-size: {{ '24px' if is_mobile else '28px' }}; background: {{ gradient }}; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+        <i class="{{ icon }}"></i>
+    </div>
+    <h6 class="mb-1" style="font-size: {{ '1.1rem' if is_mobile else '1.3rem' }}; color: var(--text-dark);">{{ title }}</h6>
+    <p class="mb-1" style="font-size: {{ '1.2rem' if is_mobile else '1.4rem' }}; font-weight: 600; {% if is_complete %}color: #28a745;{% else %}color: #fd7e14;{% endif %}">{{ status }}</p>
+    <small class="text-muted" style="font-size: {{ '0.8rem' if is_mobile else '0.9rem' }};">{{ date }}</small>
+    <div class="position-absolute" style="top: {{ '10px' if is_mobile else '15px' }}; right: {{ '10px' if is_mobile else '15px' }};">
+        <button onclick="event.stopPropagation(); toggleAttendanceDropdown()" style="background: none; border: none; color: rgba(0,0,0,0.5); cursor: pointer; font-size: {{ '1.2rem' if is_mobile else '1.4rem' }};" onmouseover="this.style.color='rgba(0,0,0,0.8)'" onmouseout="this.style.color='rgba(0,0,0,0.5)'">
+            <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
+        </button>
+    </div>
+</div>
+{% endmacro %}
+<!-- Page Header Macro -->
+{% macro page_header(title, subtitle, breadcrumbs=None, is_mobile=false) %}
+<div class="page-header" style="padding: {{ '5px 15px' if is_mobile else '20px 40px' }};">
+    <div class="container-fluid">
+        {% if breadcrumbs and not is_mobile %}
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        {% for crumb in breadcrumbs %}
+                        <li class="breadcrumb-item {% if crumb.active %}active{% endif %}">
+                            {% if crumb.url and not crumb.active %}
+                                <a href="{{ crumb.url }}">{{ crumb.text }}</a>
+                            {% else %}
+                                {{ crumb.text }}
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+        <h2 class="page-title" style="margin-bottom: {{ '3px' if is_mobile else '8px' }}; font-size: {{ '1.3rem' if is_mobile else '1.8rem' }};">{{ title }}</h2>
+        <p class="page-subtitle" style="margin-bottom: {{ '8px' if is_mobile else '30px' }}; font-size: {{ '0.9rem' if is_mobile else '1rem' }};">{{ subtitle }}</p>
+    </div>
+</div>
+{% endmacro %}
+<!-- Action Button Macro -->
+{% macro action_button(text, url, icon, variant="primary", size="md", is_mobile=false, extra_classes="") %}
+{% set size_classes = {
+    'sm': 'btn-sm',
+    'md': 'btn-lg' if is_mobile else 'btn-md',
+    'lg': 'btn-lg'
+} %}
+<a href="{{ url }}" class="btn btn-{{ variant }} {{ size_classes[size] }} {{ extra_classes }}" style="width: {{ '100%' if is_mobile else 'auto' }};">
+    <i class="{{ icon }} me-2"></i>{{ text }}
+</a>
+{% endmacro %}
+<!-- Member Card Macro -->
+{% macro member_card(member, is_mobile=false, onclick=None) %}
+<div class="member-card" {% if onclick %}onclick="{{ onclick }}"{% endif %} style="padding: {{ '16px' if is_mobile else '20px' }}; margin-bottom: {{ '12px' if is_mobile else '16px' }}; border-radius: {{ '12px' if is_mobile else '16px' }}; min-height: {{ '70px' if is_mobile else '80px' }};">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="flex-grow-1">
+            <h6 class="mb-1" style="font-size: {{ '1.1rem' if is_mobile else '1.2rem' }}; font-weight: 600; line-height: 1.3;">{{ member.name }}</h6>
+            <div class="d-flex flex-wrap gap-2 mb-1">
+                <span class="text-muted" style="font-size: {{ '0.85rem' if is_mobile else '0.9rem' }}; display: flex; align-items: center;">
+                    <i class="fas fa-briefcase me-1" style="width: 12px; text-align: center;"></i>{{ member.ministry or 'Not Assigned' }}
+                </span>
+                <span class="text-muted" style="font-size: {{ '0.85rem' if is_mobile else '0.9rem' }}; display: flex; align-items: center;">
+                    <i class="fas fa-map-marker-alt me-1" style="width: 12px; text-align: center;"></i>{{ member.zone or 'Not Assigned' }}
+                </span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                {% if member.phone_number %}
+                <small class="text-muted" style="font-size: {{ '0.8rem' if is_mobile else '0.85rem' }}; display: flex; align-items: center;">
+                    <i class="fas fa-phone me-1" style="width: 12px; text-align: center;"></i>{{ member.phone_number }}
+                </small>
+                {% endif %}
+                {% if member.age %}
+                <small class="text-muted" style="font-size: {{ '0.8rem' if is_mobile else '0.85rem' }}; display: flex; align-items: center;">
+                    <i class="fas fa-calendar me-1" style="width: 12px; text-align: center;"></i>{{ member.age }} years
+                </small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="text-end">
+            <i class="fas fa-chevron-right text-muted" style="font-size: {{ '14px' if is_mobile else '16px' }};"></i>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+<!-- Form Field Macro -->
+{% macro form_field(field_id, field_name, field_type, label, placeholder, required=false, options=None, is_mobile=false, value="", error=None) %}
+<div style="margin-bottom: {{ '16px' if is_mobile else '20px' }};">
+    <label for="{{ field_id }}" style="display: block; color: #B1BAC4; font-weight: 600; margin-bottom: {{ '8px' if is_mobile else '10px' }}; font-size: {{ '16px' if is_mobile else '16px' }}; line-height: 1.4;">
+        {{ label }}{% if required %} <span style="color: #F85149;">*</span>{% endif %}
+    </label>
+    {% if field_type == 'select' and options %}
+    <select id="{{ field_id }}" 
+            name="{{ field_name }}" 
+            {% if required %}required{% endif %}
+            style="width: 100%; padding: {{ '12px 16px' if is_mobile else '14px 18px' }}; border: 2px solid #30363D; border-radius: {{ '12px' if is_mobile else '10px' }}; background: #0D1117; color: #B1BAC4; font-size: {{ '16px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box; min-height: {{ '48px' if is_mobile else '44px' }};"
+            onfocus="this.style.borderColor='#1F6FEB'; this.style.background='#161B22'; this.style.boxShadow='0 0 0 3px rgba(31, 111, 235, 0.1)';"
+            onblur="this.style.borderColor='#30363D'; this.style.background='#0D1117'; this.style.boxShadow='none';">
+        <option value="">{{ placeholder }}</option>
+        {% for option in options %}
+        <option value="{{ option.value }}" {{ 'selected' if value == option.value else '' }}>{{ option.text }}</option>
+        {% endfor %}
+    </select>
+    {% else %}
+    <input type="{{ field_type }}" 
+           id="{{ field_id }}" 
+           name="{{ field_name }}" 
+           {% if required %}required{% endif %}
+           placeholder="{{ placeholder }}"
+           value="{{ value }}"
+           style="width: 100%; padding: {{ '12px 16px' if is_mobile else '14px 18px' }}; border: 2px solid #30363D; border-radius: {{ '12px' if is_mobile else '10px' }}; background: #0D1117; color: #B1BAC4; font-size: {{ '16px' if is_mobile else '16px' }}; transition: all 0.3s ease; box-sizing: border-box; min-height: {{ '48px' if is_mobile else '44px' }};"
+           onfocus="this.style.borderColor='#1F6FEB'; this.style.background='#161B22'; this.style.boxShadow='0 0 0 3px rgba(31, 111, 235, 0.1)';"
+           onblur="this.style.borderColor='#30363D'; this.style.background='#0D1117'; this.style.boxShadow='none';">
+    {% endif %}
+    {% if error %}
+    <div style="color: #F85149; font-size: {{ '14px' if is_mobile else '14px' }}; margin-top: {{ '6px' if is_mobile else '8px' }}; font-weight: 500;">{{ error }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+<!-- Tutorial Card Macro -->
+{% macro tutorial_card(title, pdf_url, meeting_date, uploaded_at, is_mobile=false) %}
+<div class="tutorial-card" style="padding: {{ '1.5rem' if is_mobile else '2rem' }}; height: 100%; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.1)'">
+    <div class="d-flex align-items-start">
+        <div class="tutorial-icon me-3" style="width: {{ '50px' if is_mobile else '60px' }}; height: {{ '50px' if is_mobile else '60px' }}; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: {{ '18px' if is_mobile else '24px' }};">
+            <i class="fas fa-file-pdf"></i>
+        </div>
+        <div class="flex-grow-1">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0" style="font-size: {{ '1rem' if is_mobile else '1.2rem' }}; color: var(--text-dark); font-weight: 600;">{{ title }}</h6>
+                <span class="badge bg-primary tutorial-type-badge">{{ meeting_date }}</span>
+            </div>
+            <p class="text-muted mb-2" style="font-size: {{ '0.9rem' if is_mobile else '1rem' }}; line-height: 1.6;">
+                <i class="fas fa-file-pdf me-1"></i>PDF Tutorial Document
+            </p>
+            <a href="{{ pdf_url }}" target="_blank" class="btn btn-outline-primary btn-sm" style="font-size: {{ '0.8rem' if is_mobile else '0.9rem' }};">
+                <i class="fas fa-download me-1"></i>Download PDF
+            </a>
+            {% if uploaded_at %}
+            <small class="text-muted d-block mt-2" style="font-size: {{ '0.75rem' if is_mobile else '0.8rem' }};">
+                <i class="fas fa-clock me-1"></i>Uploaded: {{ uploaded_at[:10] }}
+            </small>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+<!-- Responsive Container Macro -->
+{% macro responsive_container(is_mobile=false, extra_classes="") %}
+<div class="feature-card {{ extra_classes }}" style="background: #161B22; border: 1px solid #30363D; border-radius: 12px; padding: {{ '15px' if is_mobile else '30px' }}; margin: {{ '5px' if is_mobile else '20px' }}; box-shadow: 0 4px 12px rgba(0,0,0,0.3); position: relative; z-index: 1;">
+    <div style="max-width: 600px; margin: 0 auto;">
+        {{ caller() }}
+    </div>
+</div>
+{% endmacro %}

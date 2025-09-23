@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% import 'macros/responsive.html' as responsive %}
+{% block title %}Meeting Dates - CellApp{% endblock %}
+{% block header_title %}Meeting Dates{% endblock %}
+<style>
+.btn-outline-success {
+    border: 2px solid #28a745 !important;
+    color: #28a745 !important;
+    background-color: transparent !important;
+    transition: all 0.3s ease !important;
+}
+.btn-outline-success:hover {
+    background-color: #28a745 !important;
+    color: white !important;
+    border-color: #28a745 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+}
+.btn-outline-success:focus {
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.5) !important;
+}
+</style>
+{% block mobile_content %}
+<!-- Page Header -->
+<div class="text-center mb-4">
+    <div class="feature-icon mx-auto mb-3">
+        <i class="fas fa-calendar-check"></i>
+    </div>
+    <h2>Meeting Dates</h2>
+    <p class="page-subtitle">Past 4 weeks of cell meetings</p>
+</div>
+<!-- Meeting Dates List -->
+<div class="feature-card mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2>Tuesday Meetings</h2>
+        <span class="badge bg-primary">4 Meetings</span>
+    </div>
+    <div class="list-group">
+        <div class="list-group-item d-flex align-items-center" style="background: #161B22; border: 1px solid #30363D; margin-bottom: 12px; border-radius: 8px; padding: 16px;">
+            <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 20px; background: linear-gradient(135deg, #28a745, #20c997); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="mb-1" style="color: #B1BAC4; font-size: 1.1rem; font-weight: 600;">{{ week_1_date }}</h6>
+                <p>Cell Meeting</p>
+            </div>
+            <div class="text-end d-flex flex-column gap-2">
+                {% if attendance_status.get(week_1_date, {}).get('is_complete', False) %}
+                    <span>Complete</span>
+                {% else %}
+                    <span>Incomplete</span>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_1_date) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-book me-1"></i>Tutorials
+                    </a>
+                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="list-group-item d-flex align-items-center" style="background: #161B22; border: 1px solid #30363D; margin-bottom: 12px; border-radius: 8px; padding: 16px;">
+            <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 20px; background: linear-gradient(135deg, #17a2b8, #20c997); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="mb-1" style="color: #B1BAC4; font-size: 1.1rem; font-weight: 600;">{{ week_2_date }}</h6>
+                <p>Cell Meeting</p>
+            </div>
+            <div class="text-end d-flex flex-column gap-2">
+                {% if attendance_status.get(week_2_date, {}).get('is_complete', False) %}
+                    <span>Complete</span>
+                {% else %}
+                    <span>Incomplete</span>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_2_date) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-book me-1"></i>Tutorials
+                    </a>
+                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_2_date) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="list-group-item d-flex align-items-center" style="background: #161B22; border: 1px solid #30363D; margin-bottom: 12px; border-radius: 8px; padding: 16px;">
+            <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 20px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="mb-1" style="color: #B1BAC4; font-size: 1.1rem; font-weight: 600;">{{ week_3_date }}</h6>
+                <p>Cell Meeting</p>
+            </div>
+            <div class="text-end d-flex flex-column gap-2">
+                {% if attendance_status.get(week_3_date, {}).get('is_complete', False) %}
+                    <span>Complete</span>
+                {% else %}
+                    <span>Incomplete</span>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_3_date) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-book me-1"></i>Tutorials
+                    </a>
+                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_3_date) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="list-group-item d-flex align-items-center" style="background: #161B22; border: 1px solid #30363D; margin-bottom: 12px; border-radius: 8px; padding: 16px;">
+            <div class="feature-icon me-3" style="width: 45px; height: 45px; font-size: 20px; background: linear-gradient(135deg, #6f42c1, #8e44ad); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="mb-1" style="color: #B1BAC4; font-size: 1.1rem; font-weight: 600;">{{ week_4_date }}</h6>
+                <p>Cell Meeting</p>
+            </div>
+            <div class="text-end d-flex flex-column gap-2">
+                {% if attendance_status.get(week_4_date, {}).get('is_complete', False) %}
+                    <span>Complete</span>
+                {% else %}
+                    <span>Incomplete</span>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_4_date) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-book me-1"></i>Tutorials
+                    </a>
+                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_4_date) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Back Button -->
+<div class="text-center">
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+{% block desktop_content %}
+<!-- Page Header -->
+<div class="text-center mb-4">
+    <div class="feature-icon mx-auto mb-3">
+        <i class="fas fa-calendar-check"></i>
+    </div>
+    <h2>Meeting Dates</h2>
+    <p class="page-subtitle">Past 4 weeks of cell meetings</p>
+</div>
+<!-- Meeting Dates List -->
+<div class="feature-card mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2>Tuesday Meetings</h2>
+        <span class="badge bg-primary">4 Meetings</span>
+    </div>
+    <div class="list-group">
+        <div class="list-group-item d-flex align-items-center" style="background: #161B22; border: 1px solid #30363D; margin-bottom: 16px; border-radius: 8px; padding: 20px;">
+            <div class="feature-icon me-4" style="width: 50px; height: 50px; font-size: 22px; background: linear-gradient(135deg, #28a745, #20c997); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="mb-2" style="color: #B1BAC4; font-size: 1.2rem; font-weight: 600;">{{ week_1_date }}</h5>
+                <p>Cell Meeting</p>
+            </div>
+            <div class="text-end d-flex flex-column gap-2">
+                {% if attendance_status.get(week_1_date, {}).get('is_complete', False) %}
+                    <span>Complete</span>
+                {% else %}
+                    <span>Incomplete</span>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_1_date) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-book me-1"></i>Tutorials
+                    </a>
+                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="list-group-item d-flex align-items-center" style="background: #161B22; border: 1px solid #30363D; margin-bottom: 16px; border-radius: 8px; padding: 20px;">
+            <div class="feature-icon me-4" style="width: 50px; height: 50px; font-size: 22px; background: linear-gradient(135deg, #17a2b8, #20c997); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="mb-2" style="color: #B1BAC4; font-size: 1.2rem; font-weight: 600;">{{ week_2_date }}</h5>
+                <p>Cell Meeting</p>
+            </div>
+            <div class="text-end d-flex flex-column gap-2">
+                {% if attendance_status.get(week_2_date, {}).get('is_complete', False) %}
+                    <span>Complete</span>
+                {% else %}
+                    <span>Incomplete</span>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_2_date) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-book me-1"></i>Tutorials
+                    </a>
+                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_2_date) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="list-group-item d-flex align-items-center" style="background: #161B22; border: 1px solid #30363D; margin-bottom: 16px; border-radius: 8px; padding: 20px;">
+            <div class="feature-icon me-4" style="width: 50px; height: 50px; font-size: 22px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="mb-2" style="color: #B1BAC4; font-size: 1.2rem; font-weight: 600;">{{ week_3_date }}</h5>
+                <p>Cell Meeting</p>
+            </div>
+            <div class="text-end d-flex flex-column gap-2">
+                {% if attendance_status.get(week_3_date, {}).get('is_complete', False) %}
+                    <span>Complete</span>
+                {% else %}
+                    <span>Incomplete</span>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_3_date) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-book me-1"></i>Tutorials
+                    </a>
+                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_3_date) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="list-group-item d-flex align-items-center" style="background: #161B22; border: 1px solid #30363D; margin-bottom: 16px; border-radius: 8px; padding: 20px;">
+            <div class="feature-icon me-4" style="width: 50px; height: 50px; font-size: 22px; background: linear-gradient(135deg, #6f42c1, #8e44ad); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="mb-2" style="color: #B1BAC4; font-size: 1.2rem; font-weight: 600;">{{ week_4_date }}</h5>
+                <p>Cell Meeting</p>
+            </div>
+            <div class="text-end d-flex flex-column gap-2">
+                {% if attendance_status.get(week_4_date, {}).get('is_complete', False) %}
+                    <span>Complete</span>
+                {% else %}
+                    <span>Incomplete</span>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_4_date) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-book me-1"></i>Tutorials
+                    </a>
+                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_4_date) }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-user-check me-1"></i>Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Back Button -->
+<div class="text-center">
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+{% block bottom_nav %}
+<div class="bottom-nav">
+    <a href="{{ url_for('main.index') }}" class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>Members</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Dashboard') }} - {{ _('CellApp') }}{% endblock %}
+{% block header_title %}{{ _('Dashboard') }}{% endblock %}
+
+{% block tablet_nav %}
+<div class="d-flex justify-content-center">
+    <a href="{{ url_for('main.index') }}" class="nav-link me-3">
+        <i class="fas fa-home"></i>
+        <span>{{ _('Home') }}</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-link me-3">
+        <i class="fas fa-user"></i>
+        <span>{{ _('Profile') }}</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-link me-3">
+        <i class="fas fa-users"></i>
+        <span>{{ _('Members') }}</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-link">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>{{ _('Logout') }}</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block desktop_nav %}
+<div class="d-flex justify-content-center">
+    <a href="{{ url_for('main.index') }}" class="nav-link me-4">
+        <i class="fas fa-home"></i>
+        <span>{{ _('Home') }}</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-link me-4">
+        <i class="fas fa-user"></i>
+        <span>{{ _('Profile') }}</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-link me-4">
+        <i class="fas fa-users"></i>
+        <span>{{ _('Members') }}</span>
+    </a>
+    <a href="{{ url_for('main.settings') }}" class="nav-link me-4">
+        <i class="fas fa-cog"></i>
+        <span>{{ _('Settings') }}</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-link">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>{{ _('Logout') }}</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block mobile_content %}
+
+<!-- Stats Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6">
+        <a href="{{ url_for('main.members') }}" class="text-decoration-none">
+            <div class="feature-card text-center" style="padding: 1.5rem; height: 100%;">
+                <div class="feature-icon mx-auto mb-3">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h6 class="mb-1">{{ _('Members') }}</h6>
+                <p class="mb-0">{{ member_count }} {{ _('total') }}</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-6">
+        <div class="feature-card text-center" style="padding: 1.5rem; height: 100%;">
+            <div class="feature-icon mx-auto mb-3">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <h6 class="mb-1">{{ _('Attendance') }}</h6>
+            {% if latest_attendance %}
+                <p class="mb-0">{{ latest_attendance.meeting_date }}</p>
+            {% else %}
+                <p class="mb-0">{{ _('No data') }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Ministry Card -->
+<div class="feature-card mb-4" style="padding: 2rem; background: linear-gradient(135deg, #8b5cf6, #a855f7); border: 1px solid #333; box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);">
+    <div class="d-flex align-items-center mb-4">
+        <div class="feature-icon me-3">
+            <i class="fas fa-church"></i>
+        </div>
+        <div>
+            <h5 class="mb-1">{{ _('Ministry') }}</h5>
+            <p class="text-muted mb-0">{{ _('Your ministry assignments') }}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <div class="d-flex align-items-center p-3 rounded" style="background-color: var(--bg-hover);">
+                <div class="feature-icon me-3">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-2">{{ _('Current Role') }}</h6>
+                    <p class="mb-0">{{ user.role or _('Cell Leader') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="d-flex align-items-center p-3 rounded" style="background-color: var(--bg-hover);">
+                <div class="feature-icon me-3">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-2">{{ _('Zone') }}</h6>
+                    <p class="mb-0">{{ user.zone or _('Zone A') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Card -->
+<div class="feature-card mb-4">
+    <h5 class="mb-4">{{ _('Schedule') }}</h5>
+    <div class="row g-4">
+        <div class="col-12">
+            <a href="{{ url_for('main.meeting_tutorials', meeting_date=next_meeting_date) }}" class="text-decoration-none">
+                <div class="d-flex align-items-center p-4 rounded">
+                    <div class="feature-icon me-3">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            {% if next_meeting_date == today.strftime("%B %d, %Y") %}
+                                {{ _('Today\'s Meeting') }} - {{ next_meeting_date }}
+                            {% else %}
+                                {{ _('Next Meeting') }} - {{ next_meeting_date }}
+                            {% endif %}
+                        </h6>
+                        <p class="mb-0">{{ _('Cell Meeting - Click to view tutorials') }}</p>
+                    </div>
+                    <div class="ms-auto">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="feature-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">{{ _('Recent Activities') }}</h5>
+    </div>
+    {% if todays_activities %}
+        {% for activity in todays_activities[:5] %}
+        <div class="activity-item mb-3 p-3 rounded">
+            <div class="d-flex align-items-center">
+                <div class="activity-icon me-3">
+                    <i class="{{ get_activity_icon(activity.activity_type) }}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <p class="mb-1">{{ format_activity_description(activity) }}</p>
+                    <small class="text-muted">{{ activity.created_at.strftime('%H:%M') }}</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+            <h6 class="mb-2">{{ _('No Recent Activities') }}</h6>
+            <p class="text-muted">{{ _('Start by adding members or marking attendance') }}</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block desktop_content %}
+
+<!-- Desktop Dashboard Content -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="feature-card text-center" style="padding: 2rem;">
+            <div class="feature-icon mx-auto mb-3">
+                <i class="fas fa-users"></i>
+            </div>
+            <h5 class="mb-2">{{ _('Members') }}</h5>
+            <p class="mb-0">{{ member_count }} {{ _('total') }}</p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="feature-card text-center" style="padding: 2rem;">
+            <div class="feature-icon mx-auto mb-3">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <h5 class="mb-2">{{ _('Attendance') }}</h5>
+            {% if latest_attendance %}
+                <p class="mb-0">{{ latest_attendance.meeting_date }}</p>
+            {% else %}
+                <p class="mb-0">{{ _('No data') }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Ministry Information -->
+<div class="feature-card mb-4" style="padding: 2rem;">
+    <h4 class="mb-4">{{ _('Ministry Information') }}</h4>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="text-center">
+                <div class="feature-icon mx-auto mb-3">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <h6 class="text-muted mb-2">{{ _('Current Role') }}</h6>
+                <p class="mb-0">{{ user.role or _('Cell Leader') }}</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center">
+                <div class="feature-icon mx-auto mb-3">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h6 class="text-muted mb-2">{{ _('Zone') }}</h6>
+                <p class="mb-0">{{ user.zone or _('Zone A') }}</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center">
+                <div class="feature-icon mx-auto mb-3">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <h6 class="text-muted mb-2">{{ _('Next Meeting') }}</h6>
+                <p class="mb-0">{{ next_meeting_date }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="feature-card mb-4" style="padding: 2rem;">
+    <h4 class="mb-4">{{ _('Recent Activities') }}</h4>
+    {% if todays_activities %}
+        <div class="row g-3">
+            {% for activity in todays_activities[:6] %}
+            <div class="col-md-6">
+                <div class="activity-item p-3 rounded">
+                    <div class="d-flex align-items-center">
+                        <div class="activity-icon me-3">
+                            <i class="{{ get_activity_icon(activity.activity_type) }}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-1">{{ format_activity_description(activity) }}</p>
+                            <small class="text-muted">{{ activity.created_at.strftime('%H:%M') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-4"></i>
+            <h5 class="mb-3">{{ _('No Recent Activities') }}</h5>
+            <p class="text-muted">{{ _('Start by adding members or marking attendance') }}</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block bottom_nav %}
+<div class="bottom-nav">
+    <a href="{{ url_for('main.index') }}" class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>{{ _('Home') }}</span>
+    </a>
+    <a href="{{ url_for('main.profile') }}" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>{{ _('Profile') }}</span>
+    </a>
+    <a href="{{ url_for('main.members') }}" class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>{{ _('Members') }}</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>{{ _('Logout') }}</span>
+    </a>
+</div>
+{% endblock %}

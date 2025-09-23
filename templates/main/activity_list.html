@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% import "macros/responsive.html" as responsive %}
+{% block title %}Activity List - CellApp{% endblock %}
+{% block mobile_content %}
+<div class="container-fluid">
+    <!-- Header with Back Button -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h2>Activity List</h2>
+                    <p>All activities in your cell group</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-primary" onclick="refreshActivities()" style="border-radius: 10px;">
+                        <i class="fas fa-sync-alt me-2"></i>{{Refresh
+                    }}</button>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-light" style="border-radius: 10px; padding: 8px 12px;">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Most Recent Activities -->
+    <div class="row">
+        <div class="col-12">
+            <div class="feature-card" style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #333; border-radius: 15px; padding: 1.5rem;">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h2>Most Recent Activities</h2>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary" id="activityCount" style="background: linear-gradient(135deg, #1F6FEB, #2c7bb6) !important; border-radius: 8px;">{{ activities|length if activities else 0 }} activities</span>
+                    </div>
+                </div>
+                {% if activities %}
+                    <div id="activityList">
+                        {% for activity in activities %}
+                        <div class="activity-item d-flex align-items-start mb-4 p-4 rounded activity-card" 
+                             style="background: linear-gradient(135deg, #2a2a2a, #3a3a3a); border-left: 4px solid {{ get_activity_color(activity.activity_type) }}; border-radius: 16px; transition: all 0.3s ease; cursor: pointer; min-height: 80px;" 
+                             onmouseover="this.style.transform='translateX(8px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.4)'; this.style.borderLeftColor='{{ get_activity_color(activity.activity_type) }}dd';" 
+                             onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='none'; this.style.borderLeftColor='{{ get_activity_color(activity.activity_type) }}';">
+                            <div class="activity-icon me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, {{ get_activity_color(activity.activity_type) }}, {{ get_activity_color(activity.activity_type) }}dd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                                <i class="{{ get_activity_icon(activity.activity_type) }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h6 class="mb-0" style="color: #ffffff; font-weight: 600; font-size: 1.1rem; line-height: 1.4;">{{ format_activity_description(activity) }}</h6>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if activity.activity_type == 'attendance_incomplete' %}
+                                        <span class="badge bg-warning" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">⚠️ Incomplete</span>
+                                        {% elif activity.activity_type == 'user_login' %}
+                                        <span class="badge bg-info" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">🔐 Login</span>
+                                        {% elif activity.activity_type == 'member_added' %}
+                                        <span class="badge bg-success" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">➕ New</span>
+                                        {% elif activity.activity_type == 'member_deleted' %}
+                                        <span class="badge bg-danger" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">🗑️ Removed</span>
+                                        {% elif activity.activity_type == 'attendance_sheet_updated' %}
+                                        <span class="badge bg-primary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">📋 Updated</span>
+                                        {% elif activity.activity_type == 'tutorial_uploaded' %}
+                                        <span class="badge bg-purple" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; background-color: #6f42c1 !important;">📚 Tutorial</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <small class="text-muted" style="font-size: 0.85rem; display: flex; align-items: center;">
+                                        <i class="fas fa-clock me-2" style="width: 12px; text-align: center;"></i>
+                                        {{ activity.created_at[:16] if activity.created_at else 'Just now' }}
+                                    </small>
+                                    <small class="text-muted" style="font-size: 0.85rem; display: flex; align-items: center;">
+                                        <i class="fas fa-tag me-2" style="width: 12px; text-align: center;"></i>
+                                        {{ activity.activity_type.replace('_', ' ').title() }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="feature-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 32px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <h2>No Activities Found</h2>
+                        <p>Start by adding members or marking attendance to see activities here</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function refreshActivities() {
+    location.reload();
+}
+</script>
+<style>
+.activity-card {
+    border: 1px solid #444;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+.activity-card:hover {
+    border-color: #1F6FEB;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(31, 111, 235, 0.2);
+}
+.dropdown-toggle::after {
+    margin-left: 0.5rem;
+}
+.feature-card {
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+}
+.feature-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    transform: translateY(-2px);
+}
+.btn-outline-light {
+    border-color: #555;
+    color: #ffffff;
+}
+.btn-outline-light:hover {
+    background-color: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+}
+.btn-outline-primary {
+    border-color: #1F6FEB;
+    color: #1F6FEB;
+}
+.btn-outline-primary:hover {
+    background-color: #1F6FEB;
+    color: #ffffff;
+    border-color: #1F6FEB;
+}
+</style>
+{% endblock %}
+{% block desktop_content %}
+<div class="container-fluid">
+    <!-- Header with Back Button -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h2>Activity List</h2>
+                    <p>All activities in your cell group</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-primary" onclick="refreshActivities()" style="border-radius: 10px;">
+                        <i class="fas fa-sync-alt me-2"></i>{{Refresh
+                    }}</button>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-light" style="border-radius: 10px; padding: 8px 12px;">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Most Recent Activities -->
+    <div class="row">
+        <div class="col-12">
+            <div class="feature-card" style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #333; border-radius: 15px; padding: 1.5rem;">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h2>Most Recent Activities</h2>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary" id="activityCount" style="background: linear-gradient(135deg, #1F6FEB, #2c7bb6) !important; border-radius: 8px;">{{ activities|length if activities else 0 }} activities</span>
+                    </div>
+                </div>
+                {% if activities %}
+                    <div id="activityList">
+                        {% for activity in activities %}
+                        <div class="activity-item d-flex align-items-start mb-4 p-4 rounded activity-card" 
+                             style="background: linear-gradient(135deg, #2a2a2a, #3a3a3a); border-left: 4px solid {{ get_activity_color(activity.activity_type) }}; border-radius: 16px; transition: all 0.3s ease; cursor: pointer; min-height: 80px;" 
+                             onmouseover="this.style.transform='translateX(8px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.4)'; this.style.borderLeftColor='{{ get_activity_color(activity.activity_type) }}dd';" 
+                             onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='none'; this.style.borderLeftColor='{{ get_activity_color(activity.activity_type) }}';">
+                            <div class="activity-icon me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, {{ get_activity_color(activity.activity_type) }}, {{ get_activity_color(activity.activity_type) }}dd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                                <i class="{{ get_activity_icon(activity.activity_type) }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h6 class="mb-0" style="color: #ffffff; font-weight: 600; font-size: 1.1rem; line-height: 1.4;">{{ format_activity_description(activity) }}</h6>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if activity.activity_type == 'attendance_incomplete' %}
+                                        <span class="badge bg-warning" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">⚠️ Incomplete</span>
+                                        {% elif activity.activity_type == 'user_login' %}
+                                        <span class="badge bg-info" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">🔐 Login</span>
+                                        {% elif activity.activity_type == 'member_added' %}
+                                        <span class="badge bg-success" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">➕ New</span>
+                                        {% elif activity.activity_type == 'member_deleted' %}
+                                        <span class="badge bg-danger" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">🗑️ Removed</span>
+                                        {% elif activity.activity_type == 'attendance_sheet_updated' %}
+                                        <span class="badge bg-primary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">📋 Updated</span>
+                                        {% elif activity.activity_type == 'tutorial_uploaded' %}
+                                        <span class="badge bg-purple" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; background-color: #6f42c1 !important;">📚 Tutorial</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <small class="text-muted" style="font-size: 0.85rem; display: flex; align-items: center;">
+                                        <i class="fas fa-clock me-2" style="width: 12px; text-align: center;"></i>
+                                        {{ activity.created_at[:16] if activity.created_at else 'Just now' }}
+                                    </small>
+                                    <small class="text-muted" style="font-size: 0.85rem; display: flex; align-items: center;">
+                                        <i class="fas fa-tag me-2" style="width: 12px; text-align: center;"></i>
+                                        {{ activity.activity_type.replace('_', ' ').title() }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="feature-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 32px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <h2>No Activities Found</h2>
+                        <p>Start by adding members or marking attendance to see activities here</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
