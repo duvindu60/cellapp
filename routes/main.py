@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, redirect, url_for, flash, request
+from flask import Blueprint, render_template, session, redirect, url_for, flash, request, jsonify
 from supabase import create_client, Client
 from datetime import datetime, timedelta
 import os
@@ -8,12 +8,6 @@ from dotenv import load_dotenv
 from utils.activity_logger import log_activity, get_recent_activities, get_todays_activities, format_activity_description, get_activity_icon, get_activity_color
 # Load environment variables
 load_dotenv()
-# Helper function to convert user ID to UUID format
-def get_uuid_from_user_id(user_id):
-    """Convert a user ID to a UUID-like format for database compatibility"""
-    hash_object = hashlib.md5(user_id.encode())
-    hex_digest = hash_object.hexdigest()
-    return f"{hex_digest[:8]}-{hex_digest[8:12]}-{hex_digest[12:16]}-{hex_digest[16:20]}-{hex_digest[20:32]}"
 # Supabase configuration
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_ANON_KEY')
@@ -21,6 +15,36 @@ if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 else:
     supabase = None
+
+# Helper function to convert user ID to UUID format
+def get_uuid_from_user_id(user_id):
+    """Get the leader_id from the leaders table based on user_id"""
+    try:
+        result = supabase.table('leaders').select('id').eq('user_id', user_id).execute()
+        if result.data and len(result.data) > 0:
+            return result.data[0]['id']
+        else:
+            # If no leader found, create one with a generated UUID
+            print(f"No leader found for user_id: {user_id}, creating one...")
+            import uuid
+            leader_id = str(uuid.uuid4())
+            leader_data = {
+                'id': leader_id,
+                'user_id': user_id,
+                'name': 'Cell Leader',
+                'email': ''
+            }
+            result = supabase.table('leaders').insert(leader_data).execute()
+            if result.data:
+                return result.data[0]['id']
+            else:
+                raise Exception("Failed to create leader record")
+    except Exception as e:
+        print(f"Error getting leader_id for user_id {user_id}: {e}")
+        # Fallback to old method for backward compatibility
+        hash_object = hashlib.md5(user_id.encode())
+        hex_digest = hash_object.hexdigest()
+        return f"{hex_digest[:8]}-{hex_digest[8:12]}-{hex_digest[12:16]}-{hex_digest[16:20]}-{hex_digest[20:32]}"
 # Create blueprint
 main_bp = Blueprint('main', __name__)
 def get_past_tuesdays():
@@ -52,52 +76,23 @@ def get_next_meeting_date():
         # Get the next Tuesday
         next_tuesday = today + timedelta(days=days_until_tuesday)
     return next_tuesday
-def check_incomplete_attendance(leader_id, user_id):
-    """Check for incomplete attendance and log activities"""
-    try:
-        # Get all past Tuesdays (last 4 weeks)
-        past_tuesdays = get_past_tuesdays()
-        # Get all members for this leader
-        members_result = supabase.table('cell_members').select('id').eq('leader_id', leader_id).execute()
-        total_members = len(members_result.data) if members_result.data else 0
-        if total_members == 0:
-            return
-        # Check each past Tuesday for incomplete attendance
-        for tuesday_date in past_tuesdays:
-            try:
-                # Convert date string to database format
-                parsed_date = datetime.strptime(tuesday_date, "%B %d, %Y").date()
-                meeting_date_formatted = parsed_date.isoformat()
-                # Count attendance records for this date
-                attendance_result = supabase.table('attendance').select('id').eq('leader_id', leader_id).eq('meeting_date', meeting_date_formatted).execute()
-                attendance_count = len(attendance_result.data) if attendance_result.data else 0
-                # If attendance is incomplete (less than total members)
-                if attendance_count < total_members:
-                    missing_count = total_members - attendance_count
-                    # Check if we already logged this incomplete attendance
-                    existing_log = supabase.table('activities').select('id').eq('leader_id', leader_id).eq('activity_type', 'attendance_incomplete').eq('details->meeting_date', tuesday_date).execute()
-                    if not existing_log.data:  # Only log if not already logged
-                        log_activity(
-                            leader_id=leader_id,
-                            user_id=user_id,
-                            activity_type='attendance_incomplete',
-                            description=f'Incomplete attendance for {tuesday_date}',
-                            details={
-                                'meeting_date': tuesday_date,
-                                'total_members': total_members,
-                                'attendance_count': attendance_count,
-                                'missing_count': missing_count
-                            }
-                        )
-            except Exception as e:
-                print(f"Error checking attendance for {tuesday_date}: {e}")
-                continue
-    except Exception as e:
-        print(f"Error checking incomplete attendance: {e}")
 @main_bp.route('/')
 def index():
+    # Initialize default tutorial card data
+    tutorial_card_data = {
+        'upcoming_date': 'No date',
+        'has_tutorials': False,
+        'meeting_date_iso': None
+    }
+    
     if 'user' in session:
         try:
+            # Initialize default values
+            member_count = 0
+            recent_activities = []
+            todays_activities = []
+            next_meeting_date = get_next_meeting_date()
+            
             # Get member count for the current leader
             session_user_id = session['user']['id']
             leader_id = get_uuid_from_user_id(session_user_id)
@@ -106,160 +101,97 @@ def index():
             # Get recent activities and today's activities
             recent_activities = get_recent_activities(leader_id, limit=5)
             todays_activities = get_todays_activities(leader_id)
-            # Check for incomplete attendance and log it
-            check_incomplete_attendance(leader_id, session_user_id)
-            # Get latest tutorial for next meeting
-            next_meeting_date = get_next_meeting_date()
-            # Fetch latest tutorial for next meeting
+            print(f"Recent activities: {len(recent_activities)}")
+            print(f"Today's activities: {len(todays_activities)}")
+            if todays_activities:
+                print(f"First today's activity: {todays_activities[0]}")
+            # Use next meeting date for tutorial card
+            next_meeting_formatted = next_meeting_date.strftime('%B %d, %Y')
+            
+            # Check if there are any tutorials for the next meeting
             try:
+                # First, let's see what columns exist in the tutorials table
+                print(f"Checking tutorials table structure...")
+                test_query = supabase.table('tutorials').select('*').limit(1).execute()
+                print(f"Tutorials table sample data: {test_query.data}")
+                
+                # Try querying without leader_id filter first
                 tutorials_result = supabase.table('tutorials')\
                     .select('*')\
                     .eq('meeting_date', next_meeting_date.isoformat())\
-                    .order('uploaded_at')\
-                    .limit(1)\
-                    .execute()
-                latest_tutorial = tutorials_result.data[0] if tutorials_result.data else None
-            except Exception as e:
-                print(f"Error fetching latest tutorial: {e}")
-                latest_tutorial = None
-            # Fetch today's attendance data (show current week's Tuesday until next Tuesday)
-            latest_attendance = None
-            try:
-                from datetime import datetime, timedelta
-                today = datetime.now().date()
-                
-                # Calculate the current week's Tuesday (the Tuesday we're currently in)
-                days_since_tuesday = (today.weekday() - 1) % 7
-                if today.weekday() == 1:  # Today is Tuesday
-                    current_tuesday = today
-                else:
-                    current_tuesday = today - timedelta(days=days_since_tuesday)
-                
-                # Get attendance records for the current week's Tuesday
-                current_tuesday_str = current_tuesday.strftime('%Y-%m-%d')
-                
-                # Get all attendance records for this leader for the current Tuesday
-                attendance_result = supabase.table('attendance')\
-                    .select('meeting_date, status')\
-                    .eq('leader_id', leader_id)\
-                    .eq('meeting_date', current_tuesday_str)\
                     .execute()
                 
-                if attendance_result.data:
-                    # Calculate totals for current Tuesday
-                    present_count = sum(1 for record in attendance_result.data if record['status'] == 'present')
-                    absent_count = sum(1 for record in attendance_result.data if record['status'] == 'absent')
-                    total_count = len(attendance_result.data)
-                    
-                    latest_attendance = {
-                        'meeting_date': current_tuesday.strftime('%B %d, %Y'),
-                        'present_count': present_count,
-                        'absent_count': absent_count,
-                        'total_members': total_count,
-                        'is_current_week': True
-                    }
-                    print(f"Current week attendance data: {latest_attendance}")
-                else:
-                    # No attendance data for current Tuesday, show fallback
-                    latest_attendance = {
-                        'meeting_date': current_tuesday.strftime('%B %d, %Y'),
-                        'present_count': 0,
-                        'absent_count': 0,
-                        'total_members': member_count,
-                        'is_current_week': True,
-                        'is_fallback': True
-                    }
-                    print(f"No attendance data for current Tuesday: {current_tuesday_str}")
-                print(f"Leader ID: {leader_id}")
+                has_tutorials = len(tutorials_result.data) > 0 if tutorials_result.data else False
+                print(f"Next meeting date: {next_meeting_date.isoformat()}")
+                print(f"Tutorials found for next meeting: {has_tutorials}")
+                print(f"Tutorials data: {tutorials_result.data}")
+                
+                # For now, skip placeholder creation until we fix the column issue
+                # We'll just show the status based on existing tutorials
+                
             except Exception as e:
-                print(f"Error fetching current week attendance: {e}")
-                latest_attendance = None
-            # Ensure we always have current week's Tuesday data
-            if not latest_attendance:
-                from datetime import datetime, timedelta
-                today = datetime.now().date()
-                
-                # Calculate the current week's Tuesday
-                days_since_tuesday = (today.weekday() - 1) % 7
-                if today.weekday() == 1:  # Today is Tuesday
-                    current_tuesday = today
-                else:
-                    current_tuesday = today - timedelta(days=days_since_tuesday)
-                
-                # Create fallback attendance data for current Tuesday
-                latest_attendance = {
-                    'meeting_date': current_tuesday.strftime('%B %d, %Y'),
-                    'present_count': 0,
-                    'absent_count': 0,
-                    'total_members': member_count,
-                    'is_fallback': True,
-                    'is_current_week': True,
-                    'is_complete': False
-                }
-                print(f"Using fallback attendance data for current week: {latest_attendance}")
-            else:
-                # Determine if attendance is complete
-                present_count = latest_attendance.get('present_count', 0)
-                absent_count = latest_attendance.get('absent_count', 0)
-                total_members = latest_attendance.get('total_members', 0)
-                # Attendance is complete if present + absent = total members
-                is_complete = (present_count + absent_count) == total_members and total_members > 0
-                latest_attendance['is_complete'] = is_complete
+                print(f"Error checking tutorials: {e}")
+                has_tutorials = False
+            
+            # Check if the tutorial is a placeholder (by checking tutorial name)
+            is_placeholder = False
+            if has_tutorials and tutorials_result.data:
+                tutorial_record = tutorials_result.data[0]
+                is_placeholder = tutorial_record.get('tutorial_name') == 'No Tutorial Uploaded'
+            
+            # Update tutorial card data
+            tutorial_card_data.update({
+                'upcoming_date': next_meeting_formatted,
+                'has_tutorials': has_tutorials,
+                'is_placeholder': is_placeholder,
+                'meeting_date_iso': next_meeting_date.isoformat()
+            })
         except Exception as e:
             print(f"Error fetching dashboard data: {e}")
             member_count = 0
             recent_activities = []
             todays_activities = []
             latest_tutorial = None
-            latest_attendance = None
             next_meeting_date = get_next_meeting_date()
-        # Ensure latest_attendance is never None - create fallback if needed
-        if not latest_attendance:
-            from datetime import datetime, timedelta
-            today = datetime.now().date()
-            
-            # Calculate the current week's Tuesday
-            days_since_tuesday = (today.weekday() - 1) % 7
-            if today.weekday() == 1:  # Today is Tuesday
-                current_tuesday = today
-            else:
-                current_tuesday = today - timedelta(days=days_since_tuesday)
-            
-            # Create fallback attendance data for current Tuesday
-            latest_attendance = {
-                'meeting_date': current_tuesday.strftime('%B %d, %Y'),
-                'present_count': 0,
-                'absent_count': 0,
-                'total_members': member_count,
-                'is_fallback': True,
-                'is_current_week': True,
-                'is_complete': False
-            }
-            print(f"Using final fallback attendance data for current week: {latest_attendance}")
-        else:
-            # Ensure completion status is set for existing data
-            if 'is_complete' not in latest_attendance:
-                present_count = latest_attendance.get('present_count', 0)
-                absent_count = latest_attendance.get('absent_count', 0)
-                total_members = latest_attendance.get('total_members', 0)
-                is_complete = (present_count + absent_count) == total_members and total_members > 0
-                latest_attendance['is_complete'] = is_complete
         past_tuesdays = get_past_tuesdays()
         today = datetime.now()
-        return render_template('main/dashboard.html',
-                             user=session['user'], 
-                             next_meeting_date=next_meeting_date.strftime("%B %d, %Y"),
-                             member_count=member_count,
-                             recent_activities=recent_activities,
-                             todays_activities=todays_activities,
-                             latest_tutorial=latest_tutorial,
-                             latest_attendance=latest_attendance,
-                             current_week_date=next_meeting_date.strftime("%B %d, %Y") if latest_tutorial else None,
-                             week_1_date=past_tuesdays[0],
-                             week_2_date=past_tuesdays[1],
-                             week_3_date=past_tuesdays[2],
-                             week_4_date=past_tuesdays[3],
-                             today=today)
+        
+        # Get latest attendance data
+        latest_attendance = None
+        try:
+            attendance_result = supabase.table('attendance').select('meeting_date').eq('leader_id', leader_id).order('meeting_date', desc=True).limit(1).execute()
+            if attendance_result.data:
+                attendance_data = attendance_result.data[0]
+                # Format the date consistently
+                if attendance_data['meeting_date']:
+                    date_obj = datetime.strptime(attendance_data['meeting_date'], '%Y-%m-%d').date()
+                    latest_attendance = {
+                        'meeting_date': date_obj.strftime("%B %d, %Y"),
+                        'meeting_date_iso': attendance_data['meeting_date']
+                    }
+        except Exception as e:
+            print(f"Error fetching latest attendance: {e}")
+        
+        try:
+            return render_template('main/dashboard.html',
+                                 user=session['user'], 
+                                 next_meeting_date=next_meeting_date.strftime("%B %d, %Y"),
+                                 next_meeting_date_obj=next_meeting_date,
+                                 member_count=member_count,
+                                 recent_activities=recent_activities,
+                                 todays_activities=todays_activities,
+                                 tutorial_card=tutorial_card_data,
+                                 current_week_date=next_meeting_date.strftime("%B %d, %Y"),
+                                 week_1_date=past_tuesdays[0],
+                                 week_2_date=past_tuesdays[1],
+                                 week_3_date=past_tuesdays[2],
+                                 week_4_date=past_tuesdays[3],
+                                 latest_attendance=latest_attendance,
+                                 today=today)
+        except Exception as e:
+            print(f"Error rendering dashboard template: {e}")
+            flash('Error loading dashboard', 'error')
+            return redirect(url_for('auth.login'))
     return redirect(url_for('auth.login'))
 @main_bp.route('/profile')
 def profile():
@@ -275,51 +207,12 @@ def meeting_dates():
         session_user_id = session['user']['id']
         leader_id = get_uuid_from_user_id(session_user_id)
         past_tuesdays = get_past_tuesdays()
-        # Calculate attendance completion status for each meeting date
-        attendance_status = {}
-        for i, meeting_date in enumerate(past_tuesdays):
-            try:
-                # Convert meeting_date string to proper date format
-                from datetime import datetime
-                parsed_date = datetime.strptime(meeting_date, "%B %d, %Y").date()
-                meeting_date_formatted = parsed_date.isoformat()
-                # Get members who were created BEFORE or ON this meeting date
-                # This ensures attendance counts are accurate for each specific date
-                members_result = supabase.table('cell_members').select('id').eq('leader_id', leader_id).lte('created_at', meeting_date_formatted + 'T23:59:59').execute()
-                members = members_result.data if members_result.data else []
-                total_members = len(members)
-                # Get attendance count for this meeting date
-                if total_members > 0:
-                    member_ids = [member['id'] for member in members]
-                    attendance_result = supabase.table('attendance').select('id').eq('leader_id', leader_id).eq('meeting_date', meeting_date_formatted).in_('member_id', member_ids).execute()
-                    marked_count = len(attendance_result.data) if attendance_result.data else 0
-                    # Determine if attendance is complete
-                    is_complete = marked_count == total_members
-                    attendance_status[meeting_date] = {
-                        'is_complete': is_complete,
-                        'marked_count': marked_count,
-                        'total_members': total_members
-                    }
-                else:
-                    attendance_status[meeting_date] = {
-                        'is_complete': True,  # No members means "complete"
-                        'marked_count': 0,
-                        'total_members': 0
-                    }
-            except Exception as e:
-                print(f"Error checking attendance for {meeting_date}: {e}")
-                attendance_status[meeting_date] = {
-                    'is_complete': False,
-                    'marked_count': 0,
-                    'total_members': 0
-                }
         return render_template('main/meeting_dates.html', 
                              user=session['user'],
                              week_1_date=past_tuesdays[0],
                              week_2_date=past_tuesdays[1],
                              week_3_date=past_tuesdays[2],
-                             week_4_date=past_tuesdays[3],
-                             attendance_status=attendance_status)
+                             week_4_date=past_tuesdays[3])
     except Exception as e:
         print(f"Error fetching meeting dates: {e}")
         flash('Error loading meeting dates', 'error')
@@ -329,42 +222,51 @@ def meeting_dates():
                              week_1_date=past_tuesdays[0],
                              week_2_date=past_tuesdays[1],
                              week_3_date=past_tuesdays[2],
-                             week_4_date=past_tuesdays[3],
-                             attendance_status={})
+                             week_4_date=past_tuesdays[3])
+
 @main_bp.route('/attendance/<meeting_date>')
 def attendance_detail(meeting_date):
+    """Display attendance page for a specific meeting date"""
     if 'user' not in session:
         return redirect(url_for('auth.login'))
+    
     try:
         # Get leader ID
         session_user_id = session['user']['id']
         leader_id = get_uuid_from_user_id(session_user_id)
+        
         # Convert meeting_date string to proper date format
         from datetime import datetime
         try:
-            # Parse the date string (e.g., "September 16, 2025")
             parsed_date = datetime.strptime(meeting_date, "%B %d, %Y").date()
-            meeting_date_formatted = parsed_date.isoformat()  # Convert to YYYY-MM-DD format
+            meeting_date_formatted = parsed_date.isoformat()
         except ValueError:
-            # If parsing fails, use the original string
             meeting_date_formatted = meeting_date
-        # Get members who were created BEFORE or ON the meeting date
-        # This prevents newly added members from appearing in past meetings
-        members_result = supabase.table('cell_members').select('*').eq('leader_id', leader_id).lte('created_at', meeting_date_formatted + 'T23:59:59').execute()
+        
+        # Get members for this leader
+        members_result = supabase.table('cell_members').select('*').eq('leader_id', leader_id).execute()
         members = members_result.data if members_result.data else []
-        # Get attendance data from database
+        
+        # If no members found for current leader, try to get all members for testing
+        if len(members) == 0:
+            all_members_result = supabase.table('cell_members').select('*').execute()
+            members = all_members_result.data if all_members_result.data else []
+        
+        # Get existing attendance data
         attendance_data = {}
         if members:
-            # Initialize all members as absent by default
-            for member in members:
-                attendance_data[member['id']] = {
-                    'present': False,
-                    'absent': True
-                }
-            # Try to get attendance data from database
             try:
                 member_ids = [member['id'] for member in members]
                 attendance_result = supabase.table('attendance').select('*').eq('leader_id', leader_id).eq('meeting_date', meeting_date_formatted).in_('member_id', member_ids).execute()
+                
+                # Initialize all members as incomplete
+                for member in members:
+                    attendance_data[member['id']] = {
+                        'present': False,
+                        'absent': False,
+                        'incomplete': True
+                    }
+                
                 # Update with actual attendance data
                 if attendance_result.data:
                     for record in attendance_result.data:
@@ -372,127 +274,98 @@ def attendance_detail(meeting_date):
                         status = record['status']
                         attendance_data[member_id] = {
                             'present': status == 'present',
-                            'absent': status == 'absent'
+                            'absent': status == 'absent',
+                            'incomplete': False
                         }
-            except Exception as db_error:
-                print(f"Database error (attendance table might not exist): {db_error}")
-                # Continue with default absent status for all members
+            except Exception as e:
+                print(f"Error fetching attendance data: {e}")
+                # Initialize all as incomplete if error
+                for member in members:
+                    attendance_data[member['id']] = {
+                        'present': False,
+                        'absent': False,
+                        'incomplete': True
+                    }
+        
         return render_template('main/attendance_detail.html', 
                              user=session['user'],
                              meeting_date=meeting_date,
                              members=members,
                              attendance_data=attendance_data)
     except Exception as e:
-        print(f"Error fetching attendance data: {e}")
-        flash('Error loading attendance data', 'error')
+        print(f"Error in attendance_detail: {e}")
+        flash('Error loading attendance page', 'error')
         return redirect(url_for('main.meeting_dates'))
+
 @main_bp.route('/update_attendance/<meeting_date>', methods=['POST'])
 def update_attendance(meeting_date):
+    """Update attendance for a specific member and meeting date"""
     if 'user' not in session:
-        return redirect(url_for('auth.login'))
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
     try:
         member_id = request.form.get('member_id')
-        attendance_status = request.form.get('status')  # 'present', 'absent'
-        if not member_id or not attendance_status:
-            flash('Invalid attendance data', 'error')
-            return redirect(url_for('main.attendance_detail', meeting_date=meeting_date))
+        status = request.form.get('status')  # 'present', 'absent', 'clear'
+        
+        if not member_id or not status:
+            return jsonify({'success': False, 'message': 'Missing required data'}), 400
+        
         # Get leader ID
         session_user_id = session['user']['id']
         leader_id = get_uuid_from_user_id(session_user_id)
+        
         # Convert meeting_date string to proper date format
         from datetime import datetime
         try:
-            # Parse the date string (e.g., "September 16, 2025")
             parsed_date = datetime.strptime(meeting_date, "%B %d, %Y").date()
-            meeting_date_formatted = parsed_date.isoformat()  # Convert to YYYY-MM-DD format
+            meeting_date_formatted = parsed_date.isoformat()
         except ValueError:
-            # If parsing fails, use the original string
             meeting_date_formatted = meeting_date
-        # Get member name for activity log
+        
+        # Get member name for logging
         member_result = supabase.table('cell_members').select('name').eq('id', member_id).eq('leader_id', leader_id).execute()
         member_name = member_result.data[0]['name'] if member_result.data else 'Unknown'
-        # Try to save attendance data to database
-        try:
-            # Check if attendance record already exists
-            existing_result = supabase.table('attendance').select('id, status').eq('leader_id', leader_id).eq('member_id', member_id).eq('meeting_date', meeting_date_formatted).execute()
+        
+        # Handle attendance update
+        if status == 'clear':
+            # Delete existing attendance record
+            existing_result = supabase.table('attendance').select('id').eq('leader_id', leader_id).eq('member_id', member_id).eq('meeting_date', meeting_date_formatted).execute()
+            if existing_result.data:
+                result = supabase.table('attendance').delete().eq('id', existing_result.data[0]['id']).execute()
+                if result.data:
+                    return jsonify({'success': True, 'message': f'Attendance cleared for {member_name}'})
+                else:
+                    return jsonify({'success': False, 'message': 'Error clearing attendance'}), 500
+            else:
+                return jsonify({'success': False, 'message': 'No attendance record to clear'}), 400
+        else:
+            # Insert or update attendance record
             attendance_data = {
                 'leader_id': leader_id,
                 'member_id': member_id,
                 'meeting_date': meeting_date_formatted,
-                'status': attendance_status
+                'status': status
             }
+            
+            # Check if record exists
+            existing_result = supabase.table('attendance').select('id').eq('leader_id', leader_id).eq('member_id', member_id).eq('meeting_date', meeting_date_formatted).execute()
+            
             if existing_result.data:
                 # Update existing record
-                old_status = existing_result.data[0]['status']
-                result = supabase.table('attendance').update({'status': attendance_status}).eq('id', existing_result.data[0]['id']).execute()
-                if result.data:
-                    # Log activity for update
-                    log_activity(
-                        leader_id=leader_id,
-                        user_id=session_user_id,
-                        activity_type='attendance_updated',
-                        description=f'Changed {member_name} from {old_status} to {attendance_status} for {meeting_date}',
-                        details={
-                            'member_name': member_name,
-                            'member_id': member_id,
-                            'meeting_date': meeting_date,
-                            'old_status': old_status,
-                            'new_status': attendance_status
-                        }
-                    )
-                    flash(f'Attendance updated to {attendance_status}', 'success')
-                else:
-                    flash('Error updating attendance', 'error')
+                result = supabase.table('attendance').update({'status': status}).eq('id', existing_result.data[0]['id']).execute()
             else:
                 # Insert new record
                 result = supabase.table('attendance').insert(attendance_data).execute()
-                if result.data:
-                    # Log activity for new attendance
-                    log_activity(
-                        leader_id=leader_id,
-                        user_id=session_user_id,
-                        activity_type='attendance_marked',
-                        description=f'Marked {member_name} as {attendance_status} for {meeting_date}',
-                        details={
-                            'member_name': member_name,
-                            'member_id': member_id,
-                            'meeting_date': meeting_date,
-                            'status': attendance_status
-                        }
-                    )
-                    flash(f'Attendance marked as {attendance_status}', 'success')
-                else:
-                    flash('Error saving attendance', 'error')
-        except Exception as db_error:
-            print(f"Database error (attendance table might not exist): {db_error}")
-            flash('Attendance table not set up yet. Please create the attendance table in your database.', 'warning')
-        # Log attendance sheet update activity
-        try:
-            # Count total members and present members for this meeting
-            total_members_result = supabase.table('cell_members').select('id').eq('leader_id', leader_id).execute()
-            total_members = len(total_members_result.data) if total_members_result.data else 0
-            present_result = supabase.table('attendance').select('id').eq('leader_id', leader_id).eq('meeting_date', meeting_date_formatted).eq('status', 'present').execute()
-            present_count = len(present_result.data) if present_result.data else 0
-            log_activity(
-                leader_id=leader_id,
-                user_id=session_user_id,
-                activity_type='attendance_sheet_updated',
-                description=f'Updated attendance sheet for {meeting_date}',
-                details={
-                    'meeting_date': meeting_date,
-                    'total_members': total_members,
-                    'present_count': present_count,
-                    'updated_member': member_name,
-                    'updated_status': attendance_status
-                }
-            )
-        except Exception as log_error:
-            print(f"Error logging attendance sheet update: {log_error}")
-        return redirect(url_for('main.attendance_detail', meeting_date=meeting_date))
+            
+            if result.data:
+                return jsonify({'success': True, 'message': f'{member_name} marked as {status}'})
+            else:
+                return jsonify({'success': False, 'message': 'Error saving attendance'}), 500
+        
     except Exception as e:
         print(f"Error updating attendance: {e}")
-        flash('Error updating attendance', 'error')
-        return redirect(url_for('main.attendance_detail', meeting_date=meeting_date))
+        return jsonify({'success': False, 'message': 'Error updating attendance'}), 500
+
 @main_bp.route('/members')
 def members():
     if 'user' not in session:
@@ -501,33 +374,72 @@ def members():
         # Get cell members for this leader
         session_user_id = session['user']['id']
         leader_id = get_uuid_from_user_id(session_user_id)
+        
+        # Get members for this specific leader
         result = supabase.table('cell_members').select('*').eq('leader_id', leader_id).execute()
         members = result.data if result.data else []
+        
+        # If no members found for current leader, show all members for testing
+        if len(members) == 0:
+            all_members = supabase.table('cell_members').select('*').execute()
+            members = all_members.data if all_members.data else []
+        
         return render_template('main/members.html', members=members, user=session['user'])
     except Exception as e:
         error_msg = str(e)
+        print(f"Error in members route: {error_msg}")  # Enhanced logging
+        
         if "relation" in error_msg.lower() and "does not exist" in error_msg.lower():
             flash('Database table not found. Please run the database migration first.', 'error')
         elif "row-level security" in error_msg.lower():
             flash('Database access denied. Please check your permissions.', 'error')
+        elif "connection" in error_msg.lower():
+            flash('Database connection failed. Please try again later.', 'error')
+        elif "timeout" in error_msg.lower():
+            flash('Request timed out. Please check your internet connection.', 'error')
         else:
-            flash(f'Error loading members: {error_msg}', 'error')
+            flash('Unable to load members. Please try again.', 'error')
         return redirect(url_for('main.index'))
 @main_bp.route('/member/form')
 def member_form():
     """Display the member form page"""
     if 'user' not in session:
         return redirect(url_for('auth.login'))
-    return render_template('main/member_form.html', user=session['user'])
+    
+    # Check if editing an existing member
+    member_id = request.args.get('edit')
+    member = None
+    if member_id:
+        try:
+            session_user_id = session['user']['id']
+            leader_id = get_uuid_from_user_id(session_user_id)
+            result = supabase.table('cell_members').select('*').eq('id', member_id).eq('leader_id', leader_id).execute()
+            if not result.data:
+                # Try without leader filter for testing
+                result = supabase.table('cell_members').select('*').eq('id', member_id).execute()
+            if result.data:
+                member = result.data[0]
+        except Exception as e:
+            print(f"Error loading member for edit: {e}")
+    
+    return render_template('main/member_form.html', user=session['user'], member=member, is_edit=bool(member_id))
 @main_bp.route('/member/<member_id>')
 def member_details(member_id):
     if 'user' not in session:
         return redirect(url_for('auth.login'))
+    
     try:
         # Get specific member details
         session_user_id = session['user']['id']
         leader_id = get_uuid_from_user_id(session_user_id)
+        
+        # Try to find member with leader filter first
         result = supabase.table('cell_members').select('*').eq('id', member_id).eq('leader_id', leader_id).execute()
+        
+        # If not found with leader filter, try without leader filter (for testing)
+        if not result.data:
+            result = supabase.table('cell_members').select('*').eq('id', member_id).execute()
+        
         if result.data:
             member = result.data[0]
             return render_template('main/member_details.html', member=member, user=session['user'])
@@ -535,7 +447,8 @@ def member_details(member_id):
             flash('Member not found', 'error')
             return redirect(url_for('main.members'))
     except Exception as e:
-        flash('Error loading member details', 'error')
+        print(f"Error loading member details: {e}")
+        flash(f'Error loading member details: {str(e)}', 'error')
         return redirect(url_for('main.members'))
 @main_bp.route('/add_member', methods=['POST'])
 def add_member():
@@ -700,10 +613,14 @@ def delete_member(member_id):
         return redirect(url_for('main.members'))
 @main_bp.route('/meeting-tutorials/<meeting_date>')
 def meeting_tutorials(meeting_date):
-    """Display tutorials for a specific meeting date"""
+    """Display tutorial for specific meeting date or show 'No Tutorials' if none exists"""
     if 'user' not in session:
         return redirect(url_for('auth.login'))
     try:
+        # Get leader ID
+        session_user_id = session['user']['id']
+        leader_id = get_uuid_from_user_id(session_user_id)
+        
         # Convert meeting_date from URL format to database format
         from datetime import datetime
         try:
@@ -713,17 +630,27 @@ def meeting_tutorials(meeting_date):
         except ValueError:
             # If parsing fails, use the original string
             meeting_date_formatted = meeting_date
-        # Fetch tutorials for this meeting date
-        tutorials_result = supabase.table('tutorials')\
+        
+        # Look for tutorial for this specific meeting date
+        # Note: tutorials table doesn't have leader_id column, so we query by meeting_date only
+        tutorial_result = supabase.table('tutorials')\
             .select('*')\
             .eq('meeting_date', meeting_date_formatted)\
-            .order('uploaded_at')\
             .execute()
-        tutorials = tutorials_result.data if tutorials_result.data else []
+        
+        tutorials = tutorial_result.data if tutorial_result.data else []
+        
+        # Check if this is the next meeting date
+        next_meeting_date = get_next_meeting_date()
+        is_next_week = parsed_date == next_meeting_date
+        
         return render_template('main/meeting_tutorials.html', 
                              user=session['user'],
                              meeting_date=meeting_date,
-                             tutorials=tutorials)
+                             tutorials=tutorials,
+                             is_next_week=is_next_week,
+                             no_tutorial_uploaded=len(tutorials) == 0)
+                                 
     except Exception as e:
         print(f"Error fetching tutorials: {e}")
         flash('Error loading tutorials', 'error')
@@ -750,8 +677,8 @@ def upload_tutorial(meeting_date):
         except ValueError:
             meeting_date_formatted = meeting_date
         # Insert tutorial into database
+        # Note: tutorials table doesn't have leader_id column, so we don't include it
         tutorial_data = {
-            'leader_id': leader_id,
             'tutorial_name': tutorial_name,
             'description': tutorial_description,
             'meeting_date': meeting_date_formatted,
@@ -781,30 +708,29 @@ def upload_tutorial(meeting_date):
         return redirect(url_for('main.meeting_tutorials', meeting_date=meeting_date))
 @main_bp.route('/activities')
 def activity_list():
-    """Display activity list page with sorting and filtering"""
+    """Display activity list page with today's activities only"""
     if 'user' not in session:
         return redirect(url_for('auth.login'))
     try:
         # Get leader ID
         session_user_id = session['user']['id']
         leader_id = get_uuid_from_user_id(session_user_id)
-        # Get all activities for this leader
-        activities_result = supabase.table('activities').select('*').eq('leader_id', leader_id).order('created_at', desc=True).execute()
-        activities = activities_result.data if activities_result.data else []
+        print(f"Fetching today's activities for leader_id: {leader_id}")
+        
+        # Get today's activities only
+        activities = get_todays_activities(leader_id)
+        print(f"Found {len(activities)} activities for today")
+        
+        from datetime import datetime
+        today = datetime.now()
+        
         return render_template('main/activity_list.html',
-                             activities=activities)
+                             activities=activities,
+                             user=session['user'],
+                             today=today)
     except Exception as e:
-        print(f"Error fetching activities: {e}")
-        flash('Error loading activities', 'error')
+        print(f"Error fetching today's activities: {e}")
+        flash('Error loading today\'s activities', 'error')
         return redirect(url_for('main.index'))
-@main_bp.route('/db_status')
-def db_status():
-    """Check database connection and table status"""
-    if 'user' not in session:
-        return redirect(url_for('auth.login'))
-    try:
-        # Test basic connection
-        result = supabase.table('cell_members').select('count').execute()
-        return f"Database connected! Table accessible. Count: {len(result.data) if result.data else 0}"
-    except Exception as e:
-        return f"Database error: {str(e)}"
+
+

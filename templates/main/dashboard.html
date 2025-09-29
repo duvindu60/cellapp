@@ -1,459 +1,1584 @@
 {% extends "base.html" %}
-{% import 'macros/responsive.html' as responsive %}
 {% block title %}Dashboard - CellApp{% endblock %}
-{% block header_title %}Dashboard{% endblock %}
-
-{% block tablet_nav %}
-<div class="d-flex justify-content-center">
-    <a href="{{ url_for('main.index') }}" class="nav-link me-3">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </a>
-    <a href="{{ url_for('main.profile') }}" class="nav-link me-3">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-    <a href="{{ url_for('main.members') }}" class="nav-link me-3">
-        <i class="fas fa-users"></i>
-        <span>Members</span>
-    </a>
-    <a href="{{ url_for('auth.logout') }}" class="nav-link">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Logout</span>
-    </a>
-</div>
-{% endblock %}
-
-{% block desktop_nav %}
-<div class="d-flex justify-content-center">
-    <a href="{{ url_for('main.index') }}" class="nav-link me-4">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </a>
-    <a href="{{ url_for('main.profile') }}" class="nav-link me-4">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-    <a href="{{ url_for('main.members') }}" class="nav-link me-4">
-        <i class="fas fa-users"></i>
-        <span>Members</span>
-    </a>
-    <a href="{{ url_for('auth.logout') }}" class="nav-link">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Logout</span>
-    </a>
-</div>
-{% endblock %}
 
 {% block mobile_content %}
-<!-- Stats Cards Row -->
-<div class="row g-3 mb-4">
-    <div class="col-6">
-        <a href="{{ url_for('main.members') }}" class="text-decoration-none">
-            <div class="feature-card text-center" style="padding: 1.5rem; height: 100%;">
-                <div class="feature-icon mx-auto mb-3" style="width: 40px; height: 40px; font-size: 20px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-users"></i>
-                </div>
-                <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Members</h6>
-                <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">{{ member_count }} total</p>
+<div class="mobile-dashboard">
+    <!-- Enhanced Header Section -->
+    <div class="mobile-page-header">
+        <div class="welcome-card">
+            <div class="welcome-icon">
+            <i class="fas fa-home"></i>
+        </div>
+            <div class="welcome-content">
+                <h1>Welcome back, {{ user.name }}!</h1>
+                <p>Your cell group dashboard</p>
             </div>
-        </a>
-    </div>
-    <div class="col-6">
-        <a href="{% if latest_attendance %}{{ url_for('main.attendance_detail', meeting_date=latest_attendance.meeting_date) }}{% else %}#{% endif %}" class="text-decoration-none">
-            <div class="feature-card text-center" style="padding: 1.5rem; height: 100%; position: relative;">
-                <!-- Status in top left corner -->
-                {% if latest_attendance %}
-                    <div class="position-absolute" style="top: 10px; left: 10px;">
-                        {% if latest_attendance.get('is_complete') %}
-                            <span class="badge bg-success" style="font-size: 0.75rem; padding: 3px 6px;">Complete</span>
-                        {% else %}
-                            <span class="badge bg-warning" style="font-size: 0.75rem; padding: 3px 6px;">Incomplete</span>
-                        {% endif %}
-                    </div>
-                {% endif %}
-                <div class="feature-icon mx-auto mb-3" style="width: 40px; height: 40px; font-size: 20px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-user-check"></i>
-                </div>
-                <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Attendance</h6>
-                {% if latest_attendance %}
-                    <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">{{ latest_attendance.meeting_date }}</p>
-                    {% if latest_attendance.get('present_count') is defined %}
-                        <small class="text-muted">{{ latest_attendance.present_count }}/{{ latest_attendance.total_members }} present</small>
-                        {% if latest_attendance.get('is_current_week') %}
-                            <br><small class="text-success">Current Week</small>
-                        {% endif %}
-                    {% endif %}
-                {% else %}
-                    <p class="mb-0" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);">No data</p>
-                {% endif %}
-                <!-- Dropdown button in top right corner -->
-                <div class="position-relative">
-                    <button onclick="event.preventDefault(); event.stopPropagation(); toggleAttendanceDropdown()" style="position: absolute; top: -10px; right: -10px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1rem; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)'">
-                        <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
-                    </button>
-                    <!-- Dropdown menu -->
-                    <div id="attendanceDropdown" class="position-absolute" style="top: 35px; right: -10px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; min-width: 150px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                        <div class="dropdown-item" style="padding: 4px 8px; color: var(--text-primary); font-size: 0.8rem; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='{{ url_for('main.meeting_dates') }}'">
-                            <i class="fas fa-calendar me-2"></i>All Meetings
-                        </div>
-                        {% if latest_attendance %}
-                        <div class="dropdown-item" style="padding: 4px 8px; color: var(--text-primary); font-size: 0.8rem; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='{{ url_for('main.attendance_detail', meeting_date=latest_attendance.meeting_date) }}'">
-                            <i class="fas fa-eye me-2"></i>View Details
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
+        </div>
 </div>
 
-<!-- Ministry Card -->
-<div class="feature-card mb-4" style="padding: 2rem;">
-    <div class="d-flex align-items-center mb-4">
-        <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #8b5cf6, #a855f7); color: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);">
+    <!-- Enhanced Stats Cards Row -->
+    <!-- New Mobile Stats Section -->
+           <div class="mobile-stats-container">
+               <!-- Combined Tutorials & Attendance Card -->
+               <div class="mobile-combined-card">
+                   <!-- Tutorials Section -->
+                   <div class="combined-section tutorials-section">
+                       <a href="{{ url_for('main.meeting_tutorials', meeting_date=tutorial_card.upcoming_date) }}" class="section-link">
+                           <div class="section-icon">
+                {% if tutorial_card.has_tutorials and not tutorial_card.is_placeholder %}
+                    <i class="fas fa-book"></i>
+                {% else %}
+                    <i class="fas fa-calendar-day"></i>
+                {% endif %}
+            </div>
+                           <div class="section-content">
+                <h3>Tutorials</h3>
+                {% if tutorial_card.has_tutorials and not tutorial_card.is_placeholder %}
+                    <p>Tutorial Available</p>
+                {% else %}
+                    <p>No Tutorials</p>
+                {% endif %}
+                               <small>{{ tutorial_card.upcoming_date }}</small>
+            </div>
+                           <div class="section-arrow">
+                <i class="fas fa-chevron-right"></i>
+            </div>
+        </a>
+                   </div>
+
+                   <!-- Attendance Section -->
+                   <div class="combined-section attendance-section">
+                       <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="section-link">
+                           <div class="section-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+                           <div class="section-content">
+                <h3>Attendance</h3>
+                               <p>{{ latest_attendance.meeting_date if latest_attendance else "No Recent Data" }}</p>
+                               <small>Latest Record</small>
+            </div>
+                           <div class="section-arrow">
+                <i class="fas fa-chevron-right"></i>
+            </div>
+        </a>
+                   </div>
+               </div>
+</div>
+
+    <!-- Enhanced Main Content Row -->
+    <div class="mobile-content-grid">
+        <!-- Enhanced Ministry Card -->
+        <div class="mobile-ministry-card">
+            <div class="ministry-card-header">
+                <div class="ministry-icon">
             <i class="fas fa-church"></i>
         </div>
-        <div>
-            <h5 class="mb-1" style="font-size: 1.5rem; color: #ffffff; font-weight: 700; letter-spacing: -0.5px;">Ministry</h5>
+                <div class="ministry-title">
+                    <h2>Ministry</h2>
             <p>Your ministry assignments</p>
         </div>
     </div>
-    <div class="row">
-        <div class="col-6">
-            <div class="border-end" style="border-color: #444 !important; padding-right: 1.5rem;">
-                <h2>Current Role</h2>
-                <div class="text-white" style="font-size: 1.3rem; font-weight: 700;">Cell Leader</div>
-            </div>
-        </div>
-        <div class="col-6" style="padding-left: 1.5rem;">
-            <h2>Zone</h2>
-            <div class="text-success" style="font-size: 1.3rem; font-weight: 700; color: #10b981 !important;">Zone A</div>
-        </div>
+            <div class="ministry-details">
+                <div class="ministry-detail-item">
+                    <div class="detail-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Current Role</span>
+                        <span class="detail-value">Cell Leader</span>
+                    </div>
+                </div>
+                <div class="ministry-detail-item">
+                    <div class="detail-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Zone</span>
+                        <span class="detail-value zone-value">Zone A</span>
+                    </div>
+                </div>
     </div>
 </div>
 
-<!-- Schedule Card -->
-<div class="feature-card mb-4" style="padding: 2rem;">
-    <h5 class="mb-4" style="font-size: 1.5rem; color: #ffffff; font-weight: 700; letter-spacing: -0.5px;">Schedule</h5>
-    <div class="row g-4">
-        <div class="col-12">
-            <a href="{{ url_for('main.meeting_tutorials', meeting_date=next_meeting_date) }}" class="text-decoration-none">
-                <div class="d-flex align-items-center p-4 rounded" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 40px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(59, 130, 246, 0.3)'">
-                    <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 20px; color: white; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+        <!-- Enhanced Schedule Card -->
+        <div class="mobile-schedule-card">
+            <div class="schedule-header">
+                <h2>Schedule</h2>
+                <div class="schedule-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+            </div>
+            <div class="schedule-actions">
+                <a href="{{ url_for('main.meeting_tutorials', meeting_date=tutorial_card.upcoming_date) }}" class="mobile-action-btn primary-btn">
+                    <div class="btn-icon">
                         <i class="fas fa-calendar-day"></i>
                     </div>
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1" style="font-size: 1.2rem; color: white; font-weight: 700;">
-                            {% if next_meeting_date == today.strftime("%B %d, %Y") %}
-                                Today's Meeting - {{ next_meeting_date }}
+                    <div class="btn-content">
+                        <span class="btn-title">
+                            {% if next_meeting_date_obj == today.date() %}
+                                Today's Meeting
                             {% else %}
-                                Next Meeting - {{ next_meeting_date }}
+                                Next Meeting
                             {% endif %}
-                        </h6>
-                        <p class="mb-0" style="font-size: 1rem; color: #ffffff !important; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Cell Meeting - Click to view tutorials</p>
+                        </span>
+                        <span class="btn-subtitle">{{ next_meeting_date }}</span>
                     </div>
-                    <div class="ms-auto">
-                        <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;"></i>
+                    <div class="btn-arrow">
+                        <i class="fas fa-chevron-right"></i>
                     </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-12">
-            <a href="{{ url_for('main.meeting_dates') }}" class="text-decoration-none">
-                <div class="d-flex align-items-center p-4 rounded" style="background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 40px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(16, 185, 129, 0.3)'">
-                    <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 20px; color: white; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                </a>
+                <a href="{{ url_for('main.meeting_dates') }}" class="mobile-action-btn secondary-btn">
+                    <div class="btn-icon">
                         <i class="fas fa-calendar-week"></i>
                     </div>
-                    <div class="flex-grow-1">
-                        <h2>Weekly Schedule</h2>
-                        <p>Every Tuesday</p>
+                    <div class="btn-content">
+                        <span class="btn-title">Weekly Schedule</span>
+                        <span class="btn-subtitle">Every Tuesday</span>
                     </div>
-                    <div class="ms-auto">
-                        <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;"></i>
+                    <div class="btn-arrow">
+                        <i class="fas fa-chevron-right"></i>
                     </div>
-                </div>
             </a>
         </div>
-    </div>
-</div>
-
-<!-- Recent Activities -->
-<div class="feature-card mb-4" style="padding: 1.5rem; cursor: pointer; transition: all 0.3s ease;" onclick="window.location.href='{{ url_for('main.activity_list') }}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <h2>Recent Activities</h2>
-    </div>
-    {% if recent_activities %}
-        <div class="row g-3">
-            {% for activity in recent_activities[:3] %}
-            <div class="col-12">
-                <div class="d-flex align-items-center p-3 rounded" style="background-color: var(--bg-hover); border-radius: 12px;">
-                    <div class="feature-icon me-3" style="width: 35px; height: 35px; font-size: 16px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-{{ activity.activity_type.lower() }}"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1" style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600;">{{ activity.activity_type }}</h6>
-                        <p class="mb-0" style="font-size: 0.8rem; color: var(--text-secondary);">{{ activity.created_at }}</p>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
         </div>
-    {% else %}
-        <div class="text-center py-4">
-            <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-book"></i>
-            </div>
-            <h6 class="mb-1" style="color: var(--text-secondary);">No recent activities</h6>
-            <p class="mb-0" style="font-size: 0.85rem; color: var(--text-muted);">Activities will appear here once they are logged</p>
-        </div>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}
 
 {% block desktop_content %}
-<!-- Stats Cards Row -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <!-- Activity Card - Clickable -->
-        <div class="feature-card text-center" style="padding: 2rem; cursor: pointer; transition: all 0.3s ease; height: 100%;" onclick="window.location.href='{{ url_for('main.activity_list') }}'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
-            <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
+<!-- Modern Desktop Dashboard -->
+<div class="desktop-dashboard">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="welcome-card">
+            <div class="welcome-icon">
+                <i class="fas fa-home"></i>
+            </div>
+            <div class="welcome-content">
+                <h1>Welcome back, {{ user.name or 'Leader' }}!</h1>
+                <p>Manage your cell group activities and members</p>
+        </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-icon">
                 <i class="fas fa-chart-line"></i>
             </div>
-            <h2>Recent Activities</h2>
-            <p class="mb-1" style="font-size: 1.4rem; font-weight: 600; color: var(--text-dark);">{{ todays_activities|length if todays_activities else 0 }} today</p>
+            <div class="stat-content">
+                <h3>{{ todays_activities|length if todays_activities else 0 }}</h3>
+                <p>Today's Activities</p>
         </div>
-    </div>
-    <div class="col-md-3">
-        {% if latest_tutorial %}
-        <a href="{{ url_for('main.meeting_tutorials', meeting_date=current_week_date) }}" class="text-decoration-none" style="display: block; height: 100%;">
-            <div class="feature-card text-center" style="padding: 2rem; height: 100%;">
-                <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #17a2b8, #20c997); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-book"></i>
-                </div>
-                <h2>Tutorials</h2>
-                <p class="mb-0" style="font-size: 1.4rem; font-weight: 600; color: var(--accent-color);">{{ latest_tutorial.title[:20] + "..." if latest_tutorial.title|length > 20 else latest_tutorial.title }}</p>
-            </div>
-        </a>
-        {% else %}
-            <div class="feature-card text-center" style="padding: 2rem; height: 100%;">
-                <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-book"></i>
-                </div>
-                <h2>Tutorials</h2>
-                <p class="mb-0">No tutorials available</p>
-            </div>
-        {% endif %}
-    </div>
-    <div class="col-md-3">
-        <a href="{{ url_for('main.members') }}" class="text-decoration-none" style="display: block; height: 100%; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
-            <div class="feature-card text-center" style="padding: 2rem; height: 100%;">
-                <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #6f42c1, #8e44ad); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+        </div>
+    
+        <div class="stat-card">
+            <div class="stat-icon">
                     <i class="fas fa-users"></i>
                 </div>
-                <h2>Members</h2>
-                <p class="mb-0" style="font-size: 1.4rem; font-weight: 600; color: var(--accent-color);">{{ member_count }} total</p>
+            <div class="stat-content">
+                <h3>{{ member_count }}</h3>
+                <p>Total Members</p>
             </div>
-        </a>
-    </div>
-    <div class="col-md-3">
-        <a href="{% if latest_attendance %}{{ url_for('main.attendance_detail', meeting_date=latest_attendance.meeting_date) }}{% else %}#{% endif %}" class="text-decoration-none" style="display: block; height: 100%;">
-            <div class="feature-card text-center" style="padding: 2rem; height: 100%; position: relative; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'">
-                <!-- Status in top left corner -->
-                {% if latest_attendance %}
-                    <div class="position-absolute" style="top: 15px; left: 15px;">
-                        {% if latest_attendance.get('is_complete') %}
-                            <span class="badge bg-success" style="font-size: 0.8rem; padding: 4px 8px;">Complete</span>
-                        {% else %}
-                            <span class="badge bg-warning" style="font-size: 0.8rem; padding: 4px 8px;">Incomplete</span>
-                        {% endif %}
-                    </div>
-                {% endif %}
-                <div class="feature-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 24px; background: linear-gradient(135deg, #fd7e14, #ff922b); color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-user-check"></i>
-                </div>
-                <h6 class="mb-1" style="font-size: 1rem; color: var(--text-primary);">Attendance</h6>
-                {% if latest_attendance %}
-                    <p class="mb-0" style="font-size: 1.4rem; font-weight: 600; color: var(--text-dark);">{{ latest_attendance.meeting_date }}</p>
-                    {% if latest_attendance.get('present_count') is defined %}
-                        <small class="text-muted">{{ latest_attendance.present_count }}/{{ latest_attendance.total_members }} present</small>
-                        {% if latest_attendance.get('is_current_week') %}
-                            <br><small class="text-success">Current Week</small>
-                        {% endif %}
-                    {% endif %}
-                {% else %}
-                    <p class="mb-0">No data</p>
-                {% endif %}
-                <!-- Dropdown button in top right corner -->
-                <div class="position-relative">
-                    <button onclick="event.preventDefault(); event.stopPropagation(); toggleAttendanceDropdown()" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.7)'">
-                        <i class="fas fa-chevron-down" id="attendanceDropdownIcon"></i>
-                    </button>
-                    <!-- Dropdown menu -->
-                    <div id="attendanceDropdownDesktop" class="position-absolute" style="top: 50px; right: 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; min-width: 150px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                        <div class="dropdown-item" style="padding: 4px 8px; color: var(--text-primary); font-size: 0.8rem; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='{{ url_for('main.meeting_dates') }}'">
-                            <i class="fas fa-calendar me-2"></i>All Meetings
-                        </div>
-                        {% if latest_attendance %}
-                        <div class="dropdown-item" style="padding: 4px 8px; color: var(--text-primary); font-size: 0.8rem; cursor: pointer;" onclick="event.stopPropagation(); window.location.href='{{ url_for('main.attendance_detail', meeting_date=latest_attendance.meeting_date) }}'">
-                            <i class="fas fa-eye me-2"></i>View Details
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-book"></i>
             </div>
-        </a>
-    </div>
+            <div class="stat-content">
+                <h3>{{ tutorial_card.has_tutorials and 'Available' or 'No Tutorials' }}</h3>
+                <p>{{ tutorial_card.upcoming_date }}</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ latest_attendance.meeting_date if latest_attendance else 'No data' }}</h3>
+                <p>Latest Attendance</p>
+        </div>
+        </div>
 </div>
-<!-- Main Content Row -->
-<div class="row g-4">
-<!-- Ministry Card -->
-    <div class="col-md-6">
-    <div class="feature-card" style="padding: 2.5rem; height: 100%; background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #333; box-shadow: 0 12px 40px rgba(0,0,0,0.4);">
-        <div class="d-flex align-items-center mb-5">
-            <div class="feature-icon me-4" style="width: 70px; height: 70px; font-size: 32px; background: linear-gradient(135deg, #8b5cf6, #a855f7); color: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);">
-        <i class="fas fa-church"></i>
-    </div>
-    <div>
+
+    <!-- Main Content Grid -->
+    <div class="main-content-grid">
+        <!-- Ministry Card -->
+    <div class="content-card ministry-card">
+            <div class="card-header">
+                <div class="card-icon">
+            <i class="fas fa-church"></i>
+        </div>
+                <div class="card-title">
                 <h2>Ministry</h2>
                 <p>Your ministry assignments</p>
-    </div>
-</div>
-<div class="row">
-    <div class="col-6">
-                <div class="border-end" style="border-color: #444 !important; padding-right: 2rem;">
-                    <h2>Current Role</h2>
-                    <div class="text-white" style="font-size: 1.4rem; font-weight: 700;" >Cell Leader</div>
         </div>
     </div>
-            <div class="col-6" style="padding-left: 2rem;">
-                <h2>Zone</h2>
-                <div class="text-success" style="font-size: 1.4rem; font-weight: 700; color: #10b981 !important;" >Zone A</div>
+            <div class="card-content">
+                <div class="ministry-item">
+                    <div class="ministry-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="ministry-content">
+                    <h3>Current Role</h3>
+                        <p>Cell Leader</p>
+                </div>
             </div>
+                <div class="ministry-item">
+                    <div class="ministry-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="ministry-content">
+                <h3>Zone</h3>
+                        <p>Zone A</p>
+                    </div>
+                </div>
+        </div>
     </div>
-</div>
-    </div>
-<div class="col-md-6">
-    <div class="feature-card" style="padding: 2.5rem; height: 100%; background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #333; box-shadow: 0 12px 40px rgba(0,0,0,0.4);">
-        <h2 class="mb-4">Schedule</h2>
-        <div class="row g-4">
-            <div class="col-12">
-                <a href="{{ url_for('main.meeting_tutorials', meeting_date=next_meeting_date) }}" class="text-decoration-none">
-                    <div class="d-flex align-items-center p-4 rounded" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 40px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(59, 130, 246, 0.3)'">
-                        <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 20px; color: white; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1" style="font-size: 1.2rem; color: white; font-weight: 700;">
-                                {% if next_meeting_date == today.strftime("%B %d, %Y") %}
-                                    Today's Meeting - {{ next_meeting_date }}
+    
+        <!-- Schedule Card -->
+    <div class="content-card schedule-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="card-title">
+                    <h2>Schedule</h2>
+                    <p>Upcoming meetings and events</p>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="schedule-item">
+                    <div class="schedule-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="schedule-content">
+                        <h3>
+                            {% if next_meeting_date_obj == today.date() %}
+                                Today's Meeting
                                 {% else %}
-                                    Next Meeting - {{ next_meeting_date }}
+                                Next Meeting
                                 {% endif %}
-                            </h6>
-                            <p class="mb-0" style="font-size: 1rem; color: #ffffff !important; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Cell Meeting - Click to view tutorials</p>
-                        </div>
-                        <div class="ms-auto">
-                            <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;"></i>
-                        </div>
+                        </h3>
+                        <p>{{ next_meeting_date }}</p>
                     </div>
-                </a>
-            </div>
-            <div class="col-12">
-                <a href="{{ url_for('main.meeting_dates') }}" class="text-decoration-none">
-                    <div class="d-flex align-items-center p-4 rounded" style="background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 40px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(16, 185, 129, 0.3)'">
-                        <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 20px; color: white; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-calendar-week"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h2>Weekly Schedule</h2>
-                            <p>Every Tuesday</p>
-                        </div>
-                        <div class="ms-auto">
-                            <i class="fas fa-chevron-right" style="color: rgba(255,255,255,0.9); font-size: 1.1rem;"></i>
-                        </div>
+                    <div class="schedule-arrow">
+                        <i class="fas fa-chevron-right"></i>
                     </div>
-                </a>
+                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=tutorial_card.upcoming_date) }}" class="schedule-link"></a>
+                </div>
+                <div class="schedule-item">
+                    <div class="schedule-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div class="schedule-content">
+                        <h3>Weekly Schedule</h3>
+                        <p>Tuesday Meetings</p>
+                    </div>
+                    <div class="schedule-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <a href="{{ url_for('main.meeting_dates') }}" class="schedule-link"></a>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{{ url_for('main.members') }}" class="action-btn">
+            <div class="action-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="action-content">
+                <h3>Members</h3>
+                <p>Manage cell group</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('main.meeting_tutorials', meeting_date=tutorial_card.upcoming_date) }}" class="action-btn">
+            <div class="action-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="action-content">
+                <h3>Tutorials</h3>
+                <p>{{ tutorial_card.upcoming_date }}</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="action-btn">
+            <div class="action-icon">
+                <i class="fas fa-user-check"></i>
+        </div>
+            <div class="action-content">
+                <h3>Attendance</h3>
+                <p>Mark attendance</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('main.activity_list') }}" class="action-btn">
+            <div class="action-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="action-content">
+                <h3>Activities</h3>
+                <p>View activities</p>
+            </div>
+        </a>
+    </div>
 </div>
 {% endblock %}
 
-{% block bottom_nav %}
-<div class="nav-responsive">
-    <a href="{{ url_for('main.index') }}" class="nav-item active">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </a>
-    <a href="{{ url_for('main.profile') }}" class="nav-item">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-    <a href="{{ url_for('main.members') }}" class="nav-item">
-        <i class="fas fa-users"></i>
-        <span>Members</span>
-    </a>
-    <a href="{{ url_for('auth.logout') }}" class="nav-item">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Logout</span>
-    </a>
-</div>
+{% block mobile_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link active">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+</a>
+<a href="{{ url_for('main.members') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
+</a>
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
 {% endblock %}
 
-{% block scripts %}
-<script>
-function toggleAttendanceDropdown() {
-    // Toggle dropdown functionality
-    const dropdown = document.getElementById('attendanceDropdown');
-    const dropdownDesktop = document.getElementById('attendanceDropdownDesktop');
-    const icon = document.getElementById('attendanceDropdownIcon');
-    
-    // Toggle mobile dropdown
-    if (dropdown) {
-        if (dropdown.style.display === 'none' || dropdown.style.display === '') {
-            dropdown.style.display = 'block';
-            icon.style.transform = 'rotate(180deg)';
-        } else {
-            dropdown.style.display = 'none';
-            icon.style.transform = 'rotate(0deg)';
+{% block extra_css %}
+<style>
+/* ===========================================
+   MOBILE DASHBOARD STYLING
+   =========================================== */
+
+/* Mobile Dashboard Container */
+.mobile-dashboard {
+    background: #0f172a;
+    min-height: 100vh;
+    padding: 1rem;
+    padding-bottom: 6rem; /* Add extra padding to prevent content from being cut off by fixed bottom nav */
+    color: white;
+}
+
+/* Mobile Page Header */
+.mobile-page-header {
+    margin-bottom: 2rem;
+}
+
+.welcome-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
+    border-radius: 20px 20px 0 0;
+}
+
+.welcome-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    margin-bottom: 1.5rem;
+}
+
+.welcome-content h1 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.welcome-content p {
+    color: #cbd5e1;
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Mobile Stats Grid */
+.mobile-stats-grid {
+    display: none; /* Hide old grid, using new container */
+}
+
+/* ===========================================
+   NEW MOBILE STATS CONTAINER
+   =========================================== */
+.mobile-stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.mobile-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 24px;
+    padding: 1rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    min-height: 80px;
+}
+
+.mobile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
+    opacity: 0.8;
+}
+
+.mobile-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border-color: #64748b;
+}
+
+.mobile-card:hover::before {
+    opacity: 1;
+    height: 4px;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+    position: relative;
+    z-index: 2;
+}
+
+.tutorials-card-new .card-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.attendance-card-new .card-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.card-title h3 {
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.3;
+}
+
+.card-subtitle {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: block;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-indicator.available {
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.status-indicator.unavailable {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    flex-shrink: 0;
+}
+
+.status-indicator.unavailable .status-dot {
+    background: #f59e0b;
+}
+
+.status-indicator span {
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.date-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.date-info i {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.card-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    text-decoration: none;
+}
+
+/* Combined Card Styles */
+.mobile-combined-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 24px;
+    padding: 1rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    min-height: 80px;
+}
+
+.mobile-combined-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.mobile-combined-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border-color: #64748b;
+}
+
+.mobile-combined-card:hover::before {
+    opacity: 1;
+    height: 4px;
+}
+
+.combined-section {
+    position: relative;
+    z-index: 2;
+}
+
+.combined-section:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.section-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+}
+
+.section-link:hover {
+    transform: translateX(4px);
+}
+
+.section-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.tutorials-section .section-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.attendance-section .section-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.section-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.section-content h3 {
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.3;
+}
+
+.section-content p {
+    color: #e2e8f0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0 0.25rem 0;
+}
+
+.section-content small {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.section-arrow {
+    color: #94a3b8;
+    font-size: 14px;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.section-link:hover .section-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+}
+
+/* ===========================================
+   ENHANCED CONTENT GRID
+   =========================================== */
+.mobile-content-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+/* ===========================================
+   ENHANCED MINISTRY CARD
+   =========================================== */
+.mobile-ministry-card {
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-ministry-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #8b5cf6, #a855f7, #c084fc);
+}
+
+.ministry-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.ministry-icon {
+    width: 55px;
+    height: 55px;
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    color: white;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+    flex-shrink: 0;
+}
+
+.ministry-title h2 {
+    color: #f0f6fc;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+}
+
+.ministry-title p {
+    color: #8b949e;
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.ministry-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ministry-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.ministry-detail-item:hover {
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    transform: translateX(4px);
+}
+
+.detail-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #30363d, #21262d);
+    color: #8b949e;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.detail-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-label {
+    color: #8b949e;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    color: #f0f6fc;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.zone-value {
+    color: #10b981;
+}
+
+/* ===========================================
+   ENHANCED SCHEDULE CARD
+   =========================================== */
+.mobile-schedule-card {
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-schedule-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10b981, #059669, #047857);
+}
+
+.schedule-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.schedule-header h2 {
+            color: #f0f6fc;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.schedule-icon {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.schedule-actions {
+    display: flex;
+    flex-direction: column;
+            gap: 1rem;
+}
+
+.mobile-action-btn {
+            background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+    gap: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.mobile-action-btn:hover::before {
+    left: 100%;
+}
+
+.mobile-action-btn:hover {
+            transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            text-decoration: none;
+            color: inherit;
         }
+        
+.primary-btn {
+    border-color: #1F6FEB;
+}
+
+.primary-btn:hover {
+            background: linear-gradient(135deg, #1F6FEB, #2c7bb6);
+    border-color: #2c7bb6;
+    box-shadow: 0 12px 32px rgba(31, 111, 235, 0.4);
+}
+
+.secondary-btn {
+    border-color: #10b981;
+}
+
+.secondary-btn:hover {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #059669;
+    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+}
+
+.btn-icon {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, #30363d, #21262d);
+    color: #8b949e;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.primary-btn .btn-icon {
+    background: linear-gradient(135deg, #1F6FEB, #2c7bb6);
+    color: white;
+}
+
+.secondary-btn .btn-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.btn-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.btn-title {
+            color: #f0f6fc;
+    font-size: 1rem;
+            font-weight: 600;
+    margin: 0;
+        }
+        
+.btn-subtitle {
+            color: #8b949e;
+            font-size: 0.85rem;
+            margin: 0;
+}
+
+.btn-arrow {
+    color: #8b949e;
+    font-size: 14px;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.mobile-action-btn:hover .btn-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+}
+
+/* ===========================================
+   MODERN DESKTOP DASHBOARD STYLING
+   =========================================== */
+
+/* Desktop Dashboard Container */
+.desktop-dashboard {
+    background: #0f172a;
+    min-height: 100vh;
+    padding: 2rem;
+    color: white;
+}
+
+/* Welcome Section */
+.welcome-section {
+    margin-bottom: 3rem;
+}
+
+.welcome-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
+    border-radius: 20px 20px 0 0;
+}
+
+.welcome-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: white;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        margin-bottom: 1.5rem;
     }
     
-    // Toggle desktop dropdown
-    if (dropdownDesktop) {
-        if (dropdownDesktop.style.display === 'none' || dropdownDesktop.style.display === '') {
-            dropdownDesktop.style.display = 'block';
-            icon.style.transform = 'rotate(180deg)';
-        } else {
-            dropdownDesktop.style.display = 'none';
-            icon.style.transform = 'rotate(0deg)';
-        }
+.welcome-content h1 {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.welcome-content p {
+    color: #cbd5e1;
+    font-size: 1.25rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Stats Overview */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card:nth-child(1) .stat-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.stat-card:nth-child(2) .stat-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.stat-card:nth-child(3) .stat-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+}
+
+.stat-card:nth-child(4) .stat-icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+.stat-content h3 {
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.stat-content p {
+    color: #94a3b8;
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Main Content Grid */
+.main-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+/* Content Cards */
+.content-card {
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.content-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
+    border-radius: 20px 20px 0 0;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1.5rem;
+}
+
+.card-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.ministry-card .card-icon {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+}
+
+.schedule-card .card-icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+
+.card-title h2 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.card-title p {
+    color: #cbd5e1;
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Ministry Items */
+.ministry-item {
+    background: #334155;
+    border: 1px solid #475569;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.ministry-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.ministry-item:hover::before {
+    left: 100%;
+}
+
+.ministry-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            }
+            
+            .ministry-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+                font-size: 18px;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.ministry-item:nth-child(1) .ministry-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.ministry-item:nth-child(2) .ministry-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.ministry-content h3 {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+.ministry-content p {
+    color: #94a3b8;
+                font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Schedule Items */
+.schedule-item {
+    background: #334155;
+    border: 1px solid #475569;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.schedule-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.schedule-item:hover::before {
+    left: 100%;
+}
+
+.schedule-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    border-color: #3b82f6;
+}
+
+.schedule-item:nth-child(1):hover {
+    border-color: #3b82f6;
+}
+
+.schedule-item:nth-child(2):hover {
+    border-color: #10b981;
+}
+
+.schedule-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.schedule-item:nth-child(1) .schedule-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.schedule-item:nth-child(2) .schedule-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.schedule-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.schedule-content h3 {
+    color: white;
+        font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+.schedule-content p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.schedule-arrow {
+    color: #94a3b8;
+    font-size: 16px;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.schedule-item:hover .schedule-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+}
+
+.schedule-item:nth-child(1):hover .schedule-arrow {
+    color: #3b82f6;
+}
+
+.schedule-item:nth-child(2):hover .schedule-arrow {
+    color: #10b981;
+}
+
+.schedule-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    text-decoration: none;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.action-btn {
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+.action-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    text-decoration: none;
+    color: inherit;
+}
+
+.action-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.action-btn:nth-child(1) .action-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.action-btn:nth-child(2) .action-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.action-btn:nth-child(3) .action-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+}
+
+.action-btn:nth-child(4) .action-icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+.action-content h3 {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+.action-content p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Desktop Responsive Design */
+@media (max-width: 1200px) {
+    .stats-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+    
+    .main-content-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
     }
 }
 
-function viewLatestAttendance() {
-    // This function is no longer needed as the card is now clickable
-    console.log('Attendance card clicked - redirecting to attendance details');
+@media (max-width: 768px) {
+    .desktop-dashboard {
+        padding: 1rem;
+    }
+    
+    .stats-overview {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .welcome-content h1 {
+        font-size: 2rem;
+    }
+    
+    .welcome-content p {
+        font-size: 1rem;
+    }
 }
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
-    const dropdown = document.getElementById('attendanceDropdown');
-    const dropdownDesktop = document.getElementById('attendanceDropdownDesktop');
-    const icon = document.getElementById('attendanceDropdownIcon');
-    
-    if (dropdown && !dropdown.contains(event.target) && !event.target.closest('button[onclick*="toggleAttendanceDropdown"]')) {
-        dropdown.style.display = 'none';
-        if (icon) icon.style.transform = 'rotate(0deg)';
-    }
-    
-    if (dropdownDesktop && !dropdownDesktop.contains(event.target) && !event.target.closest('button[onclick*="toggleAttendanceDropdown"]')) {
-        dropdownDesktop.style.display = 'none';
-        if (icon) icon.style.transform = 'rotate(0deg)';
-    }
-});
-</script>
+</style>
+{% endblock %}
+
+{% block desktop_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link active">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+</a>
+<a href="{{ url_for('main.members') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
+</a>
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
 {% endblock %}

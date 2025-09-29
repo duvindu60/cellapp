@@ -1,741 +1,1002 @@
 {% extends "base.html" %}
 {% block title %}{{ member.name }} - CellApp{% endblock %}
-{% block header_title %}{{ member.name }}{% endblock %}
-{% macro member_field(icon, title, field_name, value, default_text) %}
-<div class="col-12">
-    <div class="d-flex align-items-center p-3 rounded" style="background-color: var(--bg-hover);">
-        <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 16px; flex-shrink: 0;">
-            <i class="{{ icon }}"></i>
-        </div>
-        <div style="min-width: 0; flex: 1;">
-            <h6 class="mb-1 text-truncate">{{ title }}</h6>
-            <div id="{{ field_name }}Field">
-                <p class="text-muted mb-0 text-truncate" style="word-wrap: break-word; overflow-wrap: break-word;">{{ value or default_text }}</p>
-            </div>
-        </div>
-    </div>
-</div>
-{% endmacro %}
+
 {% block mobile_content %}
-<!-- Mobile Content Container -->
-<div class="mobile-content-wrapper">
-    <div class="text-center mb-4">
-        <div class="feature-icon mx-auto mb-3">
+<div class="member-details-page">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="header-icon">
             <i class="fas fa-user"></i>
         </div>
-        <h2 class="page-title">{{ member.name }}</h2>
+        <h1>{{ member.name }}</h1>
         <p>Cell Member Details</p>
     </div>
+
 <!-- Member Information -->
-<div class="feature-card member-info-card">
+    <div class="member-info-card">
     <h2>Member Information</h2>
-    <div class="row g-3">
-        {{ member_field('fas fa-user', 'Full Name', 'name', member.name, '') }}
-        {{ member_field('fas fa-birthday-cake', 'Age', 'age', member.age, 'Not Specified') }}
-        {{ member_field('fas fa-venus-mars', 'Gender', 'gender', member.gender, 'Not Specified') }}
-        {{ member_field('fas fa-phone', 'Phone Number', 'phone_number', member.phone_number, 'Not Provided') }}
-        {{ member_field('fas fa-church', 'Ministry', 'ministry', member.ministry, 'Not Assigned') }}
-        {{ member_field('fas fa-map-marker-alt', 'Zone', 'zone', member.zone, 'Not Assigned') }}
-        <div class="col-12">
-            <div class="d-flex align-items-center p-3 rounded" style="background-color: var(--bg-hover);">
-                <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 16px;">
-                    <i class="fas fa-calendar-plus"></i>
+        <div class="member-details-list">
+            <div class="detail-item">
+                <div class="detail-label">Full Name</div>
+                <div class="detail-value" id="name-display-mobile">{{ member.name }}</div>
+                <input type="text" class="detail-input" id="name-input-mobile" value="{{ member.name }}" style="display: none;">
                 </div>
-                <div>
-                    <h2>Joined</h2>
-                    <p class="text-muted mb-0">{{ member.created_at[:10] if member.created_at else 'Unknown' }}</p>
+            <div class="detail-item">
+                <div class="detail-label">Age</div>
+                <div class="detail-value" id="age-display-mobile">{{ member.age or 'Not specified' }}</div>
+                <input type="number" class="detail-input" id="age-input-mobile" value="{{ member.age or '' }}" placeholder="Enter age" style="display: none;">
                 </div>
+            <div class="detail-item">
+                <div class="detail-label">Gender</div>
+                <div class="detail-value" id="gender-display-mobile">{{ member.gender or 'Not specified' }}</div>
+                <select class="detail-input" id="gender-input-mobile" style="display: none;">
+                    <option value="">Select Gender</option>
+                    <option value="Male" {{ 'selected' if member.gender == 'Male' else '' }}>Male</option>
+                    <option value="Female" {{ 'selected' if member.gender == 'Female' else '' }}>Female</option>
+                    <option value="Other" {{ 'selected' if member.gender == 'Other' else '' }}>Other</option>
+                </select>
             </div>
+            <div class="detail-item">
+                <div class="detail-label">Phone Number</div>
+                <div class="detail-value" id="phone-display-mobile">{{ member.phone_number or 'Not provided' }}</div>
+                <input type="tel" class="detail-input" id="phone-input-mobile" value="{{ member.phone_number or '' }}" placeholder="Enter phone number" style="display: none;">
+        </div>
+            <div class="detail-item">
+                <div class="detail-label">Ministry</div>
+                <div class="detail-value" id="ministry-display-mobile">{{ member.ministry or 'Not assigned' }}</div>
+                <input type="text" class="detail-input" id="ministry-input-mobile" value="{{ member.ministry or '' }}" placeholder="Enter ministry" style="display: none;">
+    </div>
+            <div class="detail-item">
+                <div class="detail-label">Zone</div>
+                <div class="detail-value" id="zone-display-mobile">{{ member.zone or 'Not assigned' }}</div>
+                <input type="text" class="detail-input" id="zone-input-mobile" value="{{ member.zone or '' }}" placeholder="Enter zone" style="display: none;">
+</div>
+            <div class="detail-item">
+                <div class="detail-label">Joined</div>
+                <div class="detail-value">{{ member.created_at[:10] if member.created_at else 'Unknown' }}</div>
+        </div>
         </div>
     </div>
-</div>
+
 <!-- Action Buttons -->
-<div class="feature-card mb-4 action-buttons-container">
-    <div class="row g-3">
-        <div class="col-6">
-            <button id="editBtn" class="btn btn-primary w-100" onclick="window.toggleEditMode()">
-                <i class="fas fa-edit me-2"></i>{{Edit Member
-            }}</button>
-            <button id="saveBtn" class="btn btn-success w-100" onclick="window.saveChanges()" style="display: none;">
-                <i class="fas fa-save me-2"></i>{{ _(\'Save Changes
-            \') }}</button>
-        </div>
-        <div class="col-6">
-            <button id="deleteBtn" class="btn btn-danger w-100" onclick="window.showDeleteConfirmation()">
-                <i class="fas fa-trash me-2"></i>{{Delete Member
-            }}</button>
-            <button id="cancelBtn" class="btn btn-secondary w-100" onclick="window.cancelEdit()" style="display: none;">
-                <i class="fas fa-times me-2"></i>{{Cancel
-            }}</button>
-        </div>
+    <div class="action-buttons">
+        <a href="{{ url_for('main.members') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Members
+        </a>
+        <button onclick="toggleEditMode('mobile')" class="btn btn-warning" id="editBtn-mobile">
+            <i class="fas fa-edit me-2"></i>Edit Member
+        </button>
+        <button onclick="confirmDelete()" class="btn btn-danger">
+            <i class="fas fa-trash me-2"></i>Delete Member
+        </button>
+</div>
+
+    <!-- Save Button (hidden by default) -->
+    <div class="action-buttons" id="saveButtons-mobile" style="display: none;">
+        <button onclick="saveChanges('mobile')" class="btn btn-success">
+            <i class="fas fa-save me-2"></i>Save Changes
+        </button>
+        <button onclick="cancelEdit('mobile')" class="btn btn-secondary">
+            <i class="fas fa-times me-2"></i>Cancel
+        </button>
     </div>
 </div>
-</div> <!-- End Mobile Content Wrapper -->
 {% endblock %}
+
 {% block desktop_content %}
-<!-- Desktop Content Container -->
-<div class="desktop-content-wrapper">
-    <div class="text-center mb-4">
-        <div class="feature-icon mx-auto mb-3">
+<div class="member-details-page">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="header-icon">
             <i class="fas fa-user"></i>
         </div>
-        <h2 class="page-title">{{ member.name }}</h2>
+        <h1>{{ member.name }}</h1>
         <p>Cell Member Details</p>
     </div>
+
 <!-- Member Information -->
-<div class="feature-card member-info-card">
+    <div class="member-info-card">
     <h2>Member Information</h2>
-    <div class="row g-3">
-        {{ member_field('fas fa-user', 'Full Name', 'name', member.name, '') }}
-        {{ member_field('fas fa-birthday-cake', 'Age', 'age', member.age, 'Not Specified') }}
-        {{ member_field('fas fa-venus-mars', 'Gender', 'gender', member.gender, 'Not Specified') }}
-        {{ member_field('fas fa-phone', 'Phone Number', 'phone_number', member.phone_number, 'Not Provided') }}
-        {{ member_field('fas fa-church', 'Ministry', 'ministry', member.ministry, 'Not Assigned') }}
-        {{ member_field('fas fa-map-marker-alt', 'Zone', 'zone', member.zone, 'Not Assigned') }}
-        <div class="col-12">
-            <div class="d-flex align-items-center p-3 rounded" style="background-color: var(--bg-hover);">
-                <div class="feature-icon me-3" style="width: 40px; height: 40px; font-size: 16px;">
-                    <i class="fas fa-calendar-plus"></i>
+        <div class="member-details-list">
+            <div class="detail-item">
+                <div class="detail-label">Full Name</div>
+                <div class="detail-value" id="name-display">{{ member.name }}</div>
+                <input type="text" class="detail-input" id="name-input" value="{{ member.name }}" style="display: none;">
                 </div>
-                <div>
-                    <h2>Joined</h2>
-                    <p class="text-muted mb-0">{{ member.created_at[:10] if member.created_at else 'Unknown' }}</p>
+            <div class="detail-item">
+                <div class="detail-label">Age</div>
+                <div class="detail-value" id="age-display">{{ member.age or 'Not specified' }}</div>
+                <input type="number" class="detail-input" id="age-input" value="{{ member.age or '' }}" placeholder="Enter age" style="display: none;">
                 </div>
+            <div class="detail-item">
+                <div class="detail-label">Gender</div>
+                <div class="detail-value" id="gender-display">{{ member.gender or 'Not specified' }}</div>
+                <select class="detail-input" id="gender-input" style="display: none;">
+                    <option value="">Select Gender</option>
+                    <option value="Male" {{ 'selected' if member.gender == 'Male' else '' }}>Male</option>
+                    <option value="Female" {{ 'selected' if member.gender == 'Female' else '' }}>Female</option>
+                    <option value="Other" {{ 'selected' if member.gender == 'Other' else '' }}>Other</option>
+                </select>
             </div>
+            <div class="detail-item">
+                <div class="detail-label">Phone Number</div>
+                <div class="detail-value" id="phone-display">{{ member.phone_number or 'Not provided' }}</div>
+                <input type="tel" class="detail-input" id="phone-input" value="{{ member.phone_number or '' }}" placeholder="Enter phone number" style="display: none;">
+        </div>
+            <div class="detail-item">
+                <div class="detail-label">Ministry</div>
+                <div class="detail-value" id="ministry-display">{{ member.ministry or 'Not assigned' }}</div>
+                <input type="text" class="detail-input" id="ministry-input" value="{{ member.ministry or '' }}" placeholder="Enter ministry" style="display: none;">
+    </div>
+            <div class="detail-item">
+                <div class="detail-label">Zone</div>
+                <div class="detail-value" id="zone-display">{{ member.zone or 'Not assigned' }}</div>
+                <input type="text" class="detail-input" id="zone-input" value="{{ member.zone or '' }}" placeholder="Enter zone" style="display: none;">
+</div>
+            <div class="detail-item">
+                <div class="detail-label">Joined</div>
+                <div class="detail-value">{{ member.created_at[:10] if member.created_at else 'Unknown' }}</div>
+        </div>
         </div>
     </div>
-</div>
+
     <!-- Action Buttons -->
-    <div class="feature-card mb-4 action-buttons-container">
-        <div class="row g-3">
-            <div class="col-md-6">
-            <button id="editBtnDesktop" class="btn btn-primary w-100" onclick="window.toggleEditMode()">
-                <i class="fas fa-edit me-2"></i>{{Edit Member
-            }}</button>
-            <button id="saveBtnDesktop" class="btn btn-success w-100" onclick="window.saveChanges()" style="display: none;">
-                <i class="fas fa-save me-2"></i>{{ _(\'Save Changes
-            \') }}</button>
-        </div>
-        <div class="col-md-6">
-            <button id="deleteBtnDesktop" class="btn btn-danger w-100" onclick="window.showDeleteConfirmation()">
-                <i class="fas fa-trash me-2"></i>{{Delete Member
-            }}</button>
-            <button id="cancelBtnDesktop" class="btn btn-secondary w-100" onclick="window.cancelEdit()" style="display: none;">
-                <i class="fas fa-times me-2"></i>{{Cancel
-            }}</button>
-        </div>
+    <div class="action-buttons">
+        <a href="{{ url_for('main.members') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Members
+        </a>
+        <button onclick="toggleEditMode('desktop')" class="btn btn-warning" id="editBtn-desktop">
+            <i class="fas fa-edit me-2"></i>Edit Member
+        </button>
+        <button onclick="confirmDelete()" class="btn btn-danger">
+            <i class="fas fa-trash me-2"></i>Delete Member
+        </button>
+</div>
+
+    <!-- Save Button (hidden by default) -->
+    <div class="action-buttons" id="saveButtons-desktop" style="display: none;">
+        <button onclick="saveChanges('desktop')" class="btn btn-success">
+            <i class="fas fa-save me-2"></i>Save Changes
+        </button>
+        <button onclick="cancelEdit('desktop')" class="btn btn-secondary">
+            <i class="fas fa-times me-2"></i>Cancel
+        </button>
     </div>
 </div>
-</div> <!-- End Desktop Content Wrapper -->
 {% endblock %}
-{% block tablet_nav %}
-<a href="{{ url_for('main.index') }}" class="text-decoration-none">
-    <i class="fas fa-home me-1"></i>Dashboard
+
+{% block mobile_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
 </a>
-<a href="{{ url_for('main.members') }}" class="text-decoration-none">
-    <i class="fas fa-users me-1"></i>Members
+<a href="{{ url_for('main.members') }}" class="nav-link active">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
 </a>
-<a href="{{ url_for('auth.logout') }}" class="text-decoration-none">
-    <i class="fas fa-sign-out-alt me-1"></i>Logout
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
 </a>
 {% endblock %}
+
 {% block desktop_nav %}
-<a href="{{ url_for('main.index') }}" class="text-decoration-none">
-    <i class="fas fa-home me-1"></i>Dashboard
+<a href="{{ url_for('main.index') }}" class="nav-link">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
 </a>
-<a href="{{ url_for('main.members') }}" class="text-decoration-none">
-    <i class="fas fa-users me-1"></i>Members
+<a href="{{ url_for('main.members') }}" class="nav-link active">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
 </a>
-<a href="{{ url_for('auth.logout') }}" class="text-decoration-none">
-    <i class="fas fa-sign-out-alt me-1"></i>Logout
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
 </a>
 {% endblock %}
-{% block bottom_nav %}
-<div class="nav-responsive">
-    <a href="{{ url_for('main.index') }}" class="nav-item">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </a>
-    <a href="{{ url_for('main.members') }}" class="nav-item active">
-        <i class="fas fa-users"></i>
-        <span>Members</span>
-    </a>
-    <a href="{{ url_for('auth.logout') }}" class="nav-item">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Logout</span>
-    </a>
-</div>
-{% endblock %}
+
+{% block extra_css %}
 <style>
-.form-control {
-    background-color: var(--bg-hover);
-    border: 1px solid var(--border-color);
-    color: var(--text-dark);
-    border-radius: 8px;
-    padding: 12px;
-    width: 100%;
-}
-.form-control:focus {
-    background-color: var(--bg-hover);
-    border-color: var(--accent-color);
-    color: var(--text-dark);
-    box-shadow: 0 0 0 0.2rem rgba(52, 144, 220, 0.25);
-    outline: none;
-}
-/* Ensure proper spacing for action buttons */
-.feature-card.mb-4 {
-    margin-bottom: 2rem !important;
-}
-/* ========================================
-   CLEAN LAYOUT SOLUTION
-   ======================================== */
-/* Universal Content Wrapper Styles */
-.mobile-content-wrapper,
-.desktop-content-wrapper {
-    width: 100%;
-    max-width: 100%;
+/* Modern Member Details Page */
+.member-details-page {
+    padding: 2rem;
+    max-width: 900px;
     margin: 0 auto;
-    padding: 0;
-    overflow-x: hidden;
+    background: #0f172a;
+    min-height: 100vh;
+}
+
+/* Modern Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 24px;
+    color: white;
     position: relative;
-    box-sizing: border-box;
-}
-/* Mobile-specific wrapper */
-.mobile-content-wrapper {
-    padding: 20px 15px;
-    min-height: calc(100vh - 100px);
-    height: auto;
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    box-sizing: border-box;
-}
-/* Desktop-specific wrapper */
-.desktop-content-wrapper {
-    padding: 0 20px 2rem 20px;
-    min-height: calc(100vh - 2rem);
-}
-/* ========================================
-   MOBILE LAYOUT FIXES
-   ======================================== */
-@media (max-width: 768px) {
-    /* Mobile container adjustments */
-    .mobile-container {
-        max-width: 100% !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    /* Mobile wrapper adjustments */
-    .mobile-content-wrapper {
-        padding: 20px 15px;
-        min-height: calc(100vh - 100px);
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        box-sizing: border-box;
-    }
-    /* Content spacing */
-    .feature-card {
-        margin-bottom: 1.5rem !important;
-        padding: 20px !important;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-    }
-    /* Text handling */
-    .page-title, .page-subtitle {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        hyphens: auto;
-        max-width: 100%;
-        width: 100%;
-    }
-    .text-muted, h1, h2, h3, h4, h5, h6, p, span, div {
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
-        white-space: normal !important;
-    }
-    /* Grid system fixes */
-    .row {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        width: 100%;
-        max-width: 100%;
-    }
-    .col-12, .col-6 {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        width: 100%;
-        max-width: 100%;
-    }
-    /* Global fixes */
-    * {
-        box-sizing: border-box !important;
-    }
-    body {
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-}
-/* ========================================
-   TABLET AND DESKTOP ADJUSTMENTS
-   ======================================== */
-@media (min-width: 769px) {
-    .desktop-content-wrapper {
-        padding: 0 30px 2rem 30px;
-    }
-}
-@media (min-width: 1200px) {
-    .desktop-content-wrapper {
-        padding: 0 40px 2rem 40px;
-    }
-}
-/* ========================================
-   GLOBAL UTILITIES
-   ======================================== */
-.text-truncate {
-    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    border: 1px solid #475569;
 }
-/* Action buttons container */
-.action-buttons-container {
-    position: relative;
-    z-index: 10;
-}
-/* Delete button styling */
-.btn-danger {
-    background: #dc3545;
-    border: 2px solid #dc3545;
-    color: white;
-    border-radius: 15px;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow);
-}
-.btn-danger:hover {
-    background: #c82333;
-    border-color: #bd2130;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    color: white;
-}
-.btn-danger:disabled {
-    background: #6c757d;
-    border-color: #6c757d;
-    transform: none;
-    box-shadow: none;
-}
-/* Modal styling fixes */
-.modal.show {
-    display: block !important;
-}
-.modal-backdrop {
-    position: fixed;
+
+.page-header::before {
+    content: '';
+    position: absolute;
     top: 0;
     left: 0;
-    z-index: 1040;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
 }
-/* Enhanced form control styling for edit mode */
-.form-control {
-    background-color: var(--bg-card) !important;
-    border: 2px solid var(--border-color) !important;
-    color: var(--text-dark) !important;
-    border-radius: 8px !important;
-    padding: 12px 16px !important;
-    transition: all 0.3s ease !important;
-    font-size: 16px !important;
+
+.header-icon {
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 1;
 }
-.form-control:focus {
-    background-color: var(--bg-hover) !important;
-    border-color: var(--accent-color) !important;
-    color: var(--text-dark) !important;
-    box-shadow: 0 0 0 0.2rem rgba(31, 111, 235, 0.25) !important;
-    outline: none !important;
+
+.header-icon i {
+    font-size: 40px;
+    color: white;
 }
-.form-control::placeholder {
-    color: var(--text-muted) !important;
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 1;
 }
-/* Select dropdown styling */
-select.form-control {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236E7681' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 16px 12px;
-    padding-right: 40px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+
+.page-header p {
+    font-size: 1.2rem;
+    margin: 0;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
 }
-select.form-control option {
-    background-color: var(--bg-card);
-    color: var(--text-dark);
-    padding: 8px 12px;
+
+/* Modern Member Info Card */
+.member-info-card {
+    background: #1e293b;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    border: 1px solid #475569;
 }
-/* Form help text styling */
-.form-help-text {
-    color: var(--text-muted);
-    font-size: 14px;
-    margin-top: 4px;
-    font-style: italic;
+
+.member-info-card h2 {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 700;
+        margin: 0;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid #6b7280;
+}
+
+.member-info-card h2 i {
+    font-size: 1.2rem;
+}
+
+/* Modern Details List */
+.member-details-list {
+    padding: 2rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #374151;
+    transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+    background: #334155;
+    margin: 0 -2rem;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-label::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: #6b7280;
+    border-radius: 50%;
+}
+
+.detail-value {
+    color: #f1f5f9;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: right;
+    max-width: 60%;
+    word-wrap: break-word;
+    background: #374151;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border-left: 3px solid #6b7280;
+}
+
+/* Modern Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: nowrap;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    position: relative;
+    overflow: hidden;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+    color: #f1f5f9;
+    border-color: #6b7280;
+    box-shadow: 0 4px 15px rgba(55, 65, 81, 0.4);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
+    border-color: #9ca3af;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(55, 65, 81, 0.6);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    color: white;
+    border-color: #fb923c;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    border-color: #fdba74;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    color: white;
+    border-color: #f87171;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+    border-color: #fca5a5;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.6);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+/* Edit Mode Styles */
+.detail-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: #374151;
+    color: #f1f5f9;
+    transition: all 0.2s ease;
+    margin-top: 0.5rem;
+    display: none !important;
+}
+
+.detail-item.editing .detail-input {
+    display: block !important;
+}
+
+.detail-input:focus {
+    outline: none;
+    border-color: #6b7280;
+    background: #4b5563;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.2);
+}
+
+.detail-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+/* Modern Responsive Design */
+@media (max-width: 768px) {
+    .member-details-page {
+        padding: 1rem;
+        padding-bottom: 5rem; /* Add space for fixed bottom nav bar */
+        background: #0f172a;
+        min-height: calc(100vh - 5rem); /* Account for nav bar height */
+    }
+    
+    /* Hide main action buttons in mobile edit mode */
+    .member-details-page.editing .action-buttons:not(#saveButtons-mobile) {
+        display: none !important;
+    }
+    
+    /* Hide display values in mobile edit mode for cleaner look */
+    .member-details-page.editing .detail-value {
+        display: none !important;
+    }
+    
+    /* Make input fields take full width in mobile edit mode */
+    .member-details-page.editing .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .member-details-page.editing .detail-input {
+        width: 100%;
+        margin-top: 0;
+    }
+}
+
+/* Large Mobile and Small Tablets (481px - 768px) */
+@media (max-width: 768px) and (min-width: 481px) {
+    .member-details-page {
+        padding-bottom: 5rem; /* Add space for fixed bottom nav bar */
+    }
+    
+    .action-buttons {
+        gap: 0.75rem;
+        flex-wrap: nowrap;
+    }
+    
+    .btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.875rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Small Mobile (320px - 480px) */
+@media (max-width: 480px) {
+    .member-details-page {
+        padding: 0.75rem;
+        padding-bottom: 5rem; /* Add space for fixed bottom nav bar */
+    }
+    
+    .page-header {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .header-icon {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .header-icon i {
+        font-size: 28px;
+    }
+    
+    .member-info-card {
+        border-radius: 12px;
+    }
+    
+    .member-info-card h2 {
+        padding: 0.875rem 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .member-details-list {
+        padding: 1rem;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 1rem 0;
+    }
+    
+    .detail-item:hover {
+        margin: 0 -1rem;
+        padding: 1rem;
+        background: #334155;
+    }
+    
+    .detail-value {
+        text-align: left;
+        max-width: 100%;
+        width: 100%;
+        background: #374151;
+        color: #f1f5f9;
+        font-size: 0.9rem;
+    }
+    
+    .action-buttons {
+        flex-direction: row;
+        gap: 0.375rem;
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+    
+    .btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 0.625rem 0.375rem;
+        font-size: 0.8rem;
+        border-radius: 10px;
+    }
+    
+    .btn i {
+        font-size: 0.8rem;
+    }
+}
+
+/* Very Small Mobile (up to 320px) */
+@media (max-width: 320px) {
+    .member-details-page {
+        padding-bottom: 5rem; /* Add space for fixed bottom nav bar */
+    }
+    
+    .action-buttons {
+        gap: 0.25rem;
+    }
+    
+    .btn {
+        min-width: 70px;
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .btn i {
+        font-size: 0.75rem;
+    }
+}
+
+/* Tablets (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .member-details-page {
+        padding-bottom: 3rem; /* Add space for potential fixed elements */
+    }
+    
+    .action-buttons {
+        gap: 1.25rem;
+    }
+    
+    .btn {
+        min-width: 140px;
+        padding: 1rem 1.25rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Large Tablets and Small Desktops (1025px - 1200px) */
+@media (min-width: 1025px) and (max-width: 1200px) {
+    .member-details-page {
+        padding-bottom: 2rem; /* Add space for potential fixed elements */
+    }
+    
+    .action-buttons {
+        gap: 1.5rem;
+    }
+    
+    .btn {
+        min-width: 150px;
+        padding: 1.125rem 1.5rem;
+        font-size: 1rem;
+    }
+}
+
+/* Large Desktops (1201px+) */
+@media (min-width: 1201px) {
+    .member-details-page {
+        padding-bottom: 2rem; /* Add space for potential fixed elements */
+    }
+    
+    .action-buttons {
+        gap: 2rem;
+    }
+    
+    .btn {
+        min-width: 160px;
+        padding: 1.25rem 2rem;
+        font-size: 1.1rem;
+    }
+}
+
+/* Desktop edit mode - hide main action buttons and clean up display */
+@media (min-width: 992px) {
+    /* Hide the main action buttons (Back to Members, Edit Member, Delete Member) in desktop edit mode */
+    .member-details-page.editing .action-buttons:not(#saveButtons-desktop) {
+        display: none !important;
+    }
+    
+    /* Show only the save buttons in desktop edit mode */
+    .member-details-page.editing #saveButtons-desktop {
+        display: flex !important;
+        gap: 1.5rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .member-details-page.editing #saveButtons-desktop .btn {
+        min-width: 160px;
+        padding: 1rem 2rem;
+        font-size: 1rem;
+    }
+    
+    /* Hide display values in edit mode for cleaner look */
+    .member-details-page.editing .detail-value {
+        display: none !important;
+    }
+    
+    /* Make input fields take full width in edit mode */
+    .member-details-page.editing .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .member-details-page.editing .detail-input {
+        width: 100%;
+        margin-top: 0;
+    }
+    
+    .page-header {
+        margin-bottom: 2rem;
+        padding: 1.5rem 1rem;
+        border-radius: 16px;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+    }
+    
+    .header-icon {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .header-icon i {
+        font-size: 32px;
+    }
+    
+    .member-info-card {
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .member-info-card h2 {
+        padding: 1rem 1.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .member-details-list {
+        padding: 1.5rem;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1.25rem 0;
+    }
+    
+    .detail-item:hover {
+        margin: 0 -1.5rem;
+        padding: 1.25rem 1.5rem;
+        background: #334155;
+    }
+    
+    .detail-value {
+        text-align: left;
+        max-width: 100%;
+        width: 100%;
+        background: #374151;
+        color: #f1f5f9;
+    }
+    
+    .action-buttons {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+    
+    .btn {
+        flex: 1;
+        min-width: 100px;
+        justify-content: center;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+        border-radius: 12px;
+    }
+    
+    /* Make all buttons equal size */
+    .btn-danger {
+        flex: 1;
+    }
+}
+
+/* Dark mode support - Already dark theme */
+@media (prefers-color-scheme: dark) {
+    .member-details-page {
+        background: #0f172a;
+    }
+    
+    .member-info-card {
+        background: #1e293b;
+        border-color: #475569;
+    }
+    
+    .detail-item:hover {
+        background: #334155;
+    }
+    
+    .detail-value {
+        background: #374151;
+        color: #f1f5f9;
+    }
 }
 </style>
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteConfirmModalLabel">
-                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                    Confirm Delete
-                </h5>
-                <button type="button" class="btn-close" aria-label="Close" onclick="hideModal()"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete <strong>{{ member.name }}</strong>?</p>
-                <p class="text-muted">This action cannot be undone and will permanently remove the member from your cell group.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="hideModal()">
-                    <i class="fas fa-times me-2"></i>{{Cancel
-                }}</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="window.confirmDelete()">
-                    <i class="fas fa-trash me-2"></i>{{Delete Member
-                }}</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% block scripts %}
+
 <script>
-console.log('=== MEMBER DETAILS SCRIPT LOADING ===');
-// Global variables
 let isEditMode = false;
-// Field configuration for DRY approach
-const fieldConfig = {
-    name: { type: 'text', required: true, placeholder: 'Full Name' },
-    age: { type: 'number', min: 1, max: 120, placeholder: 'Age' },
-    gender: { 
-        type: 'select', 
-        options: [
-            { value: '', text: 'Select gender' },
-            { value: 'Male', text: 'Male' },
-            { value: 'Female', text: 'Female' },
-            { value: 'Other', text: 'Other' }
-        ], 
-        placeholder: 'Gender' 
-    },
-    phone_number: { type: 'tel', pattern: '[0-9]{10,15}', placeholder: 'Phone Number' },
-    ministry: { 
-        type: 'select', 
-        options: [
-            { value: '', text: 'Select ministry' },
-            { value: 'Worship', text: 'Worship' },
-            { value: 'Prayer', text: 'Prayer' },
-            { value: 'Evangelism', text: 'Evangelism' },
-            { value: 'Discipleship', text: 'Discipleship' },
-            { value: 'Fellowship', text: 'Fellowship' },
-            { value: 'Service', text: 'Service' }
-        ], 
-        placeholder: 'Ministry' 
-    },
-    zone: { 
-        type: 'select', 
-        options: [
-            { value: '', text: 'Select zone' },
-            { value: 'Zone A', text: 'Zone A' },
-            { value: 'Zone B', text: 'Zone B' },
-            { value: 'Zone C', text: 'Zone C' },
-            { value: 'Zone D', text: 'Zone D' }
-        ], 
-        placeholder: 'Zone' 
-    }
-};
-// Main edit mode toggle function
-function toggleEditMode() {
-    console.log('toggleEditMode called, current mode:', isEditMode);
+let originalData = {};
+
+function toggleEditMode(view) {
     isEditMode = !isEditMode;
-    // Toggle all edit/save/cancel buttons (both mobile and desktop)
-    const editButtons = document.querySelectorAll('[id*="editBtn"]');
-    const saveButtons = document.querySelectorAll('[id*="saveBtn"]');
-    const cancelButtons = document.querySelectorAll('[id*="cancelBtn"]');
-    console.log('Found buttons:', {
-        edit: editButtons.length,
-        save: saveButtons.length,
-        cancel: cancelButtons.length
-    });
-    // Toggle button visibility
-    editButtons.forEach(btn => btn.style.display = isEditMode ? 'none' : 'inline-block');
-    saveButtons.forEach(btn => btn.style.display = isEditMode ? 'inline-block' : 'none');
-    cancelButtons.forEach(btn => btn.style.display = isEditMode ? 'inline-block' : 'none');
-    // Toggle delete button visibility
-    const deleteButtons = document.querySelectorAll('[id*="deleteBtn"]');
-    deleteButtons.forEach(btn => btn.style.display = isEditMode ? 'none' : 'inline-block');
-    // Toggle field states
+    const editBtn = document.getElementById(`editBtn-${view}`);
+    const saveButtons = document.getElementById(`saveButtons-${view}`);
+    const detailItems = document.querySelectorAll('.detail-item');
+    
+    // Target the correct member-details-page based on view
+    let memberDetailsPage;
+    if (view === 'mobile') {
+        memberDetailsPage = document.querySelector('.member-details-page');
+        } else {
+        // For desktop, find the second member-details-page div
+        const allPages = document.querySelectorAll('.member-details-page');
+        memberDetailsPage = allPages[1];
+    }
+    
     if (isEditMode) {
-        makeFieldsEditable();
+        // Enter edit mode
+        editBtn.innerHTML = '<i class="fas fa-times me-2"></i>Cancel Edit';
+        editBtn.className = 'btn btn-secondary';
+        saveButtons.style.display = 'flex';
+        
+        // Add editing class for both mobile and desktop views
+        if (memberDetailsPage) {
+            memberDetailsPage.classList.add('editing');
+        }
+        
+        // Store original data based on view
+        const suffix = view === 'mobile' ? '-mobile' : '';
+        const nameInput = document.getElementById(`name-input${suffix}`);
+        const ageInput = document.getElementById(`age-input${suffix}`);
+        const genderInput = document.getElementById(`gender-input${suffix}`);
+        const phoneInput = document.getElementById(`phone-input${suffix}`);
+        const ministryInput = document.getElementById(`ministry-input${suffix}`);
+        const zoneInput = document.getElementById(`zone-input${suffix}`);
+        
+        originalData = {
+            name: nameInput ? nameInput.value : '',
+            age: ageInput ? ageInput.value : '',
+            gender: genderInput ? genderInput.value : '',
+            phone: phoneInput ? phoneInput.value : '',
+            ministry: ministryInput ? ministryInput.value : '',
+            zone: zoneInput ? zoneInput.value : ''
+        };
+        
+        // Show input fields
+        detailItems.forEach(item => {
+            if (item.querySelector('.detail-input')) {
+                item.classList.add('editing');
+            }
+        });
     } else {
-        makeFieldsReadOnly();
+        // Exit edit mode
+        cancelEdit(view);
     }
 }
-// Make all fields editable
-function makeFieldsEditable() {
-    console.log('Making fields editable...');
-    Object.keys(fieldConfig).forEach(fieldName => {
-        const containers = document.querySelectorAll(`[id*="${fieldName}Field"]`);
-        containers.forEach(container => {
-            if (container) {
-                const config = fieldConfig[fieldName];
-                const currentValue = getCurrentValue(fieldName);
-                if (config.type === 'select') {
-                    container.innerHTML = createSelectField(fieldName, config, currentValue);
-                } else {
-                    container.innerHTML = createInputField(fieldName, config, currentValue);
-                }
-                // Add phone number formatting
-                if (fieldName === 'phone_number') {
-                    const phoneInput = container.querySelector('input');
-                    if (phoneInput) {
-                        phoneInput.addEventListener('input', function(e) {
-                            let value = e.target.value.replace(/\D/g, '');
-                            if (value.length > 15) {
-                                value = value.substring(0, 15);
-                            }
-                            e.target.value = value;
-                        });
-                    }
-                }
-            }
-        });
-    });
-}
-// Make all fields read-only
-function makeFieldsReadOnly() {
-    console.log('Making fields read-only...');
-    Object.keys(fieldConfig).forEach(fieldName => {
-        const containers = document.querySelectorAll(`[id*="${fieldName}Field"]`);
-        containers.forEach(container => {
-            if (container) {
-                const currentValue = getCurrentValue(fieldName);
-                const displayValue = currentValue || getDefaultDisplayValue(fieldName);
-                container.innerHTML = `<p class="text-muted mb-0">${displayValue}</p>`;
-            }
-        });
-    });
-}
-// Create input field HTML
-function createInputField(fieldName, config, value) {
-    const attributes = [];
-    if (config.required) attributes.push('required');
-    if (config.min !== undefined) attributes.push(`min="${config.min}"`);
-    if (config.max !== undefined) attributes.push(`max="${config.max}"`);
-    if (config.pattern) attributes.push(`pattern="${config.pattern}"`);
-    if (config.placeholder) attributes.push(`placeholder="${config.placeholder}"`);
-    const helpText = getHelpText(fieldName);
-    return `
-        <input type="${config.type}" class="form-control" id="${fieldName}Input" value="${value || ''}" ${attributes.join(' ')}>
-        ${helpText ? `<div class="form-help-text">${helpText}</div>` : ''}
-    `;
-}
-// Create select field HTML
-function createSelectField(fieldName, config, value) {
-    let options = config.options.map(option => {
-        const selected = option.value === value ? 'selected' : '';
-        return `<option value="${option.value}" ${selected}>${option.text}</option>`;
-    }).join('');
-    const helpText = getHelpText(fieldName);
-    return `
-        <select class="form-control" id="${fieldName}Input">${options}</select>
-        ${helpText ? `<div class="form-help-text">${helpText}</div>` : ''}
-    `;
-}
-// Get help text for fields
-function getHelpText(fieldName) {
-    const helpTexts = {
-        'gender': 'Optional - Select gender',
-        'ministry': 'Optional - Select ministry area',
-        'zone': 'Optional - Select zone',
-        'phone_number': 'Optional - 10-15 digits only',
-        'age': 'Optional - Age between 1-120'
-    };
-    return helpTexts[fieldName] || '';
-}
-// Get current field value from template data
-function getCurrentValue(fieldName) {
-    const valueMap = {
-        'name': '{{ member.name }}',
-        'age': '{{ member.age or "" }}',
-        'gender': '{{ member.gender or "" }}',
-        'phone_number': '{{ member.phone_number or "" }}',
-        'ministry': '{{ member.ministry or "" }}',
-        'zone': '{{ member.zone or "" }}'
-    };
-    return valueMap[fieldName] || '';
-}
-// Get default display value for empty fields
-function getDefaultDisplayValue(fieldName) {
-    const defaultMap = {
-        'age': 'Not Specified',
-        'gender': 'Not Specified',
-        'phone_number': 'Not Provided',
-        'ministry': 'Not Assigned',
-        'zone': 'Not Assigned'
-    };
-    return defaultMap[fieldName] || '';
-}
-// Save changes with validation
-function saveChanges() {
-    console.log('saveChanges called');
-    const fieldValues = {};
-    let hasError = false;
-    let errorMessage = '';
-    // Collect and validate all field values
-    Object.keys(fieldConfig).forEach(fieldName => {
-        const input = document.getElementById(`${fieldName}Input`);
-        if (input) {
-            const value = input.value.trim();
-            fieldValues[fieldName] = value;
-            // Validate required fields
-            if (fieldConfig[fieldName].required && !value) {
-                hasError = true;
-                errorMessage = `${fieldConfig[fieldName].placeholder} is required`;
-                input.focus();
-                return;
-            }
-            // Validate age field
-            if (fieldName === 'age' && value) {
-                const age = parseInt(value);
-                if (isNaN(age) || age < 1 || age > 120) {
-                    hasError = true;
-                    errorMessage = 'Age must be between 1 and 120';
-                    input.focus();
-                    return;
-                }
-            }
-            // Validate phone number
-            if (fieldName === 'phone_number' && value) {
-                const phoneRegex = /^[0-9]{10,15}$/;
-                if (!phoneRegex.test(value)) {
-                    hasError = true;
-                    errorMessage = 'Phone number must be 10-15 digits';
-                    input.focus();
-                    return;
-                }
-            }
+
+function cancelEdit(view) {
+    isEditMode = false;
+    const editBtn = document.getElementById(`editBtn-${view}`);
+    const saveButtons = document.getElementById(`saveButtons-${view}`);
+    const detailItems = document.querySelectorAll('.detail-item');
+    
+    // Target the correct member-details-page based on view
+    let memberDetailsPage;
+    if (view === 'mobile') {
+        memberDetailsPage = document.querySelector('.member-details-page');
+    } else {
+        // For desktop, find the second member-details-page div
+        const allPages = document.querySelectorAll('.member-details-page');
+        memberDetailsPage = allPages[1];
+    }
+    
+    editBtn.innerHTML = '<i class="fas fa-edit me-2"></i>Edit Member';
+    editBtn.className = 'btn btn-warning';
+    saveButtons.style.display = 'none';
+    
+    // Remove editing class for both mobile and desktop views
+    if (memberDetailsPage) {
+        memberDetailsPage.classList.remove('editing');
+    }
+    
+    // Hide input fields
+    detailItems.forEach(item => {
+        if (item.querySelector('.detail-input')) {
+            item.classList.remove('editing');
         }
     });
-    if (hasError) {
-        alert(errorMessage);
+    
+    // Restore original data based on view
+    const suffix = view === 'mobile' ? '-mobile' : '';
+    const nameInput = document.getElementById(`name-input${suffix}`);
+    const ageInput = document.getElementById(`age-input${suffix}`);
+    const genderInput = document.getElementById(`gender-input${suffix}`);
+    const phoneInput = document.getElementById(`phone-input${suffix}`);
+    const ministryInput = document.getElementById(`ministry-input${suffix}`);
+    const zoneInput = document.getElementById(`zone-input${suffix}`);
+    
+    if (nameInput) nameInput.value = originalData.name;
+    if (ageInput) ageInput.value = originalData.age;
+    if (genderInput) genderInput.value = originalData.gender;
+    if (phoneInput) phoneInput.value = originalData.phone;
+    if (ministryInput) ministryInput.value = originalData.ministry;
+    if (zoneInput) zoneInput.value = originalData.zone;
+}
+
+function saveChanges(view) {
+    // Collect form data based on view
+    const suffix = view === 'mobile' ? '-mobile' : '';
+    const nameInput = document.getElementById(`name-input${suffix}`);
+    const ageInput = document.getElementById(`age-input${suffix}`);
+    const genderInput = document.getElementById(`gender-input${suffix}`);
+    const phoneInput = document.getElementById(`phone-input${suffix}`);
+    const ministryInput = document.getElementById(`ministry-input${suffix}`);
+    const zoneInput = document.getElementById(`zone-input${suffix}`);
+    
+    const formData = {
+        name: nameInput ? nameInput.value : '',
+        age: ageInput ? ageInput.value : '',
+        gender: genderInput ? genderInput.value : '',
+        phone_number: phoneInput ? phoneInput.value : '',
+        ministry: ministryInput ? ministryInput.value : '',
+        zone: zoneInput ? zoneInput.value : ''
+    };
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+        alert('Name is required');
         return;
     }
-    // Show loading state
-    const saveButtons = document.querySelectorAll('[id*="saveBtn"]');
-    saveButtons.forEach(btn => {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-    });
-    // Create and submit form
+    
+    // Remove editing class for both mobile and desktop views
+    let memberDetailsPage;
+    if (view === 'mobile') {
+        memberDetailsPage = document.querySelector('.member-details-page');
+    } else {
+        // For desktop, find the second member-details-page div
+        const allPages = document.querySelectorAll('.member-details-page');
+        memberDetailsPage = allPages[1];
+    }
+    if (memberDetailsPage) {
+        memberDetailsPage.classList.remove('editing');
+    }
+    
+    // Create form to submit update
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = '{{ url_for("main.update_member", member_id=member.id) }}';
-    Object.entries(fieldValues).forEach(([key, value]) => {
+    
+    // Add form fields
+    Object.keys(formData).forEach(key => {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = key;
-        input.value = value;
+        input.value = formData[key];
         form.appendChild(input);
     });
-    document.body.appendChild(form);
-    form.submit();
-}
-// Cancel edit and revert changes
-function cancelEdit() {
-    console.log('cancelEdit called');
-    toggleEditMode();
-}
-// Delete confirmation functions
-function showDeleteConfirmation() {
-    console.log('showDeleteConfirmation called');
-    const modalElement = document.getElementById('deleteConfirmModal');
-    if (!modalElement) {
-        console.error('Modal element not found');
-        // Fallback to native confirm
-        if (confirm(`Are you sure you want to delete {{ member.name }}? This action cannot be undone.`)) {
-            confirmDelete();
-        }
-        return;
-    }
-    // Try to show modal using Bootstrap's data attributes approach
-    try {
-        // Check if Bootstrap is available
-        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
-        } else {
-            // Fallback: manually show the modal
-            modalElement.classList.add('show');
-            modalElement.style.display = 'block';
-            modalElement.setAttribute('aria-hidden', 'false');
-            // Add backdrop
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.id = 'modalBackdrop';
-            document.body.appendChild(backdrop);
-            // Handle backdrop click to close
-            backdrop.addEventListener('click', function() {
-                hideModal();
-            });
-            // Handle escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    hideModal();
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error showing modal:', error);
-        // Fallback to native confirm
-        if (confirm(`Are you sure you want to delete {{ member.name }}? This action cannot be undone.`)) {
-            confirmDelete();
-        }
-    }
-}
-// Helper function to hide modal
-function hideModal() {
-    const modalElement = document.getElementById('deleteConfirmModal');
-    const backdrop = document.getElementById('modalBackdrop');
-    if (modalElement) {
-        modalElement.classList.remove('show');
-        modalElement.style.display = 'none';
-        modalElement.setAttribute('aria-hidden', 'true');
-    }
-    if (backdrop) {
-        backdrop.remove();
-    }
-}
-function confirmDelete() {
-    console.log('confirmDelete called');
-    // Show loading state on delete button
-    const deleteButton = document.getElementById('confirmDeleteBtn');
-    if (deleteButton) {
-        const originalText = deleteButton.innerHTML;
-        deleteButton.disabled = true;
-        deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
-    }
-    // Hide the modal
-    hideModal();
-    // Create and submit form
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ url_for("main.delete_member", member_id=member.id) }}';
+    
     // Add CSRF token if available
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (csrfToken) {
@@ -745,71 +1006,31 @@ function confirmDelete() {
         csrfInput.value = csrfToken.getAttribute('content');
         form.appendChild(csrfInput);
     }
+    
     document.body.appendChild(form);
     form.submit();
 }
-// Make functions globally available
-window.toggleEditMode = toggleEditMode;
-window.saveChanges = saveChanges;
-window.cancelEdit = cancelEdit;
-window.showDeleteConfirmation = showDeleteConfirmation;
-window.confirmDelete = confirmDelete;
-window.hideModal = hideModal;
-// Ensure action buttons are visible
-function ensureButtonsVisible() {
-    const actionContainers = document.querySelectorAll('.action-buttons-container');
-    actionContainers.forEach(container => {
-        if (container) {
-            container.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-    });
+
+function confirmDelete() {
+    if (confirm('Are you sure you want to delete {{ member.name }}? This action cannot be undone.')) {
+        // Create a form to submit the delete request
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("main.delete_member", member_id=member.id) }}';
+        
+    // Add CSRF token if available
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = csrfToken.getAttribute('content');
+        form.appendChild(csrfInput);
+    }
+        
+    document.body.appendChild(form);
+    form.submit();
 }
-// Ensure content wrappers are properly sized
-function ensureContentWrappers() {
-    const mobileWrapper = document.querySelector('.mobile-content-wrapper');
-    const desktopWrapper = document.querySelector('.desktop-content-wrapper');
-    if (mobileWrapper) {
-        mobileWrapper.style.minHeight = 'calc(100vh - 100px)';
-    }
-    if (desktopWrapper) {
-        desktopWrapper.style.minHeight = 'calc(100vh - 2rem)';
-    }
-    console.log('Applied content wrapper fixes');
 }
-// Run on page load and when edit mode changes
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded - Applying fixes');
-    // Test modal functionality
-    console.log('Testing modal elements...');
-    const modalElement = document.getElementById('deleteConfirmModal');
-    console.log('Modal element found:', !!modalElement);
-    const deleteButtons = document.querySelectorAll('[id*="deleteBtn"]');
-    console.log('Delete buttons found:', deleteButtons.length);
-    // Ensure delete buttons are visible initially
-    deleteButtons.forEach(btn => {
-        btn.style.display = 'inline-block';
-    });
-    // Test Bootstrap availability
-    console.log('Bootstrap available:', typeof bootstrap !== 'undefined');
-    if (typeof bootstrap !== 'undefined') {
-        console.log('Bootstrap Modal available:', typeof bootstrap.Modal !== 'undefined');
-    }
-    // Ensure buttons are visible on page load
-    setTimeout(ensureButtonsVisible, 100);
-    // Ensure content wrappers are properly sized
-    setTimeout(ensureContentWrappers, 100);
-});
-// Override toggleEditMode to ensure visibility
-const originalToggleEditMode = toggleEditMode;
-toggleEditMode = function() {
-    originalToggleEditMode();
-    // Ensure buttons are visible after toggling
-    setTimeout(ensureButtonsVisible, 100);
-};
-console.log('=== FUNCTIONS LOADED ===');
-console.log('toggleEditMode:', typeof window.toggleEditMode);
-console.log('saveChanges:', typeof window.saveChanges);
-console.log('cancelEdit:', typeof window.cancelEdit);
-console.log('=== SCRIPT READY ===');
 </script>
 {% endblock %}

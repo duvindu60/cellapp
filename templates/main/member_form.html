@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-{% import 'macros/responsive.html' as responsive %}
+{% import 'macros/components.html' as components %}
 
 {% block title %}Add New Member{% endblock %}
-
 
 <!-- Reusable Form Partial -->
 {% macro render_member_form(is_mobile=false) %}
@@ -153,6 +152,7 @@
 {% endmacro %}
 
 {% block mobile_content %}
+<div class="member-form-page">
 <!-- Mobile Form Wrapper -->
 <div class="feature-card" style="background: #161B22; border: 1px solid #30363D; border-radius: 12px; padding: 15px; margin: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); position: relative; z-index: 1;">
     <div style="max-width: 600px; margin: 0 auto;">
@@ -160,26 +160,17 @@
         {{ render_member_form(is_mobile=true) }}
     </div>
 </div>
+</div>
 {% endblock %}
 
 {% block desktop_content %}
 <!-- Desktop Form Wrapper -->
-<div class="page-header">
-    <div class="container-fluid">
-        <div class="d-flex align-items-center justify-content-between">
-            <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="{{ url_for('main.members') }}">Members</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Add Member</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
-        <h2 class="page-title">Add New Member</h2>
-        <p class="page-subtitle">Register a new cell group member</p>
+<div class="text-center mb-5">
+    <div class="feature-icon mx-auto mb-4" style="width: 80px; height: 80px; font-size: 32px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(31, 111, 235, 0.3);">
+        <i class="fas fa-user-plus"></i>
     </div>
+    <h2 class="page-title" style="font-size: 2.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;">Add New Member</h2>
+    <p class="page-subtitle" style="font-size: 1.2rem; color: var(--text-secondary);">Register a new cell group member</p>
 </div>
 
 <div class="feature-card" style="background: #161B22; border: 1px solid #30363D; border-radius: 12px; padding: 30px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
@@ -189,44 +180,16 @@
 </div>
 {% endblock %}
 
-{% block bottom_nav %}
-<div class="bottom-nav">
-    <a href="{{ url_for('main.index') }}" class="nav-item">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </a>
-    <a href="{{ url_for('main.profile') }}" class="nav-item">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-    <a href="{{ url_for('main.members') }}" class="nav-item active">
-        <i class="fas fa-users"></i>
-        <span>Members</span>
-    </a>
-    <a href="{{ url_for('auth.logout') }}" class="nav-item">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Logout</span>
-    </a>
-</div>
-{% endblock %}
-
-{% block tablet_nav %}
-<a href="{{ url_for('main.index') }}" class="text-decoration-none">
-    <i class="fas fa-home me-1"></i>Dashboard
-</a>
-<a href="{{ url_for('main.profile') }}" class="text-decoration-none">
-    <i class="fas fa-user me-1"></i>Profile
-</a>
-<a href="{{ url_for('main.members') }}" class="text-decoration-none active">
-    <i class="fas fa-users me-1"></i>Members
-</a>
-<a href="{{ url_for('auth.logout') }}" class="text-decoration-none">
-    <i class="fas fa-sign-out-alt me-1"></i>Logout
-</a>
-{% endblock %}
-
 {% block extra_css %}
 <style>
+/* Member Form Page Container */
+.member-form-page {
+    padding: 1rem;
+    padding-bottom: 6rem; /* Add extra padding to prevent content from being cut off by fixed bottom nav */
+    min-height: 100vh;
+    background: #0f172a;
+}
+
 /* Form Styling for Dark Theme */
 .form-label {
     color: var(--text-dark) !important;
@@ -387,21 +350,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Show loading state
+            // Show loading state with better UX
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
             submitBtn.disabled = true;
             
-            // Re-enable button after 10 seconds (in case of error)
+            // Add visual feedback
+            submitBtn.style.opacity = '0.7';
+            
+            // Re-enable button after 15 seconds (in case of error)
             setTimeout(() => {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
-            }, 10000);
+                submitBtn.style.opacity = '1';
+            }, 15000);
         });
     }
 });
 
 </script>
 
+{% endblock %}
 
+{% block mobile_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link active">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+</a>
+<a href="{{ url_for('main.members') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
+</a>
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
+{% endblock %}
+
+{% block desktop_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link active">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+</a>
+<a href="{{ url_for('main.members') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
+</a>
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
 {% endblock %}

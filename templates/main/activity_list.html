@@ -1,228 +1,646 @@
 {% extends "base.html" %}
-{% import "macros/responsive.html" as responsive %}
-{% block title %}Activity List - CellApp{% endblock %}
+{% block title %}Today's Activities - CellApp{% endblock %}
+
 {% block mobile_content %}
-<div class="container-fluid">
-    <!-- Header with Back Button -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <h2>Activity List</h2>
-                    <p>All activities in your cell group</p>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-outline-primary" onclick="refreshActivities()" style="border-radius: 10px;">
-                        <i class="fas fa-sync-alt me-2"></i>{{Refresh
-                    }}</button>
-                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-light" style="border-radius: 10px; padding: 8px 12px;">
-                        <i class="fas fa-arrow-left me-2"></i>Back
-                    </a>
-                </div>
+<div class="activity-list-mobile">
+    <!-- Header Section -->
+    <div class="activity-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-calendar-day"></i>
             </div>
+            <div class="header-text">
+                <h1>Today's Activities</h1>
+                <p>Track today's activities in your cell group</p>
+                <small class="text-muted">{{ today.strftime('%B %d, %Y') if today else 'Today' }}</small>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="action-btn refresh-btn" onclick="refreshActivities()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <a href="{{ url_for('main.index') }}" class="action-btn back-btn">
+                <i class="fas fa-arrow-left"></i>
+            </a>
         </div>
     </div>
-    <!-- Most Recent Activities -->
-    <div class="row">
-        <div class="col-12">
-            <div class="feature-card" style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #333; border-radius: 15px; padding: 1.5rem;">
-                <div class="d-flex align-items-center justify-content-between mb-4">
-                    <h2>Most Recent Activities</h2>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary" id="activityCount" style="background: linear-gradient(135deg, #1F6FEB, #2c7bb6) !important; border-radius: 8px;">{{ activities|length if activities else 0 }} activities</span>
+
+    <!-- Activities List -->
+    <div class="activities-container">
+        {% if activities %}
+            {% for activity in activities %}
+            <div class="activity-item">
+                <div class="activity-timeline">
+                    <div class="timeline-dot"></div>
+                    {% if not loop.last %}
+                    <div class="timeline-line"></div>
+                    {% endif %}
+                </div>
+                <div class="activity-content">
+                    <div class="activity-header-item">
+                        <div class="activity-type">
+                            <i class="fas fa-circle"></i>
+                            <span>{{ activity.activity_type.replace('_', ' ').title() }}</span>
+                        </div>
+                        <div class="activity-time">
+                            {% set created_at = activity.created_at %}
+                            {% if created_at is string %}
+                                {{ created_at[:19].replace('T', ' at ') }}
+                            {% else %}
+                                {{ created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="activity-description">
+                        {{ activity.description }}
                     </div>
                 </div>
-                {% if activities %}
-                    <div id="activityList">
-                        {% for activity in activities %}
-                        <div class="activity-item d-flex align-items-start mb-4 p-4 rounded activity-card" 
-                             style="background: linear-gradient(135deg, #2a2a2a, #3a3a3a); border-left: 4px solid {{ get_activity_color(activity.activity_type) }}; border-radius: 16px; transition: all 0.3s ease; cursor: pointer; min-height: 80px;" 
-                             onmouseover="this.style.transform='translateX(8px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.4)'; this.style.borderLeftColor='{{ get_activity_color(activity.activity_type) }}dd';" 
-                             onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='none'; this.style.borderLeftColor='{{ get_activity_color(activity.activity_type) }}';">
-                            <div class="activity-icon me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, {{ get_activity_color(activity.activity_type) }}, {{ get_activity_color(activity.activity_type) }}dd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                                <i class="{{ get_activity_icon(activity.activity_type) }}"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <h6 class="mb-0" style="color: #ffffff; font-weight: 600; font-size: 1.1rem; line-height: 1.4;">{{ format_activity_description(activity) }}</h6>
-                                    <div class="d-flex align-items-center gap-2">
-                                        {% if activity.activity_type == 'attendance_incomplete' %}
-                                        <span class="badge bg-warning" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">⚠️ Incomplete</span>
-                                        {% elif activity.activity_type == 'user_login' %}
-                                        <span class="badge bg-info" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">🔐 Login</span>
-                                        {% elif activity.activity_type == 'member_added' %}
-                                        <span class="badge bg-success" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">➕ New</span>
-                                        {% elif activity.activity_type == 'member_deleted' %}
-                                        <span class="badge bg-danger" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">🗑️ Removed</span>
-                                        {% elif activity.activity_type == 'attendance_sheet_updated' %}
-                                        <span class="badge bg-primary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">📋 Updated</span>
-                                        {% elif activity.activity_type == 'tutorial_uploaded' %}
-                                        <span class="badge bg-purple" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; background-color: #6f42c1 !important;">📚 Tutorial</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <small class="text-muted" style="font-size: 0.85rem; display: flex; align-items: center;">
-                                        <i class="fas fa-clock me-2" style="width: 12px; text-align: center;"></i>
-                                        {{ activity.created_at[:16] if activity.created_at else 'Just now' }}
-                                    </small>
-                                    <small class="text-muted" style="font-size: 0.85rem; display: flex; align-items: center;">
-                                        <i class="fas fa-tag me-2" style="width: 12px; text-align: center;"></i>
-                                        {{ activity.activity_type.replace('_', ' ').title() }}
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="text-center py-5">
-                        <div class="feature-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 32px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-history"></i>
-                        </div>
-                        <h2>No Activities Found</h2>
-                        <p>Start by adding members or marking attendance to see activities here</p>
-                    </div>
-                {% endif %}
             </div>
-        </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <h3>No Activities Today</h3>
+                <p>Today's activities will appear here as they are created in your cell group</p>
+            </div>
+        {% endif %}
     </div>
 </div>
-<script>
-function refreshActivities() {
-    location.reload();
-}
-</script>
+{% endblock %}
+
+{% block desktop_content %}
+<div class="activity-list-desktop">
+    <!-- Header Section -->
+    <div class="activity-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="header-text">
+                <h1>Today's Activities</h1>
+                <p>Track today's activities in your cell group</p>
+                <small class="text-muted">{{ today.strftime('%B %d, %Y') if today else 'Today' }}</small>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="action-btn refresh-btn" onclick="refreshActivities()">
+                <i class="fas fa-sync-alt"></i>
+                <span>Refresh</span>
+            </button>
+            <a href="{{ url_for('main.index') }}" class="action-btn back-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Activities Grid -->
+    <div class="activities-grid">
+        {% if activities %}
+            {% for activity in activities %}
+            <div class="activity-card">
+                <div class="activity-card-header">
+                    <div class="activity-type-badge">
+                        <i class="fas fa-circle"></i>
+                        <span>{{ activity.activity_type.replace('_', ' ').title() }}</span>
+                    </div>
+                    <div class="activity-time">
+                        {% set created_at = activity.created_at %}
+                        {% if created_at is string %}
+                            {{ created_at[:19].replace('T', ' at ') }}
+                        {% else %}
+                            {{ created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="activity-card-content">
+                    <p>{{ activity.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <h3>No Activities Today</h3>
+                <p>Today's activities will appear here as they are created in your cell group</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block mobile_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+</a>
+<a href="{{ url_for('main.members') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
+</a>
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
+{% endblock %}
+
+{% block desktop_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+</a>
+<a href="{{ url_for('main.members') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
+</a>
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
 <style>
-.activity-card {
-    border: 1px solid #444;
-    margin-bottom: 1rem;
+/* ===========================================
+   MODERN ACTIVITY LIST STYLING
+   =========================================== */
+
+/* Mobile Activity List */
+.activity-list-mobile {
+    padding: 1rem;
+    padding-bottom: 6rem; /* Account for fixed bottom nav */
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    min-height: 100vh;
+}
+
+/* Desktop Activity List */
+.activity-list-desktop {
+    padding: 2rem;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    min-height: 100vh;
+}
+
+/* ===========================================
+   HEADER SECTION
+   =========================================== */
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #1F6FEB, #2c7bb6);
+    color: white;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 8px 24px rgba(31, 111, 235, 0.4);
+}
+
+.header-text h1 {
+    color: #f0f6fc;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    letter-spacing: -0.5px;
+}
+
+.header-text p {
+    color: #8b949e;
+    font-size: 1rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    color: #f0f6fc;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: linear-gradient(135deg, #30363d 0%, #21262d 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    color: #f0f6fc;
+    text-decoration: none;
+}
+
+.refresh-btn:hover {
+    background: linear-gradient(135deg, #1F6FEB, #2c7bb6);
+    border-color: #2c7bb6;
+}
+
+.back-btn:hover {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #059669;
+}
+
+/* ===========================================
+   MOBILE ACTIVITIES LIST
+   =========================================== */
+.activities-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.activity-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem 0;
+    position: relative;
+}
+
+.activity-timeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(135deg, #1F6FEB, #2c7bb6);
+    border-radius: 50%;
+    border: 3px solid #0d1117;
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.2);
+    z-index: 2;
+}
+
+.timeline-line {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: calc(100% - 12px);
+    background: linear-gradient(180deg, #30363d, transparent);
+}
+
+.activity-content {
+    flex: 1;
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
 }
-.activity-card:hover {
-    border-color: #1F6FEB;
+
+.activity-content:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(31, 111, 235, 0.2);
-}
-.dropdown-toggle::after {
-    margin-left: 0.5rem;
-}
-.feature-card {
-    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    border: 1px solid #333;
-    transition: all 0.3s ease;
-}
-.feature-card:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    transform: translateY(-2px);
-}
-.btn-outline-light {
-    border-color: #555;
-    color: #ffffff;
-}
-.btn-outline-light:hover {
-    background-color: #ffffff;
-    color: #000000;
-    border-color: #ffffff;
-}
-.btn-outline-primary {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     border-color: #1F6FEB;
+}
+
+.activity-header-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.activity-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #1F6FEB;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.activity-type i {
+    font-size: 0.5rem;
     color: #1F6FEB;
 }
-.btn-outline-primary:hover {
-    background-color: #1F6FEB;
-    color: #ffffff;
+
+.activity-time {
+    color: #8b949e;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.activity-description {
+    color: #f0f6fc;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ===========================================
+   DESKTOP ACTIVITIES GRID
+   =========================================== */
+.activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.activity-card {
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.activity-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1F6FEB, #8b5cf6, #10b981);
+}
+
+.activity-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
     border-color: #1F6FEB;
 }
+
+.activity-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.activity-type-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #1F6FEB, #2c7bb6);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.activity-type-badge i {
+    font-size: 0.5rem;
+}
+
+.activity-time {
+    color: #8b949e;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.activity-card-content {
+    color: #f0f6fc;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.activity-card-content p {
+    margin: 0;
+}
+
+/* ===========================================
+   EMPTY STATE
+   =========================================== */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #30363d, #21262d);
+    color: #8b949e;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.empty-state h3 {
+    color: #f0f6fc;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+    color: #8b949e;
+    font-size: 1rem;
+    margin: 0;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN
+   =========================================== */
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+    .activity-list-mobile {
+        padding: 0.75rem;
+        padding-bottom: 6rem;
+    }
+    
+    .activity-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .action-btn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .activity-item {
+        padding: 1rem 0;
+    }
+    
+    .activity-content {
+        padding: 1rem;
+    }
+    
+    .activity-header-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .activity-time {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 479px) {
+    .activity-list-mobile {
+        padding: 0.5rem;
+        padding-bottom: 6rem;
+    }
+    
+    .activity-header {
+        padding: 1rem;
+    }
+    
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .header-text h1 {
+        font-size: 1.5rem;
+    }
+    
+    .header-text p {
+        font-size: 0.9rem;
+    }
+    
+    .action-btn {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .activity-content {
+        padding: 0.875rem;
+    }
+    
+    .activity-description {
+        font-size: 0.9rem;
+    }
+}
+
+/* Desktop Responsive */
+@media (max-width: 1200px) {
+    .activities-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .activity-list-desktop {
+        padding: 1rem;
+    }
+    
+    .activities-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* ===========================================
+   ANIMATIONS
+   =========================================== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.activity-item,
+.activity-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.activity-item:nth-child(2) { animation-delay: 0.1s; }
+.activity-item:nth-child(3) { animation-delay: 0.2s; }
+.activity-item:nth-child(4) { animation-delay: 0.3s; }
+.activity-item:nth-child(5) { animation-delay: 0.4s; }
+
+/* ===========================================
+   ACCESSIBILITY
+   =========================================== */
+@media (prefers-reduced-motion: reduce) {
+    .activity-item,
+    .activity-card {
+        animation: none;
+    }
+    
+    .activity-content:hover,
+    .activity-card:hover {
+        transform: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .activity-content,
+    .activity-card {
+        border-width: 2px;
+    }
+    
+    .timeline-dot {
+        border-width: 2px;
+    }
+}
 </style>
-{% endblock %}
-{% block desktop_content %}
-<div class="container-fluid">
-    <!-- Header with Back Button -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <h2>Activity List</h2>
-                    <p>All activities in your cell group</p>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-outline-primary" onclick="refreshActivities()" style="border-radius: 10px;">
-                        <i class="fas fa-sync-alt me-2"></i>{{Refresh
-                    }}</button>
-                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-light" style="border-radius: 10px; padding: 8px 12px;">
-                        <i class="fas fa-arrow-left me-2"></i>Back
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Most Recent Activities -->
-    <div class="row">
-        <div class="col-12">
-            <div class="feature-card" style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); border: 1px solid #333; border-radius: 15px; padding: 1.5rem;">
-                <div class="d-flex align-items-center justify-content-between mb-4">
-                    <h2>Most Recent Activities</h2>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary" id="activityCount" style="background: linear-gradient(135deg, #1F6FEB, #2c7bb6) !important; border-radius: 8px;">{{ activities|length if activities else 0 }} activities</span>
-                    </div>
-                </div>
-                {% if activities %}
-                    <div id="activityList">
-                        {% for activity in activities %}
-                        <div class="activity-item d-flex align-items-start mb-4 p-4 rounded activity-card" 
-                             style="background: linear-gradient(135deg, #2a2a2a, #3a3a3a); border-left: 4px solid {{ get_activity_color(activity.activity_type) }}; border-radius: 16px; transition: all 0.3s ease; cursor: pointer; min-height: 80px;" 
-                             onmouseover="this.style.transform='translateX(8px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.4)'; this.style.borderLeftColor='{{ get_activity_color(activity.activity_type) }}dd';" 
-                             onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='none'; this.style.borderLeftColor='{{ get_activity_color(activity.activity_type) }}';">
-                            <div class="activity-icon me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, {{ get_activity_color(activity.activity_type) }}, {{ get_activity_color(activity.activity_type) }}dd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                                <i class="{{ get_activity_icon(activity.activity_type) }}"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <h6 class="mb-0" style="color: #ffffff; font-weight: 600; font-size: 1.1rem; line-height: 1.4;">{{ format_activity_description(activity) }}</h6>
-                                    <div class="d-flex align-items-center gap-2">
-                                        {% if activity.activity_type == 'attendance_incomplete' %}
-                                        <span class="badge bg-warning" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">⚠️ Incomplete</span>
-                                        {% elif activity.activity_type == 'user_login' %}
-                                        <span class="badge bg-info" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">🔐 Login</span>
-                                        {% elif activity.activity_type == 'member_added' %}
-                                        <span class="badge bg-success" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">➕ New</span>
-                                        {% elif activity.activity_type == 'member_deleted' %}
-                                        <span class="badge bg-danger" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">🗑️ Removed</span>
-                                        {% elif activity.activity_type == 'attendance_sheet_updated' %}
-                                        <span class="badge bg-primary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">📋 Updated</span>
-                                        {% elif activity.activity_type == 'tutorial_uploaded' %}
-                                        <span class="badge bg-purple" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; background-color: #6f42c1 !important;">📚 Tutorial</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <small class="text-muted" style="font-size: 0.85rem; display: flex; align-items: center;">
-                                        <i class="fas fa-clock me-2" style="width: 12px; text-align: center;"></i>
-                                        {{ activity.created_at[:16] if activity.created_at else 'Just now' }}
-                                    </small>
-                                    <small class="text-muted" style="font-size: 0.85rem; display: flex; align-items: center;">
-                                        <i class="fas fa-tag me-2" style="width: 12px; text-align: center;"></i>
-                                        {{ activity.activity_type.replace('_', ' ').title() }}
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="text-center py-5">
-                        <div class="feature-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 32px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-history"></i>
-                        </div>
-                        <h2>No Activities Found</h2>
-                        <p>Start by adding members or marking attendance to see activities here</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

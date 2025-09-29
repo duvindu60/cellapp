@@ -4,11 +4,13 @@
 CREATE TABLE IF NOT EXISTS public.activities (
     id UUID NOT NULL DEFAULT gen_random_uuid(),
     leader_id UUID NOT NULL,
+    user_id UUID NOT NULL,
     activity_type TEXT NOT NULL,
     description TEXT NOT NULL,
+    details JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     CONSTRAINT activities_pkey PRIMARY KEY (id),
-    CONSTRAINT check_activity_type CHECK (activity_type IN ('member_added', 'member_updated', 'member_deleted', 'attendance_marked', 'attendance_updated', 'tutorial_uploaded', 'profile_updated'))
+    CONSTRAINT check_activity_type CHECK (activity_type IN ('member_added', 'member_updated', 'member_deleted', 'attendance_marked', 'attendance_updated', 'attendance_cleared', 'attendance_incomplete', 'tutorial_uploaded', 'profile_updated'))
 ) TABLESPACE pg_default;
 
 -- Create indexes for better performance

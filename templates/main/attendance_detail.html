@@ -1,241 +1,1172 @@
 {% extends "base.html" %}
-{% import 'macros/responsive.html' as responsive %}
-{% block title %}Attendance - {{ meeting_date }} - CellApp{% endblock %}
-{% block header_title %}Attendance{% endblock %}
+
+{% block title %}Attendance - {{ meeting_date }}{% endblock %}
+
 {% block mobile_content %}
-<!-- Page Header -->
-<div class="text-center mb-4">
-    <div class="feature-icon mx-auto mb-3">
-        <i class="fas fa-user-check"></i>
-    </div>
-    <h2 class="page-title">{{ meeting_date }}</h2>
-    <p>Mark attendance for this meeting</p>
-</div>
-<!-- Attendance Summary -->
-<div class="feature-card mb-4">
-    <div class="row text-center">
-        <div class="col-6">
-            <div class="border-end" style="border-color: var(--border-color) !important; padding-right: 1rem;">
-                <h2>Present</h2>
-                <div class="text-success" style="font-size: 1.2rem; font-weight: 600;" id="presentCount">
-                    {{ attendance_data.values() | selectattr('present') | list | length }}
-                </div>
+<!-- MOBILE ATTENDANCE UI -->
+<div class="mobile-attendance-container">
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="text-white fw-bold mb-1">📱 Attendance</h3>
+                <p class="text-light mb-0">{{ meeting_date }}</p>
             </div>
-        </div>
-        <div class="col-6" style="padding-left: 1rem;">
-            <h2>Absent</h2>
-            <div class="text-danger" style="font-size: 1.2rem; font-weight: 600;" id="absentCount">
-                {{ attendance_data.values() | selectattr('absent') | list | length }}
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Members List -->
-<div class="feature-card mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2>Members</h2>
-        <span class="badge bg-primary">{{ members|length }} Members</span>
-    </div>
-    {% if members %}
-        <div class="list-group">
-            {% for member in members %}
-            <div class="list-group-item d-flex justify-content-between align-items-center" 
-                 style="background: #161B22; border: 1px solid #30363D; margin-bottom: 12px; border-radius: 8px; padding: 16px;">
-                <!-- Member Info -->
-                <div class="d-flex align-items-center flex-grow-1">
-                    <!-- Avatar -->
-                    <div class="me-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                             style="width: 40px; height: 40px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; font-weight: 600; font-size: 14px;">
-                            {{ member.name[0].upper() }}
-                        </div>
-                    </div>
-                    <!-- Member Details -->
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1" style="color: #B1BAC4; font-size: 1rem; font-weight: 600;">{{ member.name }}</h6>
-                        <div class="d-flex flex-wrap gap-2">
-                            <small class="text-muted" style="font-size: 0.8rem;">
-                                <i class="fas fa-briefcase me-1" style="color: #6E7681;"></i>{{ member.ministry or 'Not Assigned' }}
-                            </small>
-                            <small class="text-muted" style="font-size: 0.8rem;">
-                                <i class="fas fa-map-marker-alt me-1" style="color: #6E7681;"></i>{{ member.zone or 'Not Assigned' }}
-                            </small>
-                        </div>
-                    </div>
-                </div>
-                <!-- Attendance Buttons - Mobile: Enhanced -->
-                <div class="btn-group" role="group" style="gap: 8px;">
-                    <form method="POST" action="{{ url_for('main.update_attendance', meeting_date=meeting_date) }}" style="display: inline;">
-                        <input type="hidden" name="member_id" value="{{ member.id }}">
-                        <input type="hidden" name="status" value="present">
-                        <button type="submit" class="btn {{ 'btn-success' if attendance_data[member.id].present else 'btn-outline-success' }}" 
-                                style="padding: 12px 16px; font-size: 14px; font-weight: 600; min-width: 60px; min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.3s ease;"
-                                title="{{ _(\'Mark as Present\') }}"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(40, 167, 69, 0.3)';"
-                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                            <i class="fas fa-check me-1"></i>{{ _(\'Present
-                        \') }}</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('main.update_attendance', meeting_date=meeting_date) }}" style="display: inline;">
-                        <input type="hidden" name="member_id" value="{{ member.id }}">
-                        <input type="hidden" name="status" value="absent">
-                        <button type="submit" class="btn {{ 'btn-danger' if attendance_data[member.id].absent else 'btn-outline-danger' }}" 
-                                style="padding: 12px 16px; font-size: 14px; font-weight: 600; min-width: 60px; min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.3s ease;"
-                                title="{{ _(\'Mark as Absent\') }}"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220, 53, 69, 0.3)';"
-                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                            <i class="fas fa-times me-1"></i>{{ _(\'Absent
-                        \') }}</button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="text-center py-4">
-            <div class="feature-icon mx-auto mb-3">
-                <i class="fas fa-user-plus"></i>
-            </div>
-            <h2>No Members Yet</h2>
-            <p>Add members to track attendance</p>
-            <a href="{{ url_for('main.member_form') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Add First Member
+            <a href="{{ url_for('main.meeting_dates') }}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-arrow-left"></i>
             </a>
         </div>
-    {% endif %}
+    </div>
+    
+    <!-- Mobile Stats -->
+    <div class="mobile-stats">
+        <div class="row g-2">
+            <div class="col-3">
+                <div class="stat-card present">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-number" id="presentCount-mobile">0</div>
+                    <div class="stat-label">Present</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="stat-card absent">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-number" id="absentCount-mobile">0</div>
+                    <div class="stat-label">Absent</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="stat-card pending">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-number" id="pendingCount-mobile">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="stat-card total">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-number">{{ members|length }}</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Members List -->
+    <div class="mobile-members-section">
+        <h5 class="section-title">Members</h5>
+        {% if members %}
+            <div class="mobile-members-list">
+                {% for member in members %}
+                <div class="mobile-member-card {% if attendance_data[member.id].present %}status-present{% elif attendance_data[member.id].absent %}status-absent{% else %}status-pending{% endif %}" data-member-id="{{ member.id }}">
+                    <div class="member-info">
+                        <div class="member-avatar-mobile">
+                            <span class="avatar-text">{{ member.name[0].upper() }}</span>
+                        </div>
+                        <div class="member-details">
+                            <h6 class="member-name">{{ member.name }}</h6>
+                            <div class="member-meta">
+                                {% if member.phone_number %}
+                                <span class="meta-item">
+                                    <i class="fas fa-phone"></i> {{ member.phone_number }}
+                                </span>
+                                {% endif %}
+                                {% if member.ministry %}
+                                <span class="meta-item">
+                                    <i class="fas fa-church"></i> {{ member.ministry }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="member-actions">
+                        <div class="action-buttons-mobile">
+                            <button type="button" 
+                                    class="action-btn present-btn-mobile {% if attendance_data[member.id].present %}active{% endif %}"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceMobile('{{ member.id }}', 'present', '{{ meeting_date }}')">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button type="button" 
+                                    class="action-btn absent-btn-mobile {% if attendance_data[member.id].absent %}active{% endif %}"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceMobile('{{ member.id }}', 'absent', '{{ meeting_date }}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button type="button" 
+                                    class="action-btn clear-btn-mobile"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceMobile('{{ member.id }}', 'clear', '{{ meeting_date }}')">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </div>
+                        <div class="status-badge-mobile">
+                            <span class="status-text-mobile {% if attendance_data[member.id].present %}text-success{% elif attendance_data[member.id].absent %}text-danger{% else %}text-muted{% endif %}" id="status-{{ member.id }}-mobile">
+                                {% if attendance_data[member.id].present %}
+                                    Present
+                                {% elif attendance_data[member.id].absent %}
+                                    Absent
+                                {% else %}
+                                    Not marked
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-members-mobile">
+                <i class="fas fa-users"></i>
+                <h5>No members found</h5>
+                <p>Add some members to mark attendance.</p>
+            </div>
+        {% endif %}
+    </div>
 </div>
-<!-- Back Button -->
-<div class="text-center">
-    <a href="{{ url_for('main.meeting_dates') }}" class="btn btn-primary">
-        <i class="fas fa-arrow-left me-2"></i>Back to Meeting Dates
-    </a>
-</div>
+
+<!-- Mobile CSS -->
+<style>
+.mobile-attendance-container {
+        padding: 1rem;
+    min-height: calc(100vh - 5rem);
+    padding-bottom: 5rem;
+    background: #1a1a1a;
+}
+
+.mobile-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    padding: 1.5rem;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    border: 1px solid #34495e;
+}
+
+.mobile-stats {
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: #2c3e50;
+    border-radius: 15px;
+    padding: 1rem;
+        text-align: center;
+    border: 2px solid #34495e;
+    transition: all 0.3s ease;
+}
+
+.stat-card.present {
+    border-color: #27ae60;
+    background: #2c3e50;
+}
+
+.stat-card.absent {
+    border-color: #e74c3c;
+    background: #2c3e50;
+}
+
+.stat-card.pending {
+    border-color: #f39c12;
+    background: #2c3e50;
+}
+
+.stat-card.total {
+    border-color: #3498db;
+    background: #2c3e50;
+}
+
+.stat-icon {
+    font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #bdc3c7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mobile-members-section {
+    background: #2c3e50;
+        border-radius: 20px;
+        padding: 1.5rem;
+    border: 1px solid #34495e;
+}
+
+.section-title {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.mobile-members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mobile-member-card {
+    background: #34495e;
+    border-radius: 15px;
+    padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    border: 1px solid #34495e;
+}
+
+.mobile-member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    border-color: #3498db;
+}
+
+.mobile-member-card.status-present {
+    border-left: 4px solid #27ae60;
+    border-right: 4px solid #27ae60;
+    border-top: 2px solid #27ae60;
+    border-bottom: 2px solid #27ae60;
+    background: #34495e;
+}
+
+.mobile-member-card.status-absent {
+    border-left: 4px solid #e74c3c;
+    border-right: 4px solid #e74c3c;
+    border-top: 2px solid #e74c3c;
+    border-bottom: 2px solid #e74c3c;
+    background: #34495e;
+}
+
+.mobile-member-card.status-pending {
+    border-left: 4px solid #f39c12;
+    border-right: 4px solid #f39c12;
+    border-top: 2px solid #f39c12;
+    border-bottom: 2px solid #f39c12;
+    background: #34495e;
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.member-avatar-mobile {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.avatar-text {
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.member-details {
+    flex: 1;
+}
+
+.member-name {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.member-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.meta-item {
+    font-size: 0.8rem;
+    color: #bdc3c7;
+}
+
+.meta-item i {
+    margin-right: 0.5rem;
+    color: #95a5a6;
+}
+
+.member-actions {
+        display: flex;
+    flex-direction: column;
+        align-items: center;
+    gap: 0.5rem;
+}
+
+.action-buttons-mobile {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.action-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.present-btn-mobile {
+    background: #27ae60;
+    color: white;
+}
+
+.absent-btn-mobile {
+    background: #e74c3c;
+    color: white;
+}
+
+.clear-btn-mobile {
+    background: #f39c12;
+    color: white;
+}
+
+.action-btn.active {
+    transform: scale(1.2);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+
+.status-badge-mobile {
+        text-align: center;
+}
+
+.status-text-mobile {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-text-mobile.text-success {
+    background: #27ae60;
+    color: white;
+}
+
+.status-text-mobile.text-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.status-text-mobile.text-muted {
+    background: #7f8c8d;
+    color: white;
+}
+
+.no-members-mobile {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #95a5a6;
+}
+
+.no-members-mobile i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+}
+
+.no-members-mobile h5 {
+    color: #bdc3c7;
+        margin-bottom: 0.5rem;
+    }
+    
+.no-members-mobile p {
+    color: #95a5a6;
+    margin: 0;
+}
+</style>
+
+<!-- Mobile JavaScript -->
+<script>
+function updateAttendanceMobile(memberId, status, meetingDate) {
+    const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
+    const buttons = memberCard.querySelectorAll('.action-btn');
+    
+    // Add loading state
+    buttons.forEach(btn => {
+        btn.style.opacity = '0.6';
+        btn.style.pointerEvents = 'none';
+    });
+    
+    fetch(`/update_attendance/${encodeURIComponent(meetingDate)}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `member_id=${memberId}&status=${status}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            setMemberStatusMobile(memberId, status);
+            updateStatsMobile();
+            showFeedbackMobile(data.message, 'success');
+            
+            // Success animation
+            memberCard.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                memberCard.style.transform = 'scale(1)';
+            }, 200);
+        } else {
+            showFeedbackMobile(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showFeedbackMobile('Network error', 'error');
+    })
+    .finally(() => {
+        // Remove loading state
+        buttons.forEach(btn => {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        });
+    });
+}
+
+function setMemberStatusMobile(memberId, status) {
+    const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
+    const statusElement = document.getElementById(`status-${memberId}-mobile`);
+    const buttons = memberCard.querySelectorAll('.action-btn');
+    
+    // Remove all active classes
+    buttons.forEach(btn => btn.classList.remove('active'));
+    memberCard.classList.remove('status-present', 'status-absent', 'status-pending');
+    
+    if (status === 'present') {
+        memberCard.classList.add('status-present');
+        statusElement.textContent = 'Present';
+        statusElement.className = 'status-text-mobile text-success';
+        memberCard.querySelector('.present-btn-mobile').classList.add('active');
+    } else if (status === 'absent') {
+        memberCard.classList.add('status-absent');
+        statusElement.textContent = 'Absent';
+        statusElement.className = 'status-text-mobile text-danger';
+        memberCard.querySelector('.absent-btn-mobile').classList.add('active');
+    } else {
+        memberCard.classList.add('status-pending');
+        statusElement.textContent = 'Not marked';
+        statusElement.className = 'status-text-mobile text-muted';
+    }
+}
+
+function updateStatsMobile() {
+    const presentCards = document.querySelectorAll('.mobile-member-card.status-present').length;
+    const absentCards = document.querySelectorAll('.mobile-member-card.status-absent').length;
+    const pendingCards = document.querySelectorAll('.mobile-member-card.status-pending').length;
+    
+    document.getElementById('presentCount-mobile').textContent = presentCards;
+    document.getElementById('absentCount-mobile').textContent = absentCards;
+    document.getElementById('pendingCount-mobile').textContent = pendingCards;
+}
+
+function showFeedbackMobile(message, type) {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = `toast-mobile ${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Remove toast after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => document.body.removeChild(toast), 300);
+    }, 3000);
+}
+
+// Initialize mobile attendance
+document.addEventListener('DOMContentLoaded', function() {
+    updateStatsMobile();
+});
+</script>
+
+<!-- Mobile Toast Styles -->
+<style>
+.toast-mobile {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    z-index: 9999;
+        transition: all 0.3s ease;
+    border: 1px solid #34495e;
+}
+
+.toast-mobile.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-mobile.success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-color: #27ae60;
+}
+
+.toast-mobile.error {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border-color: #e74c3c;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toast-content i {
+    font-size: 1.2rem;
+}
+</style>
 {% endblock %}
+
 {% block desktop_content %}
-<!-- Page Header -->
-<div class="text-center mb-4">
-    <div class="feature-icon mx-auto mb-3">
-        <i class="fas fa-user-check"></i>
-    </div>
-    <h2 class="page-title">{{ meeting_date }}</h2>
-    <p>Mark attendance for this meeting</p>
-</div>
-<!-- Attendance Summary -->
-<div class="feature-card mb-4">
-    <div class="row text-center">
-        <div class="col-6">
-            <div class="border-end" style="border-color: var(--border-color) !important; padding-right: 2rem;">
-                <h2>Present</h2>
-                <div class="text-success" style="font-size: 1.5rem; font-weight: 700;" id="presentCount">
-                    {{ attendance_data.values() | selectattr('present') | list | length }}
-                </div>
+<!-- DESKTOP ATTENDANCE UI -->
+<div class="desktop-attendance-container">
+    <!-- Desktop Header -->
+    <div class="desktop-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="text-white fw-bold mb-1">🖥️ Attendance Management</h2>
+                <p class="text-light mb-0">{{ meeting_date }}</p>
             </div>
-        </div>
-        <div class="col-6" style="padding-left: 2rem;">
-            <h2>Absent</h2>
-            <div class="text-danger" style="font-size: 1.5rem; font-weight: 700;" id="absentCount">
-                {{ attendance_data.values() | selectattr('absent') | list | length }}
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Members List -->
-<div class="feature-card mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2>Members</h2>
-        <span class="badge bg-primary">{{ members|length }} Members</span>
-    </div>
-    {% if members %}
-        <div class="list-group">
-            {% for member in members %}
-            <div class="list-group-item d-flex justify-content-between align-items-center" 
-                 style="background: #161B22; border: 1px solid #30363D; margin-bottom: 16px; border-radius: 8px; padding: 20px;">
-                <!-- Member Info -->
-                <div class="d-flex align-items-center flex-grow-1">
-                    <!-- Avatar -->
-                    <div class="me-4">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                             style="width: 50px; height: 50px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; font-weight: 600; font-size: 18px;">
-                            {{ member.name[0].upper() }}
-                        </div>
-                    </div>
-                    <!-- Member Details -->
-                    <div class="flex-grow-1">
-                        <h5 class="mb-2" style="color: #B1BAC4; font-size: 1.2rem; font-weight: 600;">{{ member.name }}</h5>
-                        <div class="d-flex flex-wrap gap-3">
-                            <small class="text-muted" style="font-size: 0.9rem;">
-                                <i class="fas fa-briefcase me-2" style="color: #6E7681;"></i>{{ member.ministry or 'Not Assigned' }}
-                            </small>
-                            <small class="text-muted" style="font-size: 0.9rem;">
-                                <i class="fas fa-map-marker-alt me-2" style="color: #6E7681;"></i>{{ member.zone or 'Not Assigned' }}
-                            </small>
-                            {% if member.phone_number %}
-                            <small class="text-muted" style="font-size: 0.9rem;">
-                                <i class="fas fa-phone me-2" style="color: #6E7681;"></i>{{ member.phone_number }}
-                            </small>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <!-- Attendance Buttons -->
-                <div class="btn-group" role="group">
-                    <form method="POST" action="{{ url_for('main.update_attendance', meeting_date=meeting_date) }}" style="display: inline;">
-                        <input type="hidden" name="member_id" value="{{ member.id }}">
-                        <input type="hidden" name="status" value="present">
-                        <button type="submit" class="btn {{ 'btn-success' if attendance_data[member.id].present else 'btn-outline-success' }}" 
-                                style="padding: 8px 16px;">
-                            <i class="fas fa-check me-2"></i>{{ _(\'Present
-                        \') }}</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('main.update_attendance', meeting_date=meeting_date) }}" style="display: inline;">
-                        <input type="hidden" name="member_id" value="{{ member.id }}">
-                        <input type="hidden" name="status" value="absent">
-                        <button type="submit" class="btn {{ 'btn-danger' if attendance_data[member.id].absent else 'btn-outline-danger' }}" 
-                                style="padding: 8px 16px;">
-                            <i class="fas fa-times me-2"></i>{{ _(\'Absent
-                        \') }}</button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="text-center py-4">
-            <div class="feature-icon mx-auto mb-3">
-                <i class="fas fa-user-plus"></i>
-            </div>
-            <h2>No Members Yet</h2>
-            <p>Add members to track attendance</p>
-            <a href="{{ url_for('main.member_form') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Add First Member
+            <a href="{{ url_for('main.meeting_dates') }}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Back to Meeting Dates
             </a>
         </div>
-    {% endif %}
+    </div>
+
+    <!-- Desktop Stats Dashboard -->
+    <div class="desktop-stats-dashboard">
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card-desktop present">
+                    <div class="stat-icon-desktop">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number-desktop" id="presentCount-desktop">0</div>
+                        <div class="stat-label-desktop">Present</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card-desktop absent">
+                    <div class="stat-icon-desktop">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number-desktop" id="absentCount-desktop">0</div>
+                        <div class="stat-label-desktop">Absent</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card-desktop pending">
+                    <div class="stat-icon-desktop">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number-desktop" id="pendingCount-desktop">0</div>
+                        <div class="stat-label-desktop">Pending</div>
+                </div>
+            </div>
+                </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card-desktop total">
+                    <div class="stat-icon-desktop">
+            <i class="fas fa-users"></i>
+        </div>
+                    <div class="stat-content">
+                        <div class="stat-number-desktop">{{ members|length }}</div>
+                        <div class="stat-label-desktop">Total Members</div>
+        </div>
+    </div>
 </div>
-<!-- Back Button -->
-<div class="text-center">
-    <a href="{{ url_for('main.meeting_dates') }}" class="btn btn-primary">
-        <i class="fas fa-arrow-left me-2"></i>Back to Meeting Dates
-    </a>
+        </div>
+    </div>
+            
+    <!-- Desktop Members Grid -->
+    <div class="desktop-members-section">
+        <div class="section-header-desktop">
+            <h4 class="section-title-desktop">Member Attendance</h4>
+            <div class="section-subtitle">Click buttons to mark attendance status</div>
+                </div>
+                
+                {% if members %}
+            <div class="desktop-members-grid">
+                    {% for member in members %}
+                <div class="desktop-member-card {% if attendance_data[member.id].present %}status-present{% elif attendance_data[member.id].absent %}status-absent{% else %}status-pending{% endif %}" data-member-id="{{ member.id }}">
+                    <div class="member-header-desktop">
+                        <div class="member-avatar-desktop">
+                            <span class="avatar-text-desktop">{{ member.name[0].upper() }}</span>
+                        </div>
+                        <div class="member-info-desktop">
+                            <h5 class="member-name-desktop">{{ member.name }}</h5>
+                            <div class="member-details-desktop">
+                                {% if member.phone_number %}
+                                <div class="detail-item">
+                                    <i class="fas fa-phone"></i>
+                                    <span>{{ member.phone_number }}</span>
+                                </div>
+                                {% endif %}
+                                {% if member.ministry %}
+                                <div class="detail-item">
+                                    <i class="fas fa-church"></i>
+                                    <span>{{ member.ministry }}</span>
+                                </div>
+                                {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    
+                    <div class="member-actions-desktop">
+                        <div class="action-buttons-desktop">
+                            <button type="button" 
+                                    class="action-btn-desktop present-btn-desktop {% if attendance_data[member.id].present %}active{% endif %}"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceDesktop('{{ member.id }}', 'present', '{{ meeting_date }}')">
+                                <i class="fas fa-check"></i>
+                                <span>Present</span>
+                            </button>
+                            <button type="button" 
+                                    class="action-btn-desktop absent-btn-desktop {% if attendance_data[member.id].absent %}active{% endif %}"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceDesktop('{{ member.id }}', 'absent', '{{ meeting_date }}')">
+                                <i class="fas fa-times"></i>
+                                <span>Absent</span>
+                            </button>
+                            <button type="button" 
+                                    class="action-btn-desktop clear-btn-desktop"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceDesktop('{{ member.id }}', 'clear', '{{ meeting_date }}')">
+                                <i class="fas fa-undo"></i>
+                                <span>Clear</span>
+                            </button>
+                        </div>
+                        <div class="status-indicator-desktop">
+                            <span class="status-text-desktop {% if attendance_data[member.id].present %}text-success{% elif attendance_data[member.id].absent %}text-danger{% else %}text-muted{% endif %}" id="status-{{ member.id }}-desktop">
+                                {% if attendance_data[member.id].present %}
+                                    Present
+                                {% elif attendance_data[member.id].absent %}
+                                    Absent
+                                {% else %}
+                                    Not marked
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+            </div>
+                {% endfor %}
+            </div>
+                {% else %}
+            <div class="no-members-desktop">
+                <div class="no-members-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                <h4>No members found</h4>
+                <p>Add some members to mark attendance.</p>
+                </div>
+                {% endif %}
+            </div>
 </div>
-{% endblock %}
-{% block bottom_nav %}
-<div class="bottom-nav">
-    <a href="{{ url_for('main.index') }}" class="nav-item">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </a>
-    <a href="{{ url_for('main.profile') }}" class="nav-item">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-    <a href="{{ url_for('main.members') }}" class="nav-item">
-        <i class="fas fa-users"></i>
-        <span>Members</span>
-    </a>
-    <a href="{{ url_for('auth.logout') }}" class="nav-item">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Logout</span>
-    </a>
-</div>
+
+<!-- Desktop CSS -->
+<style>
+.desktop-attendance-container {
+    padding: 2rem;
+    min-height: calc(100vh - 2rem);
+    background: #1a1a1a;
+}
+
+.desktop-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    padding: 2rem;
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid #34495e;
+}
+
+.desktop-stats-dashboard {
+    margin-bottom: 2rem;
+}
+
+.stat-card-desktop {
+    background: #2c3e50;
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    border: 3px solid #34495e;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.stat-card-desktop:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+}
+
+.stat-card-desktop.present {
+    border-color: #27ae60;
+    background: #2c3e50;
+}
+
+.stat-card-desktop.absent {
+    border-color: #e74c3c;
+    background: #2c3e50;
+}
+
+.stat-card-desktop.pending {
+    border-color: #f39c12;
+    background: #2c3e50;
+}
+
+.stat-card-desktop.total {
+    border-color: #3498db;
+    background: #2c3e50;
+}
+
+.stat-icon-desktop {
+    font-size: 3rem;
+    color: white;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number-desktop {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label-desktop {
+    font-size: 1rem;
+    color: #bdc3c7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.desktop-members-section {
+    background: #2c3e50;
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid #34495e;
+}
+
+.section-header-desktop {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.section-title-desktop {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    color: #bdc3c7;
+    font-size: 1rem;
+}
+
+.desktop-members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.desktop-member-card {
+    background: #34495e;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    border: 3px solid #34495e;
+}
+
+.desktop-member-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    border-color: #3498db;
+}
+
+.desktop-member-card.status-present {
+    border-color: #27ae60;
+    background: #34495e;
+    border-width: 3px;
+}
+
+.desktop-member-card.status-absent {
+    border-color: #e74c3c;
+    background: #34495e;
+    border-width: 3px;
+}
+
+.desktop-member-card.status-pending {
+    border-color: #f39c12;
+    background: #34495e;
+    border-width: 3px;
+}
+
+.member-header-desktop {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.member-avatar-desktop {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+}
+
+.avatar-text-desktop {
+    color: white;
+    font-weight: bold;
+    font-size: 1.8rem;
+}
+
+.member-info-desktop {
+    flex: 1;
+}
+
+.member-name-desktop {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.member-details-desktop {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #bdc3c7;
+}
+
+.detail-item i {
+    color: #95a5a6;
+    width: 16px;
+}
+
+.member-actions-desktop {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.action-buttons-desktop {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.action-btn-desktop {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.action-btn-desktop:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+.present-btn-desktop {
+    background: #27ae60;
+    color: white;
+}
+
+.absent-btn-desktop {
+    background: #e74c3c;
+    color: white;
+}
+
+.clear-btn-desktop {
+    background: #f39c12;
+    color: white;
+}
+
+.action-btn-desktop.active {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+}
+
+.status-indicator-desktop {
+    text-align: center;
+}
+
+.status-text-desktop {
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-text-desktop.text-success {
+    background: #27ae60;
+    color: white;
+}
+
+.status-text-desktop.text-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.status-text-desktop.text-muted {
+    background: #7f8c8d;
+    color: white;
+}
+
+.no-members-desktop {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #95a5a6;
+}
+
+.no-members-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    color: #bdc3c7;
+}
+
+.no-members-desktop h4 {
+    color: #bdc3c7;
+    margin-bottom: 1rem;
+}
+
+.no-members-desktop p {
+    color: #95a5a6;
+    margin: 0;
+    font-size: 1.1rem;
+}
+</style>
+
+<!-- Desktop JavaScript -->
+<script>
+function updateAttendanceDesktop(memberId, status, meetingDate) {
+    const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
+    const buttons = memberCard.querySelectorAll('.action-btn-desktop');
+    
+    // Add loading state
+    buttons.forEach(btn => {
+        btn.style.opacity = '0.6';
+        btn.style.pointerEvents = 'none';
+    });
+    
+    fetch(`/update_attendance/${encodeURIComponent(meetingDate)}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `member_id=${memberId}&status=${status}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            setMemberStatusDesktop(memberId, status);
+            updateStatsDesktop();
+            showFeedbackDesktop(data.message, 'success');
+            
+            // Success animation
+            memberCard.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                memberCard.style.transform = 'scale(1)';
+            }, 200);
+        } else {
+            showFeedbackDesktop(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showFeedbackDesktop('Network error', 'error');
+    })
+    .finally(() => {
+        // Remove loading state
+        buttons.forEach(btn => {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        });
+    });
+}
+
+function setMemberStatusDesktop(memberId, status) {
+    const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
+    const statusElement = document.getElementById(`status-${memberId}-desktop`);
+    const buttons = memberCard.querySelectorAll('.action-btn-desktop');
+    
+    // Remove all active classes
+    buttons.forEach(btn => btn.classList.remove('active'));
+    memberCard.classList.remove('status-present', 'status-absent', 'status-pending');
+    
+    if (status === 'present') {
+        memberCard.classList.add('status-present');
+        statusElement.textContent = 'Present';
+        statusElement.className = 'status-text-desktop text-success';
+        memberCard.querySelector('.present-btn-desktop').classList.add('active');
+    } else if (status === 'absent') {
+        memberCard.classList.add('status-absent');
+        statusElement.textContent = 'Absent';
+        statusElement.className = 'status-text-desktop text-danger';
+        memberCard.querySelector('.absent-btn-desktop').classList.add('active');
+    } else {
+        memberCard.classList.add('status-pending');
+        statusElement.textContent = 'Not marked';
+        statusElement.className = 'status-text-desktop text-muted';
+    }
+}
+
+function updateStatsDesktop() {
+    const presentCards = document.querySelectorAll('.desktop-member-card.status-present').length;
+    const absentCards = document.querySelectorAll('.desktop-member-card.status-absent').length;
+    const pendingCards = document.querySelectorAll('.desktop-member-card.status-pending').length;
+    
+    document.getElementById('presentCount-desktop').textContent = presentCards;
+    document.getElementById('absentCount-desktop').textContent = absentCards;
+    document.getElementById('pendingCount-desktop').textContent = pendingCards;
+}
+
+function showFeedbackDesktop(message, type) {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = `toast-desktop ${type}`;
+    toast.innerHTML = `
+        <div class="toast-content-desktop">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Remove toast after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => document.body.removeChild(toast), 300);
+    }, 3000);
+}
+
+// Initialize desktop attendance
+document.addEventListener('DOMContentLoaded', function() {
+    updateStatsDesktop();
+});
+</script>
+
+<!-- Desktop Toast Styles -->
+<style>
+.toast-desktop {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    background: #2c3e50;
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 9999;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+    border: 1px solid #34495e;
+}
+
+.toast-desktop.show {
+    transform: translateX(0);
+}
+
+.toast-desktop.success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-color: #27ae60;
+}
+
+.toast-desktop.error {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border-color: #e74c3c;
+}
+
+.toast-content-desktop {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.toast-content-desktop i {
+    font-size: 1.3rem;
+}
+</style>
 {% endblock %}

@@ -1,12 +1,15 @@
 {
-  "name": "CellApp",
+  "name": "CellApp - Cell Group Management",
   "short_name": "CellApp",
-  "description": "A modern Flask web app with Supabase authentication",
+  "description": "Modern cell group management app with attendance tracking and member management",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0D1117",
-  "theme_color": "#0D1117",
+  "theme_color": "#1F6FEB",
   "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iNDgiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik05NiA0OEM3OC4zIDQ4IDY0IDYyLjMgNjQgODBWNzJDNTcuNCA3MiA1MiA3Ny40IDUyIDg0VjE0NEM1MiAxNTAuNiA1Ny40IDE1NiA2NCAxNTZIMTI4QzEzNC42IDE1NiAxNDAgMTUwLjYgMTQwIDE0NFY4NEMxNDAgNzYuNCAxMzQuNiA3MSAxMjggNzFIMTIwVjgwQzEyMCA2Mi4zIDEwNS43IDQ4IDg4IDQ4SDk2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTk2IDY0Qzg4LjMgNjQgODIgNzAuMyA4MiA3OFY4NkM4MiA5My43IDg4LjMgMTAwIDk2IDEwMEMxMDMuNyAxMDAgMTEwIDkzLjcgMTEwIDg2Vjc4QzExMCA3MC4zIDEwMy43IDY0IDk2IDY0WiIgZmlsbD0id2hpdGUiLz4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQwX2xpbmVhcl8xXzEiIHgxPSIwIiB5MT0iMCIgeDI9IjE5MiIgeTI9IjE5MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjNjY3ZWVhIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzc2NGJhMiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo=",
