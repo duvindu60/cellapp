@@ -2,219 +2,801 @@
 {% import 'macros/components.html' as components %}
 {% block title %}Meeting Dates - CellApp{% endblock %}
 
-{% block mobile_content %}
-<div class="meeting-dates-page">
-{{ components.page_header('fas fa-calendar-check', 'Meeting Dates', 'Past 4 weeks of cell meetings') }}
+{% block extra_css %}
+<style>
+/* Modern Meeting Dates - Professional UI */
 
-<!-- Meeting Dates List -->
-<div class="content-card">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2>Tuesday Meetings</h2>
-        <span class="badge bg-primary">4 Meetings</span>
-    </div>
+/* CSS Variables for Design System - Dark Theme */
+:root {
+    --primary-color: #1F6FEB;
+    --primary-dark: #1d4ed8;
+    --secondary-color: #10b981;
+    --secondary-dark: #059669;
+    --accent-color: #f59e0b;
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --bg-primary: #1e293b;
+    --bg-secondary: #21262d;
+    --bg-tertiary: #334155;
+    --border-color: #30363d;
+    --border-light: #475569;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+}
+
+/* CRITICAL FIXES - Override Base Template Dark Theme */
+
+/* Override base template container */
+.desktop-box-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: none !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    display: block !important;
+    flex-direction: unset !important;
+}
+
+.desktop-box-content {
+    background: transparent !important;
+    padding: 0 !important;
+    overflow: visible !important;
+}
+
+/* Override body styles */
+body {
+    background: #0f172a !important;
+    color: #f0f6fc !important;
+}
+
+/* Override base template dark theme */
+.modern-meeting-dates {
+    min-height: 100vh !important;
+    background: #0f172a !important;
+    padding: 2rem !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    color: #f0f6fc !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Additional critical overrides */
+.desktop-box-header {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.desktop-nav {
+    display: none !important;
+}
+
+/* Force all text to use light theme colors */
+.modern-meeting-dates h1,
+.modern-meeting-dates h2,
+.modern-meeting-dates h3,
+.modern-meeting-dates h4,
+.modern-meeting-dates h5,
+.modern-meeting-dates h6,
+.modern-meeting-dates p,
+.modern-meeting-dates span,
+.modern-meeting-dates div,
+.modern-meeting-dates a,
+.modern-meeting-dates button {
+    color: inherit !important;
+}
+
+/* Specific overrides for all elements */
+.modern-meeting-dates .hero-text h1 {
+    color: #f0f6fc !important;
+}
+
+.modern-meeting-dates .hero-text p {
+    color: #8b949e !important;
+}
+
+.modern-meeting-dates .timeline-header h2 {
+    color: #f0f6fc !important;
+}
+
+.modern-meeting-dates .meeting-info h3 {
+    color: #f0f6fc !important;
+}
+
+.modern-meeting-dates .meeting-info p {
+    color: #8b949e !important;
+}
+
+.modern-meeting-dates .stat-number {
+    color: #f0f6fc !important;
+}
+
+.modern-meeting-dates .stat-label {
+    color: #8b949e !important;
+}
+
+.modern-meeting-dates .filter-btn {
+    color: #8b949e !important;
+    background: #1e293b !important;
+    border-color: #30363d !important;
+}
+
+.modern-meeting-dates .filter-btn.active {
+    color: #f0f6fc !important;
+    background: #1F6FEB !important;
+    border-color: #1F6FEB !important;
+}
+
+.modern-meeting-dates .quick-action-btn {
+    color: #f0f6fc !important;
+}
+
+.modern-meeting-dates .quick-action-btn span {
+    color: #f0f6fc !important;
+}
+
+/* Hero Section */
+.hero-section {
+    margin-bottom: 3rem;
+}
+
+.hero-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: linear-gradient(135deg, #1e293b 0%, #21262d 100%);
+    border: 1px solid #30363d;
+    border-radius: var(--radius-xl);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #1F6FEB, #10b981, #ef4444);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.hero-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.hero-text h1 {
+    color: var(--text-primary) !important;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.025em;
+}
+
+.hero-text p {
+    color: var(--text-secondary) !important;
+    font-size: 1.125rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Stats Card */
+.stats-card {
+    background: linear-gradient(135deg, #1e293b 0%, #21262d 100%);
+    border: 1px solid #30363d;
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #1F6FEB, #10b981, #ef4444);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.stats-content {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 48px;
+    background: var(--border-color);
+}
+
+/* Timeline Container */
+.timeline-container {
+    background: linear-gradient(135deg, #1e293b 0%, #21262d 100%);
+    border: 1px solid #30363d;
+    border-radius: var(--radius-xl);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #1F6FEB, #10b981, #ef4444);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+}
+
+.timeline-header h2 {
+    color: var(--text-primary);
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.timeline-filter {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    display: block;
+    margin-bottom: 2rem;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-marker {
+    display: none;
+}
+
+.timeline-content {
+    width: 100%;
+}
+
+/* Meeting Cards */
+.meeting-card {
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    border: 1px solid #30363d;
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.meeting-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.meeting-card:hover::before {
+    left: 100%;
+}
+
+.meeting-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: #1F6FEB;
+    transform: translateY(-2px);
+}
+
+.meeting-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.meeting-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #334155;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.date-day {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1F6FEB;
+    line-height: 1;
+}
+
+.date-month {
+    font-size: 0.75rem;
+    color: #8b949e;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.meeting-info {
+    flex: 1;
+}
+
+.meeting-info h3 {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+}
+
+.meeting-info p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.meeting-actions {
+    display: flex;
+    gap: 1rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid;
+}
+
+.action-btn.primary {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.action-btn.primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.action-btn.secondary {
+    background: #1e293b;
+    color: #10b981;
+    border-color: #10b981;
+}
+
+.action-btn.secondary:hover {
+    background: #10b981;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #1e293b 0%, #21262d 100%);
+    border: 1px solid #30363d;
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-lg);
+}
+
+.quick-action-btn:hover {
+    background: linear-gradient(135deg, #21262d 0%, #1e293b 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+    color: var(--text-primary);
+    border-color: #1F6FEB;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modern-meeting-dates {
+        padding: 1rem;
+    }
     
-    <div class="list-group">
-        <!-- Week 1 -->
-        <div class="list-group-item d-flex align-items-center meeting-item">
-            <div class="feature-icon me-3 meeting-icon">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="mb-1 meeting-date">{{ week_1_date }}</h6>
-                <p class="meeting-type">Cell Meeting</p>
-            </div>
-            <div class="text-end d-flex flex-column gap-2">
-                <div class="d-flex gap-2">
-                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_1_date) }}" class="btn-custom-primary" title="View Tutorials">
-                        <i class="fas fa-book"></i>
-                    </a>
-                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="btn-custom-success" title="Mark Attendance">
-                        <i class="fas fa-user-check"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
+    .hero-content {
+        padding: 1.5rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .hero-text h1 {
+        font-size: 2rem;
+    }
+    
+    .stats-content {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .stat-divider {
+        width: 100%;
+        height: 1px;
+    }
+    
+    .timeline-container {
+        padding: 1.5rem;
+    }
+    
+    .timeline-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .timeline-item {
+        gap: 1rem;
+    }
+    
+    .meeting-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .meeting-date {
+        flex-direction: row;
+        min-width: auto;
+    }
+    
+    .meeting-actions {
+        flex-direction: column;
+    }
+    
+    .action-btn {
+        justify-content: center;
+    }
+}
 
-        <!-- Week 2 -->
-        <div class="list-group-item d-flex align-items-center meeting-item">
-            <div class="feature-icon me-3 meeting-icon">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="mb-1 meeting-date">{{ week_2_date }}</h6>
-                <p class="meeting-type">Cell Meeting</p>
-            </div>
-            <div class="text-end d-flex flex-column gap-2">
-                <div class="d-flex gap-2">
-                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_2_date) }}" class="btn-custom-primary" title="View Tutorials">
-                        <i class="fas fa-book"></i>
-                    </a>
-                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_2_date) }}" class="btn-custom-success" title="Mark Attendance">
-                        <i class="fas fa-user-check"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
+@media (max-width: 480px) {
+    .modern-meeting-dates {
+        padding: 0.5rem;
+    }
+    
+    .hero-content {
+        padding: 1rem;
+    }
+    
+    .timeline-container {
+        padding: 1rem;
+    }
+    
+    .meeting-card {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
 
-        <!-- Week 3 -->
-        <div class="list-group-item d-flex align-items-center meeting-item">
-            <div class="feature-icon me-3 meeting-icon">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="mb-1 meeting-date">{{ week_3_date }}</h6>
-                <p class="meeting-type">Cell Meeting</p>
-            </div>
-            <div class="text-end d-flex flex-column gap-2">
-                <div class="d-flex gap-2">
-                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_3_date) }}" class="btn-custom-primary" title="View Tutorials">
-                        <i class="fas fa-book"></i>
-                    </a>
-                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_3_date) }}" class="btn-custom-success" title="Mark Attendance">
-                        <i class="fas fa-user-check"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Week 4 -->
-        <div class="list-group-item d-flex align-items-center meeting-item">
-            <div class="feature-icon me-3 meeting-icon">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="mb-1 meeting-date">{{ week_4_date }}</h6>
-                <p class="meeting-type">Cell Meeting</p>
-            </div>
-            <div class="text-end d-flex flex-column gap-2">
-                <div class="d-flex gap-2">
-                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_4_date) }}" class="btn-custom-primary" title="View Tutorials">
-                        <i class="fas fa-book"></i>
-                    </a>
-                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_4_date) }}" class="btn-custom-success" title="Mark Attendance">
-                        <i class="fas fa-user-check"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Back Button -->
-<div class="d-grid">
-    <a href="{{ url_for('main.index') }}" class="btn btn-outline-light">
-        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-    </a>
-</div>
-</div>
+{% block mobile_content %}
 {% endblock %}
 
 {% block desktop_content %}
-<div class="page-container">
-    <div class="row justify-content-center">
-        <div class="col-12">
-            {{ components.page_header('fas fa-calendar-check', 'Meeting Dates', 'Past 4 weeks of cell meetings') }}
-            
-            <!-- Meeting Dates List -->
-            <div class="content-card">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h2>Tuesday Meetings</h2>
-                    <span class="badge bg-primary">4 Meetings</span>
+<div class="modern-meeting-dates">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 2V5M16 2V5M3.5 9.09H20.5M21 8.5V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 13H8.01M12 13H12.01M16 13H16.01M8 17H8.01M12 17H12.01M16 17H16.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="hero-text">
+                <h1>Meeting Schedule</h1>
+                <p>Track your cell group meetings and activities</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-container">
+        <!-- Stats Card -->
+        <div class="stats-card">
+            <div class="stats-content">
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 2V5M16 2V5M3.5 9.09H20.5M21 8.5V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number">4</span>
+                        <span class="stat-label">Recent Meetings</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meetings Timeline -->
+        <div class="timeline-container">
+            <div class="timeline-header">
+                <h2>Meeting Timeline</h2>
+                <div class="timeline-filter">
+                    <button class="filter-btn active">All</button>
+                    <button class="filter-btn">This Month</button>
+                </div>
                 </div>
                 
-                <div class="list-group">
-                    <!-- Week 1 -->
-                    <div class="list-group-item d-flex align-items-center meeting-item">
-                        <div class="feature-icon me-3 meeting-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1 meeting-date">{{ week_1_date }}</h6>
-                            <p class="meeting-type">Cell Meeting</p>
-                        </div>
-                        <div class="text-end d-flex flex-column gap-2">
-                            <div class="d-flex gap-2">
-                                <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_1_date) }}" class="btn-custom-primary" title="View Tutorials">
-                                    <i class="fas fa-book"></i>
-                                </a>
-                                <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="btn-custom-success" title="Mark Attendance">
-                                    <i class="fas fa-user-check"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Week 2 -->
-                    <div class="list-group-item d-flex align-items-center meeting-item">
-                        <div class="feature-icon me-3 meeting-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1 meeting-date">{{ week_2_date }}</h6>
-                            <p class="meeting-type">Cell Meeting</p>
-                        </div>
-                        <div class="text-end d-flex flex-column gap-2">
-                            <div class="d-flex gap-2">
-                                <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_2_date) }}" class="btn-custom-primary" title="View Tutorials">
-                                    <i class="fas fa-book"></i>
-                                </a>
-                                <a href="{{ url_for('main.attendance_detail', meeting_date=week_2_date) }}" class="btn-custom-success" title="Mark Attendance">
-                                    <i class="fas fa-user-check"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Week 3 -->
-                    <div class="list-group-item d-flex align-items-center meeting-item">
-                        <div class="feature-icon me-3 meeting-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1 meeting-date">{{ week_3_date }}</h6>
-                            <p class="meeting-type">Cell Meeting</p>
-                        </div>
-                        <div class="text-end d-flex flex-column gap-2">
-                            <div class="d-flex gap-2">
-                                <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_3_date) }}" class="btn-custom-primary" title="View Tutorials">
-                                    <i class="fas fa-book"></i>
-                                </a>
-                                <a href="{{ url_for('main.attendance_detail', meeting_date=week_3_date) }}" class="btn-custom-success" title="Mark Attendance">
-                                    <i class="fas fa-user-check"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Week 4 -->
-                    <div class="list-group-item d-flex align-items-center meeting-item">
-                        <div class="feature-icon me-3 meeting-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1 meeting-date">{{ week_4_date }}</h6>
-                            <p class="meeting-type">Cell Meeting</p>
-                        </div>
-                        <div class="text-end d-flex flex-column gap-2">
-                            <div class="d-flex gap-2">
-                                <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_4_date) }}" class="btn-custom-primary" title="View Tutorials">
-                                    <i class="fas fa-book"></i>
-                                </a>
-                                <a href="{{ url_for('main.attendance_detail', meeting_date=week_4_date) }}" class="btn-custom-success" title="Mark Attendance">
-                                    <i class="fas fa-user-check"></i>
-                                </a>
+            <div class="timeline">
+                <!-- Meeting 1 -->
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="meeting-card">
+                            <div class="meeting-header">
+                                <div class="meeting-date">
+                                    <span class="date-day">{{ week_1_date.split(',')[0].split()[-1] }}</span>
+                                    <span class="date-month">{{ week_1_date.split(',')[0].split()[0] }}</span>
+                                </div>
+                                <div class="meeting-info">
+                                    <h3>{{ week_1_date }}</h3>
+                                    <p>Cell Group Meeting</p>
+                                </div>
+                                <div class="meeting-actions">
+                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_1_date) }}" class="action-btn primary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Tutorials</span>
+                                    </a>
+                                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="action-btn secondary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Attendance</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Meeting 2 -->
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="meeting-card">
+                            <div class="meeting-header">
+                                <div class="meeting-date">
+                                    <span class="date-day">{{ week_2_date.split(',')[0].split()[-1] }}</span>
+                                    <span class="date-month">{{ week_2_date.split(',')[0].split()[0] }}</span>
+                                </div>
+                                <div class="meeting-info">
+                                    <h3>{{ week_2_date }}</h3>
+                                    <p>Cell Group Meeting</p>
+                                </div>
+                                <div class="meeting-actions">
+                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_2_date) }}" class="action-btn primary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Tutorials</span>
+                                    </a>
+                                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_2_date) }}" class="action-btn secondary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Attendance</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meeting 3 -->
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="meeting-card">
+                            <div class="meeting-header">
+                                <div class="meeting-date">
+                                    <span class="date-day">{{ week_3_date.split(',')[0].split()[-1] }}</span>
+                                    <span class="date-month">{{ week_3_date.split(',')[0].split()[0] }}</span>
+                                </div>
+                                <div class="meeting-info">
+                                    <h3>{{ week_3_date }}</h3>
+                                    <p>Cell Group Meeting</p>
+                                </div>
+                                <div class="meeting-actions">
+                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_3_date) }}" class="action-btn primary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Tutorials</span>
+                                    </a>
+                                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_3_date) }}" class="action-btn secondary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Attendance</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meeting 4 -->
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="meeting-card">
+                            <div class="meeting-header">
+                                <div class="meeting-date">
+                                    <span class="date-day">{{ week_4_date.split(',')[0].split()[-1] }}</span>
+                                    <span class="date-month">{{ week_4_date.split(',')[0].split()[0] }}</span>
+                                </div>
+                                <div class="meeting-info">
+                                    <h3>{{ week_4_date }}</h3>
+                                    <p>Cell Group Meeting</p>
+                                </div>
+                                <div class="meeting-actions">
+                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_4_date) }}" class="action-btn primary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Tutorials</span>
+                                    </a>
+                                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_4_date) }}" class="action-btn secondary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Attendance</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
             </div>
 
-            <!-- Back Button -->
-            <div class="d-grid">
-                <a href="{{ url_for('main.index') }}" class="btn btn-outline-light">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                </a>
-            </div>
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{{ url_for('main.index') }}" class="quick-action-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Back to Dashboard</span>
+            </a>
         </div>
     </div>
 </div>
@@ -257,382 +839,3 @@
     <span>Logout</span>
 </a>
 {% endblock %}
-
-<style>
-/* Meeting Dates Page Container */
-.meeting-dates-page {
-    padding: 1rem;
-    padding-bottom: 6rem; /* Add extra padding to prevent content from being cut off by fixed bottom nav */
-    min-height: 100vh;
-    background: #0f172a;
-}
-
-/* Meeting Dates Page - Profile Color Scheme */
-.meeting-item {
-    background: #1e293b;
-    border: 1px solid #475569;
-    margin-bottom: 12px;
-    border-radius: 12px;
-    padding: 16px;
-    transition: all 0.3s ease;
-}
-
-.meeting-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.meeting-icon {
-    width: 45px;
-    height: 45px;
-    font-size: 20px;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    color: white;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.meeting-date {
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.meeting-type {
-    color: #cbd5e1;
-    margin-bottom: 0;
-}
-
-/* Custom Button Styles - Enhanced Touch-Friendly Design */
-.btn-custom-primary {
-    background: linear-gradient(135deg, #334155 0%, #475569 100%);
-    border: 3px solid #3b82f6;
-    color: #3b82f6;
-    border-radius: 20px;
-    padding: 1.25rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 64px;
-    min-width: 64px;
-    width: 64px;
-    height: 64px;
-    aspect-ratio: 1;
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.btn-custom-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.4), transparent);
-    transition: left 0.6s ease;
-}
-
-.btn-custom-primary:hover {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    transform: translateY(-3px) scale(1.08);
-    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.5);
-    text-decoration: none;
-    border-color: #1d4ed8;
-}
-
-.btn-custom-primary:hover::before {
-    left: 100%;
-}
-
-.btn-custom-primary:active {
-    transform: translateY(-1px) scale(1.05);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.6);
-    transition: all 0.1s ease;
-}
-
-.btn-custom-success {
-    background: linear-gradient(135deg, #334155 0%, #475569 100%);
-    border: 3px solid #10b981;
-    color: #10b981;
-    border-radius: 20px;
-    padding: 1.25rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 64px;
-    min-width: 64px;
-    width: 64px;
-    height: 64px;
-    aspect-ratio: 1;
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.btn-custom-success::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), transparent);
-    transition: left 0.6s ease;
-}
-
-.btn-custom-success:hover {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    transform: translateY(-3px) scale(1.08);
-    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.5);
-    text-decoration: none;
-    border-color: #059669;
-}
-
-.btn-custom-success:hover::before {
-    left: 100%;
-}
-
-.btn-custom-success:active {
-    transform: translateY(-1px) scale(1.05);
-    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.6);
-    transition: all 0.1s ease;
-}
-
-/* Mobile-specific button improvements - Extra Touch-Friendly */
-@media (max-width: 768px) {
-    .btn-custom-primary,
-    .btn-custom-success {
-        padding: 1.5rem;
-        font-size: 1.75rem;
-        min-height: 72px;
-        min-width: 72px;
-        width: 72px;
-        height: 72px;
-        border-radius: 24px;
-        border-width: 4px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    }
-    
-    /* Enhanced hover effects for mobile */
-    .btn-custom-primary:hover,
-    .btn-custom-success:hover {
-        transform: translateY(-4px) scale(1.1);
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-    }
-    
-    /* Button container improvements */
-    .d-flex.gap-2 {
-        gap: 1.5rem !important;
-        flex-wrap: nowrap;
-    }
-}
-    
-/* Meeting item mobile layout improvements - Touch-Optimized */
-@media (max-width: 768px) {
-    .meeting-item {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-        padding: 2rem;
-        margin-bottom: 20px;
-        border-radius: 20px;
-        background: #1e293b;
-        border: 2px solid #475569;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        transition: all 0.3s ease;
-    }
-    
-    .meeting-item:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-        border-color: #3b82f6;
-    }
-    
-    .meeting-item .d-flex.align-items-center {
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
-    }
-    
-    .meeting-item .feature-icon.me-3 {
-        margin-right: 0 !important;
-        margin-bottom: 1rem;
-        width: 60px;
-        height: 60px;
-        border-radius: 16px;
-    }
-    
-    .meeting-item .flex-grow-1 {
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-    
-    .meeting-item .text-end {
-        text-align: center !important;
-        width: 100%;
-        margin-top: 1.5rem;
-    }
-    
-    .meeting-item .text-end .d-flex {
-        justify-content: center;
-        width: 100%;
-    }
-    
-    .meeting-date {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-    
-    .meeting-type {
-        font-size: 1rem;
-        margin-bottom: 1rem;
-    }
-}
-
-/* Very small mobile screens - Maximum Touch-Friendly */
-@media (max-width: 480px) {
-    .btn-custom-primary,
-    .btn-custom-success {
-        padding: 1.75rem;
-        font-size: 2rem;
-        min-height: 80px;
-        min-width: 80px;
-        width: 80px;
-        height: 80px;
-        border-radius: 28px;
-        border-width: 4px;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
-    }
-    
-    /* Enhanced hover effects for small mobile */
-    .btn-custom-primary:hover,
-    .btn-custom-success:hover {
-        transform: translateY(-5px) scale(1.12);
-        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
-    }
-    
-    .d-flex.gap-2 {
-        gap: 2rem !important;
-    }
-    
-    .meeting-item {
-        padding: 2rem;
-        margin-bottom: 24px;
-        border-radius: 20px;
-    }
-}
-
-/* Badge Styles */
-.badge-custom {
-    background: #334155;
-    color: #94a3b8;
-    border: 1px solid #475569;
-    border-radius: 6px;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-/* Content Card */
-.content-card {
-    background: #1e293b;
-    border: 1px solid #475569;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.content-card h2 {
-    color: white;
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 0;
-}
-
-.badge.bg-primary {
-    background: #3b82f6 !important;
-    color: white;
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-/* List Group Override */
-.list-group-item {
-    background: transparent;
-    border: none;
-    padding: 0;
-}
-
-/* Page Header */
-.page-header {
-    text-align: center;
-    margin-bottom: 2rem;
-    padding: 2rem 1rem;
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    border-radius: 20px;
-    border: 1px solid #475569;
-    position: relative;
-    overflow: hidden;
-}
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
-}
-
-.page-header-icon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    color: white;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    margin: 0 auto 1rem auto;
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-}
-
-.page-header h1 {
-    color: white;
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.page-header p {
-    color: #cbd5e1;
-    font-size: 1rem;
-    margin-bottom: 0;
-}
-</style>

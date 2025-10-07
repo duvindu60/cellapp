@@ -3,6 +3,7 @@ from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
 from utils.activity_logger import log_activity
+from utils.device_detector import get_template_suffix
 
 # Load environment variables
 load_dotenv()
@@ -27,12 +28,14 @@ def login():
         
         if not mobile or not password:
             flash("Mobile number and password are required", 'error')
-            return render_template('auth/login.html')
+            template_name = f'auth/login{get_template_suffix()}.html'
+            return render_template(template_name)
         
         # Validate mobile number format
         if len(mobile) != 10 or not mobile.isdigit():
             flash("Please enter a valid 10-digit mobile number", 'error')
-            return render_template('auth/login.html')
+            template_name = f'auth/login{get_template_suffix()}.html'
+            return render_template(template_name)
         
         # Simple authentication - accept any mobile + password for testing
         if password == '123456':  # Simple password for testing
@@ -61,7 +64,8 @@ def login():
         else:
             flash("Invalid mobile number or password", 'error')
     
-    return render_template('auth/login.html')
+    template_name = f'auth/login{get_template_suffix()}.html'
+    return render_template(template_name)
 
 @auth_bp.route('/logout')
 def logout():

@@ -2,75 +2,6 @@
 {% import 'macros/components.html' as components %}
 {% block title %}Meeting Tutorials - {{ meeting_date }}{% endblock %}
 {% block mobile_content %}
-<div class="meeting-tutorials-page">
-<!-- Meeting Header -->
-<div class="feature-card mb-4" style="padding: 1.5rem;">
-    <div class="text-center">
-        <div class="feature-icon mx-auto mb-3" style="width: 60px; height: 60px; font-size: 24px; background: linear-gradient(135deg, #1F6FEB, #2c7bb6); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-            {% if is_latest %}
-                <i class="fas fa-book"></i>
-            {% else %}
-                <i class="fas fa-calendar-day"></i>
-            {% endif %}
-        </div>
-        <h4 class="mb-2" style="color: var(--text-dark);">{{ meeting_date }}</h4>
-        {% if is_latest %}
-            <p>Latest Tutorial Available</p>
-        {% elif is_next_week %}
-            <p>Next Week Meeting</p>
-        {% else %}
-            <p>Cell Meeting Tutorials</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Tutorials List -->
-{% if tutorials %}
-    <div class="tutorials-list">
-        {% for tutorial in tutorials %}
-        <div class="tutorial-card-mobile">
-            <div class="tutorial-header">
-                <div class="tutorial-icon">
-                    <i class="fas fa-file-pdf"></i>
-                </div>
-                <div class="tutorial-info">
-                    <h3>{{ tutorial.tutorial_name or 'Tutorial' }}</h3>
-                    <p class="tutorial-date">{{ tutorial.meeting_date }}</p>
-                </div>
-            </div>
-            {% if tutorial.description %}
-            <div class="tutorial-description">
-                <p>{{ tutorial.description }}</p>
-            </div>
-            {% endif %}
-            <div class="tutorial-footer">
-                <small class="text-muted">
-                    Uploaded: {{ tutorial.uploaded_at[:19].replace('T', ' at ') if tutorial.uploaded_at else 'Recently' }}
-                </small>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <div class="feature-card text-center" style="padding: 3rem 1.5rem;">
-        <div class="feature-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 32px; background: linear-gradient(135deg, #6c757d, #adb5bd); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <h2>No Tutorials Yet</h2>
-        <p class="text-muted mb-0">No tutorials have been uploaded for this meeting date yet.</p>
-        {% if is_next_week %}
-        <p class="text-muted mt-2">This is the next week's meeting date.</p>
-        {% endif %}
-    </div>
-{% endif %}
-
-<!-- Back Button -->
-<div class="text-center mt-4">
-    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
-        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-    </a>
-</div>
-</div>
 {% endblock %}
 {% block desktop_content %}
 <div class="page-container">
@@ -224,31 +155,6 @@
     font-size: 0.8rem;
 }
 
-/* Mobile specific improvements */
-@media (max-width: 768px) {
-    .tutorial-card-mobile {
-        margin-bottom: 1rem;
-        padding: 1.25rem;
-    }
-    
-    .tutorial-header {
-        gap: 0.75rem;
-    }
-    
-    .tutorial-icon {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
-    }
-    
-    .tutorial-info h3 {
-        font-size: 1.1rem;
-    }
-    
-    .tutorial-date {
-        font-size: 0.85rem;
-    }
-}
 
 /* Desktop specific improvements */
 @media (min-width: 992px) {

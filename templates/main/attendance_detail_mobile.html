@@ -1,0 +1,796 @@
+{% extends "base.html" %}
+{% block title %}Attendance - {{ meeting_date }}{% endblock %}
+
+{% block mobile_content %}
+<!-- Mobile Attendance UI -->
+<div class="mobile-attendance-container">
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="header-text">
+                <h1>Attendance</h1>
+                <p>{{ meeting_date }}</p>
+            </div>
+        </div>
+        <a href="{{ url_for('main.meeting_dates') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
+    
+    <!-- Mobile Stats -->
+    <div class="mobile-stats">
+        <div class="stats-grid">
+            <div class="stat-card present">
+                <div class="stat-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="stat-number" id="presentCount-mobile">0</div>
+                <div class="stat-label">Present</div>
+            </div>
+            <div class="stat-card absent">
+                <div class="stat-icon">
+                    <i class="fas fa-times"></i>
+                </div>
+                <div class="stat-number" id="absentCount-mobile">0</div>
+                <div class="stat-label">Absent</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number" id="pendingCount-mobile">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card total">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">{{ members|length }}</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Members List -->
+    <div class="mobile-members-section">
+        <div class="section-header">
+            <h2>Members</h2>
+            <div class="section-actions">
+                <button class="action-btn bulk-present" onclick="markAllPresent()">
+                    <i class="fas fa-check-double"></i>All Present
+                </button>
+                <button class="action-btn bulk-clear" onclick="clearAllAttendance()">
+                    <i class="fas fa-eraser"></i>Clear All
+                </button>
+            </div>
+        </div>
+        
+        {% if members %}
+            <div class="mobile-members-list">
+                {% for member in members %}
+                <div class="mobile-member-card {% if attendance_data[member.id].present %}status-present{% elif attendance_data[member.id].absent %}status-absent{% else %}status-pending{% endif %}" data-member-id="{{ member.id }}">
+                    <div class="member-info">
+                        <div class="member-avatar">
+                            <span class="avatar-text">{{ member.name[0].upper() }}</span>
+                        </div>
+                        <div class="member-details">
+                            <h3 class="member-name">{{ member.name }}</h3>
+                            <div class="member-meta">
+                                {% if member.phone_number %}
+                                <span class="meta-item">
+                                    <i class="fas fa-phone"></i> {{ member.phone_number }}
+                                </span>
+                                {% endif %}
+                                {% if member.ministry %}
+                                <span class="meta-item">
+                                    <i class="fas fa-church"></i> {{ member.ministry }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="member-actions">
+                        <div class="action-buttons">
+                            <button type="button" 
+                                    class="action-btn present-btn {% if attendance_data[member.id].present %}active{% endif %}"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceMobile('{{ member.id }}', 'present', '{{ meeting_date }}')">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button type="button" 
+                                    class="action-btn absent-btn {% if attendance_data[member.id].absent %}active{% endif %}"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceMobile('{{ member.id }}', 'absent', '{{ meeting_date }}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button type="button" 
+                                    class="action-btn clear-btn"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="updateAttendanceMobile('{{ member.id }}', 'clear', '{{ meeting_date }}')">
+                                <i class="fas fa-eraser"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>No Members</h3>
+                <p>No members found for this cell group</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block mobile_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+</a>
+<a href="{{ url_for('main.members') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
+</a>
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Mobile Attendance Page Styling */
+.mobile-attendance-container {
+    padding: 1rem;
+    padding-bottom: 6rem; /* Add extra padding to prevent content from being cut off by fixed bottom nav */
+    min-height: 100vh;
+    background: #0f172a;
+}
+
+/* Mobile Header */
+.mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
+    border-radius: 20px 20px 0 0;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.header-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.header-text h1 {
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+}
+
+.header-text p {
+    color: #8b949e;
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.back-btn {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    color: #f0f6fc;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.back-btn:hover {
+    background: linear-gradient(135deg, #30363d 0%, #21262d 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    color: #f0f6fc;
+    text-decoration: none;
+}
+
+/* Mobile Stats */
+.mobile-stats {
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 16px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.stat-card.present::before {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.stat-card.absent::before {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.stat-card.pending::before {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.stat-card.total::before {
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+    height: 4px;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 18px;
+    color: white;
+}
+
+.stat-card.present .stat-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-card.absent .stat-icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.stat-card.pending .stat-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-card.total .stat-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #8b949e;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Mobile Members Section */
+.mobile-members-section {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-members-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
+    border-radius: 20px 20px 0 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.section-header h2 {
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.section-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    background: #21262d;
+    color: #f0f6fc;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.action-btn:hover {
+    background: #30363d;
+    border-color: #64748b;
+    transform: translateY(-1px);
+}
+
+.bulk-present {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #059669;
+    color: white;
+}
+
+.bulk-present:hover {
+    background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.bulk-clear {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #dc2626;
+    color: white;
+}
+
+.bulk-clear:hover {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+/* Mobile Members List */
+.mobile-members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.mobile-member-card {
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-member-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.mobile-member-card.status-present::before {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.mobile-member-card.status-absent::before {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.mobile-member-card.status-pending::before {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.mobile-member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-member-card:hover::before {
+    opacity: 1;
+    height: 4px;
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.member-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.member-details {
+    flex: 1;
+}
+
+.member-name {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.member-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.meta-item {
+    color: #8b949e;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-item i {
+    font-size: 12px;
+    width: 12px;
+}
+
+.member-actions {
+    position: relative;
+    z-index: 1;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.action-buttons .action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    padding: 0;
+    border: 2px solid;
+    transition: all 0.3s ease;
+}
+
+.present-btn {
+    background: transparent;
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.present-btn.active {
+    background: #10b981;
+    color: white;
+}
+
+.present-btn:hover {
+    background: #10b981;
+    color: white;
+    transform: scale(1.1);
+}
+
+.absent-btn {
+    background: transparent;
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.absent-btn.active {
+    background: #ef4444;
+    color: white;
+}
+
+.absent-btn:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.1);
+}
+
+.clear-btn {
+    background: transparent;
+    border-color: #6b7280;
+    color: #6b7280;
+}
+
+.clear-btn:hover {
+    background: #6b7280;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: #21262d;
+    border-radius: 16px;
+    border: 1px solid #30363d;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #30363d, #21262d);
+    color: #8b949e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.empty-state h3 {
+    color: #f0f6fc;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #8b949e;
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 575px) {
+    .mobile-header {
+        padding: 1.25rem;
+        gap: 0.75rem;
+    }
+    
+    .header-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .header-text h1 {
+        font-size: 1.2rem;
+    }
+    
+    .header-text p {
+        font-size: 0.85rem;
+    }
+    
+    .stats-grid {
+        gap: 0.75rem;
+    }
+    
+    .stat-card {
+        padding: 0.875rem;
+    }
+    
+    .stat-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+    
+    .stat-number {
+        font-size: 1.3rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+    }
+    
+    .mobile-members-section {
+        padding: 1.25rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .action-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+    }
+    
+    .mobile-member-card {
+        padding: 1rem;
+    }
+    
+    .member-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+    }
+    
+    .member-name {
+        font-size: 1rem;
+    }
+    
+    .meta-item {
+        font-size: 0.8rem;
+    }
+    
+    .action-buttons .action-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update attendance counts
+function updateCounts() {
+    const presentCount = document.querySelectorAll('.status-present').length;
+    const absentCount = document.querySelectorAll('.status-absent').length;
+    const pendingCount = document.querySelectorAll('.status-pending').length;
+    
+    document.getElementById('presentCount-mobile').textContent = presentCount;
+    document.getElementById('absentCount-mobile').textContent = absentCount;
+    document.getElementById('pendingCount-mobile').textContent = pendingCount;
+}
+
+// Update attendance for mobile
+function updateAttendanceMobile(memberId, status, meetingDate) {
+    const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
+    const presentBtn = memberCard.querySelector('.present-btn');
+    const absentBtn = memberCard.querySelector('.absent-btn');
+    
+    // Remove all status classes
+    memberCard.classList.remove('status-present', 'status-absent', 'status-pending');
+    presentBtn.classList.remove('active');
+    absentBtn.classList.remove('active');
+    
+    // Apply new status
+    if (status === 'present') {
+        memberCard.classList.add('status-present');
+        presentBtn.classList.add('active');
+    } else if (status === 'absent') {
+        memberCard.classList.add('status-absent');
+        absentBtn.classList.add('active');
+    } else {
+        memberCard.classList.add('status-pending');
+    }
+    
+    // Update counts
+    updateCounts();
+    
+    // Here you would typically make an API call to save the attendance
+    console.log(`Updated ${memberId} to ${status} for ${meetingDate}`);
+}
+
+// Mark all members as present
+function markAllPresent() {
+    const memberCards = document.querySelectorAll('.mobile-member-card');
+    memberCards.forEach(card => {
+        const memberId = card.getAttribute('data-member-id');
+        updateAttendanceMobile(memberId, 'present', '{{ meeting_date }}');
+    });
+}
+
+// Clear all attendance
+function clearAllAttendance() {
+    const memberCards = document.querySelectorAll('.mobile-member-card');
+    memberCards.forEach(card => {
+        const memberId = card.getAttribute('data-member-id');
+        updateAttendanceMobile(memberId, 'clear', '{{ meeting_date }}');
+    });
+}
+
+// Initialize counts on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCounts();
+});
+</script>
+{% endblock %}

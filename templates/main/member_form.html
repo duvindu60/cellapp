@@ -152,15 +152,6 @@
 {% endmacro %}
 
 {% block mobile_content %}
-<div class="member-form-page">
-<!-- Mobile Form Wrapper -->
-<div class="feature-card" style="background: #161B22; border: 1px solid #30363D; border-radius: 12px; padding: 15px; margin: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); position: relative; z-index: 1;">
-    <div style="max-width: 600px; margin: 0 auto;">
-        <h3 style="color: #B1BAC4; font-size: 1.2rem; margin-bottom: 15px; text-align: center;">Add New Member</h3>
-        {{ render_member_form(is_mobile=true) }}
-    </div>
-</div>
-</div>
 {% endblock %}
 
 {% block desktop_content %}
@@ -279,17 +270,6 @@
     color: var(--text-muted) !important;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-    .feature-card {
-        margin: 16px;
-        padding: 20px;
-    }
-    
-    .form-control, .form-select {
-        font-size: 16px !important; /* Prevents zoom on iOS */
-    }
-}
 </style>
 {% endblock %}
 

@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% block title %}Attendance List - CellApp{% endblock %}
+
+{% block desktop_content %}
+<div class="attendance-list-page">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="header-text">
+                <h1>Attendance List</h1>
+                <p>View attendance records and completion status</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance List -->
+    <div class="attendance-list-card">
+        <div class="card-header">
+            <h3><i class="fas fa-list me-2"></i>Attendance Overview</h3>
+        </div>
+        
+        <div class="attendance-content">
+            {% if attendance_list %}
+                <div class="attendance-grid">
+                    {% for attendance in attendance_list %}
+                        <div class="attendance-item">
+                            <div class="attendance-header">
+                                <div class="attendance-date">{{ attendance.date }}</div>
+                                <div class="attendance-status {{ attendance.status }}">
+                                    {% if attendance.status == 'complete' %}
+                                        <i class="fas fa-check-circle"></i> Complete
+                                    {% elif attendance.status == 'partial' %}
+                                        <i class="fas fa-exclamation-triangle"></i> Partial
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> Incomplete
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="attendance-info">
+                                <div class="attendance-count">{{ attendance.count }}/{{ attendance.total }} Members</div>
+                                <div class="attendance-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: {{ (attendance.count / attendance.total * 100) if attendance.total > 0 else 0 }}%"></div>
+                                    </div>
+                                    <div class="progress-text">{{ "%.0f"|format((attendance.count / attendance.total * 100) if attendance.total > 0 else 0) }}% Complete</div>
+                                </div>
+                            </div>
+                            <div class="attendance-actions">
+                                <a href="{{ url_for('main.attendance_detail', meeting_date=attendance.date) }}" class="btn btn-primary">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3>No Attendance Records</h3>
+                    <p>No attendance records have been created yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block desktop_nav %}
+<a href="{{ url_for('main.index') }}" class="nav-link active">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+</a>
+<a href="{{ url_for('main.members') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span>Members</span>
+</a>
+<a href="{{ url_for('main.profile') }}" class="nav-link">
+    <i class="fas fa-user"></i>
+    <span>Profile</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="nav-link">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Logout</span>
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ===========================================
+   ATTENDANCE LIST DESKTOP STYLING
+   =========================================== */
+
+.attendance-list-page {
+    background: #0f172a;
+    min-height: 100vh;
+    padding: 2rem;
+    color: white;
+}
+
+.page-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 16px;
+    border: 1px solid #475569;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.header-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: white;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+}
+
+.header-text h1 {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.header-text p {
+    color: #94a3b8;
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.attendance-list-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-bottom: 1px solid #475569;
+}
+
+.card-header h3 {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.attendance-content {
+    padding: 2rem;
+}
+
+.attendance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.attendance-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.attendance-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #059669);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.attendance-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.attendance-item:hover::before {
+    opacity: 1;
+}
+
+.attendance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.attendance-date {
+    color: #3b82f6;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.attendance-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+.attendance-status.complete {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.attendance-status.partial {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.attendance-status.incomplete {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.attendance-info {
+    margin-bottom: 1.5rem;
+}
+
+.attendance-count {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.attendance-progress {
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.attendance-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #94a3b8;
+    grid-column: span 2;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: white;
+    font-size: 1.5rem;
+    margin: 0 0 0.75rem 0;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .attendance-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .attendance-list-page {
+        padding: 1rem;
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .header-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+    
+    .header-text h1 {
+        font-size: 2rem;
+    }
+    
+    .attendance-content {
+        padding: 1rem;
+    }
+    
+    .attendance-item {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
