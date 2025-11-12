@@ -412,12 +412,22 @@
 <script>
 function updateAttendanceMobile(memberId, status, meetingDate) {
     const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
+    
+    // Check if memberCard exists
+    if (!memberCard) {
+        console.error(`Member card not found for memberId: ${memberId}`);
+        showFeedbackMobile('Error: Member card not found', 'error');
+        return;
+    }
+    
     const buttons = memberCard.querySelectorAll('.action-btn');
     
     // Add loading state
     buttons.forEach(btn => {
-        btn.style.opacity = '0.6';
-        btn.style.pointerEvents = 'none';
+        if (btn) {
+            btn.style.opacity = '0.6';
+            btn.style.pointerEvents = 'none';
+        }
     });
     
     fetch(`/update_attendance/${encodeURIComponent(meetingDate)}`, {
@@ -435,10 +445,14 @@ function updateAttendanceMobile(memberId, status, meetingDate) {
             showFeedbackMobile(data.message, 'success');
             
             // Success animation
-            memberCard.style.transform = 'scale(1.02)';
-            setTimeout(() => {
-                memberCard.style.transform = 'scale(1)';
-            }, 200);
+            if (memberCard) {
+                memberCard.style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    if (memberCard) {
+                        memberCard.style.transform = 'scale(1)';
+                    }
+                }, 200);
+            }
         } else {
             showFeedbackMobile(data.message, 'error');
         }
@@ -450,35 +464,69 @@ function updateAttendanceMobile(memberId, status, meetingDate) {
     .finally(() => {
         // Remove loading state
         buttons.forEach(btn => {
-            btn.style.opacity = '1';
-            btn.style.pointerEvents = 'auto';
+            if (btn) {
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
         });
     });
 }
 
 function setMemberStatusMobile(memberId, status) {
     const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
+    
+    // Check if memberCard exists
+    if (!memberCard) {
+        console.error(`Member card not found for memberId: ${memberId}`);
+        return;
+    }
+    
     const statusElement = document.getElementById(`status-${memberId}-mobile`);
     const buttons = memberCard.querySelectorAll('.action-btn');
     
     // Remove all active classes
-    buttons.forEach(btn => btn.classList.remove('active'));
-    memberCard.classList.remove('status-present', 'status-absent', 'status-pending');
+    buttons.forEach(btn => {
+        if (btn) {
+            btn.classList.remove('active');
+        }
+    });
+    
+    if (memberCard) {
+        memberCard.classList.remove('status-present', 'status-absent', 'status-pending');
+    }
     
     if (status === 'present') {
-        memberCard.classList.add('status-present');
-        statusElement.textContent = 'Present';
-        statusElement.className = 'status-text-mobile text-success';
-        memberCard.querySelector('.present-btn-mobile').classList.add('active');
+        if (memberCard) {
+            memberCard.classList.add('status-present');
+        }
+        if (statusElement) {
+            statusElement.textContent = 'Present';
+            statusElement.className = 'status-text-mobile text-success';
+        }
+        const presentBtn = memberCard.querySelector('.present-btn-mobile');
+        if (presentBtn) {
+            presentBtn.classList.add('active');
+        }
     } else if (status === 'absent') {
-        memberCard.classList.add('status-absent');
-        statusElement.textContent = 'Absent';
-        statusElement.className = 'status-text-mobile text-danger';
-        memberCard.querySelector('.absent-btn-mobile').classList.add('active');
+        if (memberCard) {
+            memberCard.classList.add('status-absent');
+        }
+        if (statusElement) {
+            statusElement.textContent = 'Absent';
+            statusElement.className = 'status-text-mobile text-danger';
+        }
+        const absentBtn = memberCard.querySelector('.absent-btn-mobile');
+        if (absentBtn) {
+            absentBtn.classList.add('active');
+        }
     } else {
-        memberCard.classList.add('status-pending');
-        statusElement.textContent = 'Not marked';
-        statusElement.className = 'status-text-mobile text-muted';
+        if (memberCard) {
+            memberCard.classList.add('status-pending');
+        }
+        if (statusElement) {
+            statusElement.textContent = 'Not marked';
+            statusElement.className = 'status-text-mobile text-muted';
+        }
     }
 }
 
@@ -487,9 +535,19 @@ function updateStatsMobile() {
     const absentCards = document.querySelectorAll('.mobile-member-card.status-absent').length;
     const pendingCards = document.querySelectorAll('.mobile-member-card.status-pending').length;
     
-    document.getElementById('presentCount-mobile').textContent = presentCards;
-    document.getElementById('absentCount-mobile').textContent = absentCards;
-    document.getElementById('pendingCount-mobile').textContent = pendingCards;
+    const presentCountEl = document.getElementById('presentCount-mobile');
+    const absentCountEl = document.getElementById('absentCount-mobile');
+    const pendingCountEl = document.getElementById('pendingCount-mobile');
+    
+    if (presentCountEl) {
+        presentCountEl.textContent = presentCards;
+    }
+    if (absentCountEl) {
+        absentCountEl.textContent = absentCards;
+    }
+    if (pendingCountEl) {
+        pendingCountEl.textContent = pendingCards;
+    }
 }
 
 function showFeedbackMobile(message, type) {
@@ -630,89 +688,137 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
             
+    <!-- Global Action Buttons -->
+    {% if members %}
+    <div class="desktop-global-actions">
+        <button type="button" class="global-action-btn all-present-btn-desktop" onclick="markAllPresentDesktop()">
+            <i class="fas fa-check-double"></i>
+            All Present
+        </button>
+        <button type="button" class="global-action-btn all-absent-btn-desktop" onclick="markAllAbsentDesktop()">
+            <i class="fas fa-times-circle"></i>
+            All Absent
+        </button>
+    </div>
+    {% endif %}
+    
     <!-- Desktop Members Grid -->
     <div class="desktop-members-section">
         <div class="section-header-desktop">
             <h4 class="section-title-desktop">Member Attendance</h4>
-            <div class="section-subtitle">Click buttons to mark attendance status</div>
-                </div>
+            <div class="section-subtitle">Mark members as present or absent, then click Submit</div>
+        </div>
                 
-                {% if members %}
-            <div class="desktop-members-grid">
+        {% if members %}
+            <form id="attendanceFormDesktop">
+                <div class="desktop-members-grid">
                     {% for member in members %}
-                <div class="desktop-member-card {% if attendance_data[member.id].present %}status-present{% elif attendance_data[member.id].absent %}status-absent{% else %}status-pending{% endif %}" data-member-id="{{ member.id }}">
-                    <div class="member-header-desktop">
-                        <div class="member-avatar-desktop">
-                            <span class="avatar-text-desktop">{{ member.name[0].upper() }}</span>
-                        </div>
-                        <div class="member-info-desktop">
-                            <h5 class="member-name-desktop">{{ member.name }}</h5>
-                            <div class="member-details-desktop">
-                                {% if member.phone_number %}
-                                <div class="detail-item">
-                                    <i class="fas fa-phone"></i>
-                                    <span>{{ member.phone_number }}</span>
-                                </div>
-                                {% endif %}
-                                {% if member.ministry %}
-                                <div class="detail-item">
-                                    <i class="fas fa-church"></i>
-                                    <span>{{ member.ministry }}</span>
-                                </div>
-                                {% endif %}
+                    <div class="desktop-member-card" data-member-id="{{ member.id }}">
+                        <div class="member-header-desktop">
+                            <div class="member-avatar-desktop">
+                                <span class="avatar-text-desktop">{{ member.name[0].upper() }}</span>
+                            </div>
+                            <div class="member-info-desktop">
+                                <h5 class="member-name-desktop">{{ member.name }}</h5>
+                                <div class="member-details-desktop">
+                                    {% if member.phone_number %}
+                                    <div class="detail-item">
+                                        <i class="fas fa-phone"></i>
+                                        <span>{{ member.phone_number }}</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if member.ministry %}
+                                    <div class="detail-item">
+                                        <i class="fas fa-church"></i>
+                                        <span>{{ member.ministry }}</span>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                     
-                    <div class="member-actions-desktop">
-                        <div class="action-buttons-desktop">
-                            <button type="button" 
-                                    class="action-btn-desktop present-btn-desktop {% if attendance_data[member.id].present %}active{% endif %}"
-                                    data-member-id="{{ member.id }}"
-                                    onclick="updateAttendanceDesktop('{{ member.id }}', 'present', '{{ meeting_date }}')">
-                                <i class="fas fa-check"></i>
-                                <span>Present</span>
-                            </button>
-                            <button type="button" 
-                                    class="action-btn-desktop absent-btn-desktop {% if attendance_data[member.id].absent %}active{% endif %}"
-                                    data-member-id="{{ member.id }}"
-                                    onclick="updateAttendanceDesktop('{{ member.id }}', 'absent', '{{ meeting_date }}')">
-                                <i class="fas fa-times"></i>
-                                <span>Absent</span>
-                            </button>
-                            <button type="button" 
-                                    class="action-btn-desktop clear-btn-desktop"
-                                    data-member-id="{{ member.id }}"
-                                    onclick="updateAttendanceDesktop('{{ member.id }}', 'clear', '{{ meeting_date }}')">
-                                <i class="fas fa-undo"></i>
-                                <span>Clear</span>
-                            </button>
+                        <div class="member-actions-desktop">
+                            <div class="action-icons-desktop">
+                                <button type="button" 
+                                        class="icon-btn-desktop present-icon-btn-desktop {% if attendance_data[member.id].present %}active{% endif %}"
+                                        data-member-id="{{ member.id }}"
+                                        onclick="markMemberPresentDesktop(this)"
+                                        title="Mark as Present">
+                                    <i class="fas fa-check-circle"></i>
+                                </button>
+                                <button type="button" 
+                                        class="icon-btn-desktop absent-icon-btn-desktop {% if not attendance_data[member.id].present %}active{% endif %}"
+                                        data-member-id="{{ member.id }}"
+                                        onclick="markMemberAbsentDesktop(this)"
+                                        title="Mark as Absent">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="status-indicator-desktop">
-                            <span class="status-text-desktop {% if attendance_data[member.id].present %}text-success{% elif attendance_data[member.id].absent %}text-danger{% else %}text-muted{% endif %}" id="status-{{ member.id }}-desktop">
-                                {% if attendance_data[member.id].present %}
-                                    Present
-                                {% elif attendance_data[member.id].absent %}
-                                    Absent
-                                {% else %}
-                                    Not marked
-                                {% endif %}
-                            </span>
-                        </div>
+                        <input type="checkbox" 
+                               class="member-checkbox-desktop" 
+                               name="attendance" 
+                               value="{{ member.id }}"
+                               data-member-id="{{ member.id }}"
+                               style="display: none;"
+                               {% if attendance_data[member.id].present %}checked{% endif %}>
                     </div>
-            </div>
-                {% endfor %}
-            </div>
-                {% else %}
+                    {% endfor %}
+                </div>
+            </form>
+        {% else %}
             <div class="no-members-desktop">
                 <div class="no-members-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
+                    <i class="fas fa-users"></i>
+                </div>
                 <h4>No members found</h4>
                 <p>Add some members to mark attendance.</p>
-                </div>
-                {% endif %}
             </div>
+        {% endif %}
+    </div>
+    
+    <!-- Submit Button -->
+    {% if members %}
+    <div class="desktop-submit-container">
+        <button type="button" class="desktop-submit-btn" onclick="submitAttendanceDesktop()">
+            <i class="fas fa-check-circle"></i>
+            Submit Attendance
+        </button>
+    </div>
+    {% endif %}
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmModalDesktop" class="confirm-modal-desktop" style="display: none;">
+        <div class="modal-overlay-desktop" onclick="closeConfirmModalDesktop()"></div>
+        <div class="modal-content-desktop">
+            <div class="modal-header-desktop">
+                <h3>Confirm Attendance</h3>
+            </div>
+            <div class="modal-body-desktop">
+                <p>Are you sure you want to submit the attendance for this meeting?</p>
+                <div class="attendance-summary-desktop">
+                    <div class="summary-item-desktop">
+                        <span class="summary-label-desktop">Present:</span>
+                        <span class="summary-value-desktop present-value-desktop" id="confirmPresentCountDesktop">0</span>
+                    </div>
+                    <div class="summary-item-desktop">
+                        <span class="summary-label-desktop">Absent:</span>
+                        <span class="summary-value-desktop absent-value-desktop" id="confirmAbsentCountDesktop">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer-desktop">
+                <button type="button" class="modal-btn-desktop cancel-btn-desktop" onclick="closeConfirmModalDesktop()">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button type="button" class="modal-btn-desktop confirm-btn-desktop" onclick="confirmSubmitDesktop()">
+                    <i class="fas fa-check"></i>
+                    Yes, Submit
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Desktop CSS -->
@@ -914,81 +1020,315 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .member-actions-desktop {
     display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Global Action Buttons */
+.desktop-global-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+}
+
+.global-action-btn {
+    flex: 1;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+    min-height: 50px;
+}
+
+.all-present-btn-desktop {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    box-shadow: 0 4px 16px rgba(39, 174, 96, 0.3);
+}
+
+.all-present-btn-desktop:hover {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+}
+
+.all-absent-btn-desktop {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 4px 16px rgba(231, 76, 60, 0.3);
+}
+
+.all-absent-btn-desktop:hover {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+/* Icon Buttons */
+.action-icons-desktop {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.icon-btn-desktop {
+    width: 50px;
+    height: 50px;
+    border: 2px solid;
+    border-radius: 12px;
+    background: transparent;
+    color: #95a5a6;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.present-icon-btn-desktop {
+    border-color: #7f8c8d;
+    color: #7f8c8d;
+}
+
+.present-icon-btn-desktop:hover {
+    border-color: #27ae60;
+    color: #27ae60;
+    background: rgba(39, 174, 96, 0.1);
+}
+
+.present-icon-btn-desktop.active {
+    border-color: #27ae60;
+    color: #27ae60;
+    background: rgba(39, 174, 96, 0.15);
+}
+
+.absent-icon-btn-desktop {
+    border-color: #7f8c8d;
+    color: #7f8c8d;
+}
+
+.absent-icon-btn-desktop:hover {
+    border-color: #e74c3c;
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.absent-icon-btn-desktop.active {
+    border-color: #e74c3c;
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.15);
+}
+
+.icon-btn-desktop:active {
+    transform: scale(0.95);
+}
+
+/* Submit Button */
+.desktop-submit-container {
+    margin-top: 2rem;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+.desktop-submit-btn {
+    padding: 1rem 3rem;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    min-height: 56px;
+}
+
+.desktop-submit-btn:hover {
+    background: linear-gradient(135deg, #2980b9, #3498db);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(52, 152, 219, 0.5);
+}
+
+.desktop-submit-btn:active {
+    transform: translateY(0);
+}
+
+.desktop-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Confirmation Modal */
+.confirm-modal-desktop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.modal-overlay-desktop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content-desktop {
+    position: relative;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: 1px solid #34495e;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideInDesktop 0.3s ease;
+    z-index: 1;
+}
+
+@keyframes modalSlideInDesktop {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header-desktop {
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header-desktop h3 {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.modal-body-desktop {
+    padding: 2rem;
+}
+
+.modal-body-desktop p {
+    color: #ecf0f1;
+    font-size: 1.1rem;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.5;
+}
+
+.attendance-summary-desktop {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.action-buttons-desktop {
+.summary-item-desktop {
     display: flex;
-    gap: 0.75rem;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.action-btn-desktop {
+.summary-label-desktop {
+    color: #bdc3c7;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.summary-value-desktop {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.present-value-desktop {
+    color: #27ae60;
+}
+
+.absent-value-desktop {
+    color: #e74c3c;
+}
+
+.modal-footer-desktop {
+    padding: 1.5rem 2rem 2rem;
+    display: flex;
+    gap: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-btn-desktop {
     flex: 1;
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
+    padding: 1rem 1.5rem;
     border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    font-weight: 600;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    min-height: 50px;
 }
 
-.action-btn-desktop:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-}
-
-.present-btn-desktop {
-    background: #27ae60;
+.cancel-btn-desktop {
+    background: rgba(255, 255, 255, 0.1);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.absent-btn-desktop {
-    background: #e74c3c;
+.cancel-btn-desktop:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.98);
+}
+
+.confirm-btn-desktop {
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
+    box-shadow: 0 4px 16px rgba(52, 152, 219, 0.3);
 }
 
-.clear-btn-desktop {
-    background: #f39c12;
-    color: white;
+.confirm-btn-desktop:hover {
+    background: linear-gradient(135deg, #2980b9, #3498db);
+    transform: scale(0.98);
 }
 
-.action-btn-desktop.active {
-    transform: scale(1.05);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+.confirm-btn-desktop:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
-.status-indicator-desktop {
-    text-align: center;
-}
-
-.status-text-desktop {
-    font-size: 0.8rem;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.status-text-desktop.text-success {
-    background: #27ae60;
-    color: white;
-}
-
-.status-text-desktop.text-danger {
-    background: #e74c3c;
-    color: white;
-}
-
-.status-text-desktop.text-muted {
-    background: #7f8c8d;
-    color: white;
-}
 
 .no-members-desktop {
     text-align: center;
@@ -1016,90 +1356,255 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Desktop JavaScript -->
 <script>
-function updateAttendanceDesktop(memberId, status, meetingDate) {
-    const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
-    const buttons = memberCard.querySelectorAll('.action-btn-desktop');
-    
-    // Add loading state
-    buttons.forEach(btn => {
-        btn.style.opacity = '0.6';
-        btn.style.pointerEvents = 'none';
-    });
-    
-    fetch(`/update_attendance/${encodeURIComponent(meetingDate)}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `member_id=${memberId}&status=${status}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            setMemberStatusDesktop(memberId, status);
-            updateStatsDesktop();
-            showFeedbackDesktop(data.message, 'success');
-            
-            // Success animation
-            memberCard.style.transform = 'scale(1.02)';
-            setTimeout(() => {
-                memberCard.style.transform = 'scale(1)';
-            }, 200);
-        } else {
-            showFeedbackDesktop(data.message, 'error');
+// Mark member as present
+window.markMemberPresentDesktop = function(buttonElement) {
+    try {
+        if (!buttonElement) {
+            console.error('Button element not provided');
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showFeedbackDesktop('Network error', 'error');
-    })
-    .finally(() => {
-        // Remove loading state
-        buttons.forEach(btn => {
-            btn.style.opacity = '1';
-            btn.style.pointerEvents = 'auto';
-        });
-    });
-}
-
-function setMemberStatusDesktop(memberId, status) {
-    const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
-    const statusElement = document.getElementById(`status-${memberId}-desktop`);
-    const buttons = memberCard.querySelectorAll('.action-btn-desktop');
-    
-    // Remove all active classes
-    buttons.forEach(btn => btn.classList.remove('active'));
-    memberCard.classList.remove('status-present', 'status-absent', 'status-pending');
-    
-    if (status === 'present') {
-        memberCard.classList.add('status-present');
-        statusElement.textContent = 'Present';
-        statusElement.className = 'status-text-desktop text-success';
-        memberCard.querySelector('.present-btn-desktop').classList.add('active');
-    } else if (status === 'absent') {
-        memberCard.classList.add('status-absent');
-        statusElement.textContent = 'Absent';
-        statusElement.className = 'status-text-desktop text-danger';
-        memberCard.querySelector('.absent-btn-desktop').classList.add('active');
-    } else {
-        memberCard.classList.add('status-pending');
-        statusElement.textContent = 'Not marked';
-        statusElement.className = 'status-text-desktop text-muted';
+        
+        const memberId = buttonElement.getAttribute('data-member-id');
+        if (!memberId) {
+            console.error('Member ID not found on button');
+            return;
+        }
+        
+        // Find the parent member card
+        const memberCard = buttonElement.closest('.desktop-member-card');
+        if (!memberCard) {
+            console.error('Member card not found');
+            return;
+        }
+        
+        const checkbox = memberCard.querySelector('.member-checkbox-desktop');
+        const presentBtn = memberCard.querySelector('.present-icon-btn-desktop');
+        const absentBtn = memberCard.querySelector('.absent-icon-btn-desktop');
+        
+        if (!checkbox || !presentBtn || !absentBtn) {
+            console.error('Required elements not found for member:', memberId);
+            return;
+        }
+        
+        checkbox.checked = true;
+        presentBtn.classList.add('active');
+        absentBtn.classList.remove('active');
+        
+        updateCountsDesktop();
+    } catch (error) {
+        console.error('Error in markMemberPresentDesktop:', error);
     }
 }
 
-function updateStatsDesktop() {
-    const presentCards = document.querySelectorAll('.desktop-member-card.status-present').length;
-    const absentCards = document.querySelectorAll('.desktop-member-card.status-absent').length;
-    const pendingCards = document.querySelectorAll('.desktop-member-card.status-pending').length;
+// Mark member as absent
+window.markMemberAbsentDesktop = function(buttonElement) {
+    try {
+        if (!buttonElement) {
+            console.error('Button element not provided');
+            return;
+        }
+        
+        const memberId = buttonElement.getAttribute('data-member-id');
+        if (!memberId) {
+            console.error('Member ID not found on button');
+            return;
+        }
+        
+        // Find the parent member card
+        const memberCard = buttonElement.closest('.desktop-member-card');
+        if (!memberCard) {
+            console.error('Member card not found');
+            return;
+        }
+        
+        const checkbox = memberCard.querySelector('.member-checkbox-desktop');
+        const presentBtn = memberCard.querySelector('.present-icon-btn-desktop');
+        const absentBtn = memberCard.querySelector('.absent-icon-btn-desktop');
+        
+        if (!checkbox || !presentBtn || !absentBtn) {
+            console.error('Required elements not found for member:', memberId);
+            return;
+        }
+        
+        checkbox.checked = false;
+        presentBtn.classList.remove('active');
+        absentBtn.classList.add('active');
+        
+        updateCountsDesktop();
+    } catch (error) {
+        console.error('Error in markMemberAbsentDesktop:', error);
+    }
+}
+
+// Mark all present
+window.markAllPresentDesktop = function() {
+    const checkboxes = document.querySelectorAll('.member-checkbox-desktop');
+    const presentButtons = document.querySelectorAll('.present-icon-btn-desktop');
+    const absentButtons = document.querySelectorAll('.absent-icon-btn-desktop');
     
-    document.getElementById('presentCount-desktop').textContent = presentCards;
-    document.getElementById('absentCount-desktop').textContent = absentCards;
-    document.getElementById('pendingCount-desktop').textContent = pendingCards;
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    
+    presentButtons.forEach(btn => {
+        btn.classList.add('active');
+    });
+    
+    absentButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    updateCountsDesktop();
+}
+
+// Mark all absent
+window.markAllAbsentDesktop = function() {
+    const checkboxes = document.querySelectorAll('.member-checkbox-desktop');
+    const presentButtons = document.querySelectorAll('.present-icon-btn-desktop');
+    const absentButtons = document.querySelectorAll('.absent-icon-btn-desktop');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    presentButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    absentButtons.forEach(btn => {
+        btn.classList.add('active');
+    });
+    
+    updateCountsDesktop();
+}
+
+// Update counts
+function updateCountsDesktop() {
+    const checkedBoxes = document.querySelectorAll('.member-checkbox-desktop:checked');
+    const presentCount = checkedBoxes.length;
+    const totalMembers = document.querySelectorAll('.member-checkbox-desktop').length;
+    const absentCount = totalMembers - presentCount;
+    
+    const presentCountEl = document.getElementById('presentCount-desktop');
+    const absentCountEl = document.getElementById('absentCount-desktop');
+    const pendingCountEl = document.getElementById('pendingCount-desktop');
+    
+    if (presentCountEl) presentCountEl.textContent = presentCount;
+    if (absentCountEl) absentCountEl.textContent = absentCount;
+    if (pendingCountEl) pendingCountEl.textContent = 0; // No pending with checkbox system
+}
+
+// Show confirmation modal
+window.submitAttendanceDesktop = function() {
+    const checkedBoxes = document.querySelectorAll('.member-checkbox-desktop:checked');
+    const presentCount = checkedBoxes.length;
+    const totalMembers = document.querySelectorAll('.member-checkbox-desktop').length;
+    const absentCount = totalMembers - presentCount;
+    
+    document.getElementById('confirmPresentCountDesktop').textContent = presentCount;
+    document.getElementById('confirmAbsentCountDesktop').textContent = absentCount;
+    
+    const modal = document.getElementById('confirmModalDesktop');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Close confirmation modal
+window.closeConfirmModalDesktop = function() {
+    const modal = document.getElementById('confirmModalDesktop');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Confirm and submit attendance
+window.confirmSubmitDesktop = function() {
+    try {
+        const confirmBtn = document.querySelector('.confirm-btn-desktop');
+        const memberCheckboxes = document.querySelectorAll('.member-checkbox-desktop');
+        
+        if (!confirmBtn) {
+            console.error('Confirm button not found');
+            return;
+        }
+        
+        if (memberCheckboxes.length === 0) {
+            showFeedbackDesktop('No members found to submit', 'error');
+            return;
+        }
+        
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Submitting...</span>';
+        
+        const attendance = [];
+        memberCheckboxes.forEach(checkbox => {
+            const memberId = checkbox.getAttribute('data-member-id');
+            if (!memberId) {
+                console.warn('Checkbox missing member ID');
+                return;
+            }
+            const status = checkbox.checked ? 'present' : 'absent';
+            attendance.push({
+                member_id: memberId,
+                status: status
+            });
+        });
+        
+        if (attendance.length === 0) {
+            showFeedbackDesktop('No attendance data to submit', 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
+            return;
+        }
+        
+        const meetingDate = '{{ meeting_date }}';
+        fetch(`/bulk_update_attendance/${encodeURIComponent(meetingDate)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ attendance: attendance })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Server error');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                closeConfirmModalDesktop();
+                showFeedbackDesktop(data.message, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showFeedbackDesktop(data.message || 'Error submitting attendance', 'error');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting attendance:', error);
+            showFeedbackDesktop(error.message || 'Network error. Please try again.', 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
+        });
+    } catch (error) {
+        console.error('Error in confirmSubmitDesktop:', error);
+        showFeedbackDesktop('An error occurred. Please try again.', 'error');
+        const confirmBtn = document.querySelector('.confirm-btn-desktop');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
+        }
+    }
 }
 
 function showFeedbackDesktop(message, type) {
-    // Create toast notification
     const toast = document.createElement('div');
     toast.className = `toast-desktop ${type}`;
     toast.innerHTML = `
@@ -1111,19 +1616,21 @@ function showFeedbackDesktop(message, type) {
     
     document.body.appendChild(toast);
     
-    // Show toast
     setTimeout(() => toast.classList.add('show'), 100);
     
-    // Remove toast after 3 seconds
     setTimeout(() => {
         toast.classList.remove('show');
-        setTimeout(() => document.body.removeChild(toast), 300);
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 300);
     }, 3000);
 }
 
 // Initialize desktop attendance
 document.addEventListener('DOMContentLoaded', function() {
-    updateStatsDesktop();
+    updateCountsDesktop();
 });
 </script>
 

@@ -26,11 +26,24 @@
             {% if attendance_list %}
                 <div class="attendance-grid">
                     {% for attendance in attendance_list %}
-                        <div class="attendance-item">
+                        <div class="attendance-item {% if attendance.is_upcoming %}upcoming-meeting{% endif %}">
                             <div class="attendance-header">
-                                <div class="attendance-date">{{ attendance.date }}</div>
+                                <div class="attendance-date">
+                                    {% if attendance.is_upcoming %}
+                                        <i class="fas fa-calendar-star me-2" style="color: #3b82f6;"></i>
+                                        <span style="color: #3b82f6; font-weight: 700;">Upcoming Meeting</span>
+                                        <br>
+                                        <span style="font-size: 0.9rem; color: #94a3b8; font-weight: normal;">{{ attendance.date }}</span>
+                                    {% else %}
+                                        {{ attendance.date }}
+                                    {% endif %}
+                                </div>
                                 <div class="attendance-status {{ attendance.status }}">
-                                    {% if attendance.status == 'complete' %}
+                                    {% if attendance.is_upcoming %}
+                                        <span class="badge" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600;">
+                                            <i class="fas fa-star"></i> Upcoming
+                                        </span>
+                                    {% elif attendance.status == 'complete' %}
                                         <i class="fas fa-check-circle"></i> Complete
                                     {% elif attendance.status == 'partial' %}
                                         <i class="fas fa-exclamation-triangle"></i> Partial
@@ -49,9 +62,15 @@
                                 </div>
                             </div>
                             <div class="attendance-actions">
+                                {% if not attendance.is_upcoming %}
                                 <a href="{{ url_for('main.attendance_detail', meeting_date=attendance.date) }}" class="btn btn-primary">
                                     <i class="fas fa-eye"></i> View Details
                                 </a>
+                                {% else %}
+                                <div class="btn btn-secondary" style="opacity: 0.6; cursor: not-allowed; background: #475569; color: #94a3b8;">
+                                    <i class="fas fa-lock"></i> Available on Meeting Day
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -202,6 +221,16 @@
     background: rgba(255, 255, 255, 0.1);
     transform: translateY(-4px);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.attendance-item.upcoming-meeting {
+    border: 2px solid #3b82f6;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%);
+}
+
+.attendance-item.upcoming-meeting::before {
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    opacity: 1;
 }
 
 .attendance-item:hover::before {

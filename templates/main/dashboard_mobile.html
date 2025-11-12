@@ -33,14 +33,6 @@
             
             <div class="stat-card">
                 <div class="stat-icon">
-                    <i class="fas fa-tasks"></i>
-                </div>
-                <div class="stat-label">Activities</div>
-                <div class="stat-value">{{ todays_activities|length if todays_activities else 0 }}</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">
                     <i class="fas fa-graduation-cap"></i>
                 </div>
                 <div class="stat-label">Tutorials</div>
@@ -68,6 +60,7 @@
                         <span class="status-incomplete">Incomplete</span>
                     {% endif %}
                 </div>
+                <div class="stat-subtitle">{{ latest_attendance.meeting_date if latest_attendance else 'No data' }}</div>
             </div>
         </div>
     </div>
@@ -198,71 +191,6 @@
             {% endif %}
         </div>
     </div>
-
-    <!-- Recent Activity -->
-    <div class="activity-section">
-        <div class="section-header">
-            <h2 class="section-title">Recent Activity</h2>
-            <a href="{{ url_for('main.activity_list') }}" class="view-all-link">
-                <span>View All</span>
-                <i class="fas fa-arrow-right"></i>
-            </a>
-        </div>
-        
-        <div class="activity-container">
-            {% if recent_activities %}
-                {% for activity in recent_activities[:5] %}
-                <div class="activity-card">
-                    <div class="activity-icon">
-                        {% if 'member' in activity.description.lower() or 'user' in activity.description.lower() %}
-                            <i class="fas fa-user"></i>
-                        {% elif 'meeting' in activity.description.lower() or 'attendance' in activity.description.lower() %}
-                            <i class="fas fa-calendar-check"></i>
-                        {% elif 'tutorial' in activity.description.lower() or 'lesson' in activity.description.lower() %}
-                            <i class="fas fa-book"></i>
-                        {% elif 'task' in activity.description.lower() or 'activity' in activity.description.lower() %}
-                            <i class="fas fa-tasks"></i>
-                        {% elif 'login' in activity.description.lower() or 'logout' in activity.description.lower() %}
-                            <i class="fas fa-sign-in-alt"></i>
-                        {% elif 'create' in activity.description.lower() or 'add' in activity.description.lower() %}
-                            <i class="fas fa-plus"></i>
-                        {% elif 'update' in activity.description.lower() or 'edit' in activity.description.lower() %}
-                            <i class="fas fa-edit"></i>
-                        {% elif 'delete' in activity.description.lower() or 'remove' in activity.description.lower() %}
-                            <i class="fas fa-trash"></i>
-                        {% else %}
-                            <i class="fas fa-bell"></i>
-                        {% endif %}
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-text">{{ activity.description }}</div>
-                        <div class="activity-time">
-                            {% set created_at = activity.created_at %}
-                            {% if created_at is string %}
-                                {{ created_at[:19].replace('T', ' at ') }}
-                            {% else %}
-                                {{ created_at.strftime('%B %d at %I:%M %p') }}
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="activity-status">
-                        <div class="status-indicator"></div>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-calendar-day"></i>
-                    </div>
-                    <div class="empty-text">
-                        <h3>No Recent Activity</h3>
-                        <p>Your activity feed will appear here</p>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
 </div>
 {% endblock %}
 
@@ -295,7 +223,7 @@
     background: #0f172a;
     min-height: 100vh;
     padding: 1rem;
-    padding-bottom: 6rem;
+    padding-bottom: 10rem;
     color: white;
 }
 
@@ -360,14 +288,13 @@
    STATS SECTION - CLEAN 2x2 GRID
    =========================================== */
 .stats-section {
-    margin-bottom: 4rem !important;
-    padding-bottom: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    padding-bottom: 0 !important;
 }
 
 .stats-grid {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    grid-template-rows: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 1rem !important;
     width: 100% !important;
     margin: 0 !important;
@@ -503,9 +430,10 @@
    ACTIONS SECTION
    =========================================== */
 .actions-section {
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
     margin-top: 0.5rem !important;
     padding-top: 0.5rem !important;
+    padding-bottom: 2rem;
     position: relative;
     z-index: 1;
 }
@@ -995,7 +923,7 @@
    =========================================== */
 .meeting-section {
     margin-bottom: 1rem;
-    margin-top: 1rem;
+    margin-top: 0;
 }
 
 /* ===========================================
@@ -1134,8 +1062,7 @@
     
     .stats-grid {
         gap: 0.75rem;
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
     
     .stat-card {
@@ -1248,7 +1175,7 @@
 @media (max-width: 400px) {
     .stats-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: repeat(4, auto);
+        grid-template-rows: repeat(3, auto);
         gap: 0.75rem;
     }
     

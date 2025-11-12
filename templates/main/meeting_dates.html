@@ -632,161 +632,135 @@ body {
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <span class="stat-number">4</span>
+                        <span class="stat-number">{{ meetings|length }}</span>
                         <span class="stat-label">Recent Meetings</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Meetings Timeline -->
-        <div class="timeline-container">
-            <div class="timeline-header">
-                <h2>Meeting Timeline</h2>
-                <div class="timeline-filter">
-                    <button class="filter-btn active">All</button>
-                    <button class="filter-btn">This Month</button>
-                </div>
-                </div>
-                
-            <div class="timeline">
-                <!-- Meeting 1 -->
-                <div class="timeline-item">
-                    <div class="timeline-content">
-                        <div class="meeting-card">
-                            <div class="meeting-header">
-                                <div class="meeting-date">
-                                    <span class="date-day">{{ week_1_date.split(',')[0].split()[-1] }}</span>
-                                    <span class="date-month">{{ week_1_date.split(',')[0].split()[0] }}</span>
-                                </div>
-                                <div class="meeting-info">
-                                    <h3>{{ week_1_date }}</h3>
-                                    <p>Cell Group Meeting</p>
-                                </div>
-                                <div class="meeting-actions">
-                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_1_date) }}" class="action-btn primary">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <span>Tutorials</span>
-                                    </a>
-                                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="action-btn secondary">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <span>Attendance</span>
-                                    </a>
+        <!-- Upcoming Meeting -->
+        {% if meetings %}
+            {% for meeting in meetings %}
+                {% if meeting.is_upcoming %}
+                <div class="timeline-container" style="margin-bottom: 2rem; border-color: #3b82f6;">
+                    <div class="timeline-header">
+                        <h2 style="color: #3b82f6;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                            </svg>
+                            Upcoming Meeting
+                        </h2>
+                        <span class="badge" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600;">Latest</span>
+                    </div>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="meeting-card" style="border-color: #3b82f6; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);">
+                                    <div class="meeting-header">
+                                        <div class="meeting-date" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                            <span class="date-day">{{ meeting.date.split(',')[0].split()[-1] }}</span>
+                                            <span class="date-month">{{ meeting.date.split(',')[0].split()[0] }}</span>
+                                        </div>
+                                        <div class="meeting-info">
+                                            <h3>{{ meeting.date }}</h3>
+                                            <p>{{ meeting.meeting_type }}</p>
+                                            {% if meeting.description %}
+                                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">{{ meeting.description }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="meeting-actions">
+                                            <a href="{{ url_for('main.meeting_tutorials', meeting_date=meeting.date) }}" class="action-btn primary">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                                <span>Tutorials</span>
+                                            </a>
+                                            <!-- Attendance button hidden for upcoming meetings -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 
-                <!-- Meeting 2 -->
-                <div class="timeline-item">
-                    <div class="timeline-content">
-                        <div class="meeting-card">
-                            <div class="meeting-header">
-                                <div class="meeting-date">
-                                    <span class="date-day">{{ week_2_date.split(',')[0].split()[-1] }}</span>
-                                    <span class="date-month">{{ week_2_date.split(',')[0].split()[0] }}</span>
-                                </div>
-                                <div class="meeting-info">
-                                    <h3>{{ week_2_date }}</h3>
-                                    <p>Cell Group Meeting</p>
-                                </div>
-                                <div class="meeting-actions">
-                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_2_date) }}" class="action-btn primary">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <span>Tutorials</span>
-                                    </a>
-                                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_2_date) }}" class="action-btn secondary">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <span>Attendance</span>
-                                    </a>
+        <!-- Recent Meetings Timeline -->
+        {% if meetings %}
+            {% set recent_meetings = meetings|selectattr('is_upcoming', 'equalto', false)|list %}
+            {% if recent_meetings %}
+            <div class="timeline-container">
+                <div class="timeline-header">
+                    <h2>Recent Meetings</h2>
+                    <span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600;">{{ recent_meetings|length }} Meeting{% if recent_meetings|length != 1 %}s{% endif %}</span>
+                </div>
+                <div class="timeline">
+                    {% for meeting in recent_meetings %}
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <div class="meeting-card">
+                                <div class="meeting-header">
+                                    <div class="meeting-date">
+                                        <span class="date-day">{{ meeting.date.split(',')[0].split()[-1] }}</span>
+                                        <span class="date-month">{{ meeting.date.split(',')[0].split()[0] }}</span>
+                                    </div>
+                                    <div class="meeting-info">
+                                        <h3>{{ meeting.date }}</h3>
+                                        <p>{{ meeting.meeting_type }}</p>
+                                        {% if meeting.description %}
+                                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">{{ meeting.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="meeting-actions">
+                                        <a href="{{ url_for('main.meeting_tutorials', meeting_date=meeting.date) }}" class="action-btn primary">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            <span>Tutorials</span>
+                                        </a>
+                                        <a href="{{ url_for('main.attendance_detail', meeting_date=meeting.date) }}" class="action-btn secondary">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            <span>Attendance</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Meeting 3 -->
-                <div class="timeline-item">
-                    <div class="timeline-content">
-                        <div class="meeting-card">
-                            <div class="meeting-header">
-                                <div class="meeting-date">
-                                    <span class="date-day">{{ week_3_date.split(',')[0].split()[-1] }}</span>
-                                    <span class="date-month">{{ week_3_date.split(',')[0].split()[0] }}</span>
-                                </div>
-                                <div class="meeting-info">
-                                    <h3>{{ week_3_date }}</h3>
-                                    <p>Cell Group Meeting</p>
-                                </div>
-                                <div class="meeting-actions">
-                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_3_date) }}" class="action-btn primary">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <span>Tutorials</span>
-                                    </a>
-                                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_3_date) }}" class="action-btn secondary">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <span>Attendance</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Meeting 4 -->
-                <div class="timeline-item">
-                    <div class="timeline-content">
-                        <div class="meeting-card">
-                            <div class="meeting-header">
-                                <div class="meeting-date">
-                                    <span class="date-day">{{ week_4_date.split(',')[0].split()[-1] }}</span>
-                                    <span class="date-month">{{ week_4_date.split(',')[0].split()[0] }}</span>
-                                </div>
-                                <div class="meeting-info">
-                                    <h3>{{ week_4_date }}</h3>
-                                    <p>Cell Group Meeting</p>
-                                </div>
-                                <div class="meeting-actions">
-                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_4_date) }}" class="action-btn primary">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M6.5 2H20V22H6.5C5.11929 22 4 20.8807 4 19.5V4.5C4 3.11929 5.11929 2 6.5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <span>Tutorials</span>
-                                    </a>
-                                    <a href="{{ url_for('main.attendance_detail', meeting_date=week_4_date) }}" class="action-btn secondary">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <span>Attendance</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- No Meetings -->
+        {% if not meetings %}
+        <div class="timeline-container">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="meeting-card">
+                            <div style="text-align: center; padding: 3rem 2rem; color: #94a3b8;">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 1rem; opacity: 0.5;">
+                                    <path d="M8 2V5M16 2V5M3.5 9.09H20.5M21 8.5V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <h3 style="color: #e2e8f0; font-size: 1.2rem; font-weight: 600; margin: 0 0 0.5rem 0;">No Meetings Found</h3>
+                                <p style="color: #94a3b8; font-size: 0.9rem; margin: 0; opacity: 0.8;">No meetings found in database</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Quick Actions -->
         <div class="quick-actions">

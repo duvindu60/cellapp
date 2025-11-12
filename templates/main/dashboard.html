@@ -24,18 +24,8 @@
     <div class="stats-overview">
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="fas fa-chart-line"></i>
+                <i class="fas fa-users"></i>
             </div>
-            <div class="stat-content">
-                <h3>{{ todays_activities|length if todays_activities else 0 }}</h3>
-                <p>Today's Activities</p>
-        </div>
-        </div>
-    
-        <div class="stat-card">
-            <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
             <div class="stat-content">
                 <h3>{{ member_count }}</h3>
                 <p>Total Members</p>
@@ -580,7 +570,7 @@ function toggleQuickAccess(type) {
 /* Stats Overview */
 .stats-overview {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     margin-bottom: 3rem;
 }
@@ -630,21 +620,16 @@ function toggleQuickAccess(type) {
 }
 
 .stat-card:nth-child(1) .stat-icon {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-}
-
-.stat-card:nth-child(2) .stat-icon {
     background: linear-gradient(135deg, #10b981, #059669);
     box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
 }
 
-.stat-card:nth-child(3) .stat-icon {
+.stat-card:nth-child(2) .stat-icon {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
 }
 
-.stat-card:nth-child(4) .stat-icon {
+.stat-card:nth-child(3) .stat-icon {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
 }

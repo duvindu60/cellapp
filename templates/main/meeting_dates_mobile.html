@@ -6,99 +6,96 @@
 <div class="meeting-dates-page">
     {{ components.page_header('fas fa-calendar-check', 'Meeting Dates', 'Past 4 weeks of cell meetings') }}
 
-    <!-- Meeting Dates List -->
-    <div class="content-card">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <h2>Tuesday Meetings</h2>
-            <span class="badge bg-primary">4 Meetings</span>
+    <!-- Upcoming Meeting -->
+    {% if meetings %}
+        {% for meeting in meetings %}
+            {% if meeting.is_upcoming %}
+            <div class="content-card">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h2 style="color: #3b82f6; font-weight: 700;">
+                        <i class="fas fa-calendar-star me-2"></i>Upcoming Meeting
+                    </h2>
+                    <span class="badge bg-primary" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;">Latest</span>
+                </div>
+                
+                <div class="list-group">
+                    <div class="list-group-item d-flex align-items-center meeting-item upcoming-meeting">
+                        <div class="feature-icon me-3 meeting-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                            <i class="fas fa-calendar-star"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1 meeting-date">{{ meeting.date }}</h6>
+                            <p class="meeting-type">{{ meeting.meeting_type }}</p>
+                            {% if meeting.description %}
+                            <p class="meeting-description" style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.25rem;">{{ meeting.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="text-end d-flex flex-column gap-2">
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('main.meeting_tutorials', meeting_date=meeting.date) }}" class="btn-custom-primary" title="View Tutorials">
+                                    <i class="fas fa-book"></i>
+                                </a>
+                                <!-- Attendance button hidden for upcoming meetings -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <!-- Recent Meetings -->
+    {% if meetings %}
+        {% set recent_meetings = meetings|selectattr('is_upcoming', 'equalto', false)|list %}
+        {% if recent_meetings %}
+        <div class="content-card" style="margin-top: 1.5rem;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h2>Recent Meetings</h2>
+                <span class="badge bg-primary">{{ recent_meetings|length }} Meeting{% if recent_meetings|length != 1 %}s{% endif %}</span>
+            </div>
+            
+            <div class="list-group">
+                {% for meeting in recent_meetings %}
+                <div class="list-group-item d-flex align-items-center meeting-item">
+                    <div class="feature-icon me-3 meeting-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 meeting-date">{{ meeting.date }}</h6>
+                        <p class="meeting-type">{{ meeting.meeting_type }}</p>
+                        {% if meeting.description %}
+                        <p class="meeting-description" style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.25rem;">{{ meeting.description }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="text-end d-flex flex-column gap-2">
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('main.meeting_tutorials', meeting_date=meeting.date) }}" class="btn-custom-primary" title="View Tutorials">
+                                <i class="fas fa-book"></i>
+                            </a>
+                            <a href="{{ url_for('main.attendance_detail', meeting_date=meeting.date) }}" class="btn-custom-success" title="Mark Attendance">
+                                <i class="fas fa-user-check"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-        
-        <div class="list-group">
-            <!-- Week 1 -->
-            <div class="list-group-item d-flex align-items-center meeting-item">
-                <div class="feature-icon me-3 meeting-icon">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="mb-1 meeting-date">{{ week_1_date }}</h6>
-                    <p class="meeting-type">Cell Meeting</p>
-                </div>
-                <div class="text-end d-flex flex-column gap-2">
-                    <div class="d-flex gap-2">
-                        <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_1_date) }}" class="btn-custom-primary" title="View Tutorials">
-                            <i class="fas fa-book"></i>
-                        </a>
-                        <a href="{{ url_for('main.attendance_detail', meeting_date=week_1_date) }}" class="btn-custom-success" title="Mark Attendance">
-                            <i class="fas fa-user-check"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
+        {% endif %}
+    {% endif %}
 
-            <!-- Week 2 -->
-            <div class="list-group-item d-flex align-items-center meeting-item">
-                <div class="feature-icon me-3 meeting-icon">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="mb-1 meeting-date">{{ week_2_date }}</h6>
-                    <p class="meeting-type">Cell Meeting</p>
-                </div>
-                <div class="text-end d-flex flex-column gap-2">
-                    <div class="d-flex gap-2">
-                        <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_2_date) }}" class="btn-custom-primary" title="View Tutorials">
-                            <i class="fas fa-book"></i>
-                        </a>
-                        <a href="{{ url_for('main.attendance_detail', meeting_date=week_2_date) }}" class="btn-custom-success" title="Mark Attendance">
-                            <i class="fas fa-user-check"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Week 3 -->
-            <div class="list-group-item d-flex align-items-center meeting-item">
-                <div class="feature-icon me-3 meeting-icon">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="mb-1 meeting-date">{{ week_3_date }}</h6>
-                    <p class="meeting-type">Cell Meeting</p>
-                </div>
-                <div class="text-end d-flex flex-column gap-2">
-                    <div class="d-flex gap-2">
-                        <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_3_date) }}" class="btn-custom-primary" title="View Tutorials">
-                            <i class="fas fa-book"></i>
-                        </a>
-                        <a href="{{ url_for('main.attendance_detail', meeting_date=week_3_date) }}" class="btn-custom-success" title="Mark Attendance">
-                            <i class="fas fa-user-check"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Week 4 -->
-            <div class="list-group-item d-flex align-items-center meeting-item">
-                <div class="feature-icon me-3 meeting-icon">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="mb-1 meeting-date">{{ week_4_date }}</h6>
-                    <p class="meeting-type">Cell Meeting</p>
-                </div>
-                <div class="text-end d-flex flex-column gap-2">
-                    <div class="d-flex gap-2">
-                        <a href="{{ url_for('main.meeting_tutorials', meeting_date=week_4_date) }}" class="btn-custom-primary" title="View Tutorials">
-                            <i class="fas fa-book"></i>
-                        </a>
-                        <a href="{{ url_for('main.attendance_detail', meeting_date=week_4_date) }}" class="btn-custom-success" title="Mark Attendance">
-                            <i class="fas fa-user-check"></i>
-                        </a>
-                    </div>
-                </div>
+    <!-- No Meetings -->
+    {% if not meetings %}
+    <div class="content-card">
+        <div class="list-group-item">
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-times" style="font-size: 3rem; color: #475569; margin-bottom: 1rem;"></i>
+                <p style="color: #94a3b8;">No meetings found in database</p>
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- Back Button -->
     <div class="d-grid">
@@ -146,6 +143,19 @@
     border-radius: 12px;
     padding: 16px;
     transition: all 0.3s ease;
+}
+
+/* Upcoming Meeting Styling */
+.meeting-item.upcoming-meeting {
+    background: linear-gradient(135deg, #1e293b 0%, #1e3a5f 100%);
+    border: 2px solid #3b82f6;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.meeting-item.upcoming-meeting:hover {
+    border-color: #1d4ed8;
+    box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
 }
 
 .meeting-item:hover {

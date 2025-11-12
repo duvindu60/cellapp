@@ -1,123 +1,84 @@
 {% extends "base.html" %}
-{% block title %}Attendance - {{ meeting_date }}{% endblock %}
+{% block title %}Mark Attendance - {{ meeting_date }}{% endblock %}
 
 {% block mobile_content %}
 <!-- Mobile Attendance UI -->
 <div class="mobile-attendance-container">
-    <!-- Mobile Header -->
-    <div class="mobile-header">
-        <div class="header-content">
-            <div class="header-icon">
-                <i class="fas fa-user-check"></i>
-            </div>
-            <div class="header-text">
-                <h1>Attendance</h1>
-                <p>{{ meeting_date }}</p>
-            </div>
-        </div>
+    <!-- Header Section -->
+    <div class="attendance-header">
         <a href="{{ url_for('main.meeting_dates') }}" class="back-btn">
             <i class="fas fa-arrow-left"></i>
         </a>
-    </div>
-    
-    <!-- Mobile Stats -->
-    <div class="mobile-stats">
-        <div class="stats-grid">
-            <div class="stat-card present">
-                <div class="stat-icon">
-                    <i class="fas fa-check"></i>
-                </div>
-                <div class="stat-number" id="presentCount-mobile">0</div>
-                <div class="stat-label">Present</div>
-            </div>
-            <div class="stat-card absent">
-                <div class="stat-icon">
-                    <i class="fas fa-times"></i>
-                </div>
-                <div class="stat-number" id="absentCount-mobile">0</div>
-                <div class="stat-label">Absent</div>
-            </div>
-            <div class="stat-card pending">
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-number" id="pendingCount-mobile">0</div>
-                <div class="stat-label">Pending</div>
-            </div>
-            <div class="stat-card total">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-number">{{ members|length }}</div>
-                <div class="stat-label">Total</div>
-            </div>
+        <div class="header-content">
+            <h1>Mark Attendance</h1>
+            <p>Meeting Date: {{ meeting_date }}</p>
         </div>
     </div>
     
-    <!-- Mobile Members List -->
-    <div class="mobile-members-section">
-        <div class="section-header">
-            <h2>Members</h2>
-            <div class="section-actions">
-                <button class="action-btn bulk-present" onclick="markAllPresent()">
-                    <i class="fas fa-check-double"></i>All Present
-                </button>
-                <button class="action-btn bulk-clear" onclick="clearAllAttendance()">
-                    <i class="fas fa-eraser"></i>Clear All
-                </button>
-            </div>
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card present-card">
+            <div class="summary-label">Present</div>
+            <div class="summary-number" id="presentCount-mobile">0</div>
         </div>
-        
+        <div class="summary-card absent-card">
+            <div class="summary-label">Absent</div>
+            <div class="summary-number" id="absentCount-mobile">0</div>
+        </div>
+    </div>
+    
+    <!-- Global Action Buttons -->
+    <div class="global-actions">
+        <button type="button" class="action-btn all-present-btn" onclick="markAllPresent()">
+            <i class="fas fa-check-double"></i>
+            All Present
+        </button>
+        <button type="button" class="action-btn all-absent-btn" onclick="markAllAbsent()">
+            <i class="fas fa-times-circle"></i>
+            All Absent
+        </button>
+    </div>
+    
+    <!-- Members List -->
+    <div class="members-list-section">
         {% if members %}
-            <div class="mobile-members-list">
-                {% for member in members %}
-                <div class="mobile-member-card {% if attendance_data[member.id].present %}status-present{% elif attendance_data[member.id].absent %}status-absent{% else %}status-pending{% endif %}" data-member-id="{{ member.id }}">
-                    <div class="member-info">
-                        <div class="member-avatar">
-                            <span class="avatar-text">{{ member.name[0].upper() }}</span>
+            <form id="attendanceForm">
+                <div class="members-list">
+                    {% for member in members %}
+                    <div class="member-item" data-member-id="{{ member.id }}">
+                        <div class="member-info-section">
+                            <div class="member-name">{{ member.name }}</div>
+                            {% if member.id %}
+                            <div class="member-id">{{ member.id[:8]|upper }}</div>
+                            {% endif %}
                         </div>
-                        <div class="member-details">
-                            <h3 class="member-name">{{ member.name }}</h3>
-                            <div class="member-meta">
-                                {% if member.phone_number %}
-                                <span class="meta-item">
-                                    <i class="fas fa-phone"></i> {{ member.phone_number }}
-                                </span>
-                                {% endif %}
-                                {% if member.ministry %}
-                                <span class="meta-item">
-                                    <i class="fas fa-church"></i> {{ member.ministry }}
-                                </span>
-                                {% endif %}
-                            </div>
+                        <div class="member-action-icons">
+                            <button type="button" 
+                                    class="icon-btn present-icon-btn {% if attendance_data[member.id].present %}active{% endif %}"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="markMemberPresent('{{ member.id }}')"
+                                    title="Mark as Present">
+                                <i class="fas fa-check-circle"></i>
+                            </button>
+                            <button type="button" 
+                                    class="icon-btn absent-icon-btn {% if not attendance_data[member.id].present %}active{% endif %}"
+                                    data-member-id="{{ member.id }}"
+                                    onclick="markMemberAbsent('{{ member.id }}')"
+                                    title="Mark as Absent">
+                                <i class="fas fa-times-circle"></i>
+                            </button>
                         </div>
+                        <input type="checkbox" 
+                               class="member-checkbox" 
+                               name="attendance" 
+                               value="{{ member.id }}"
+                               data-member-id="{{ member.id }}"
+                               style="display: none;"
+                               {% if attendance_data[member.id].present %}checked{% endif %}>
                     </div>
-                    
-                    <div class="member-actions">
-                        <div class="action-buttons">
-                            <button type="button" 
-                                    class="action-btn present-btn {% if attendance_data[member.id].present %}active{% endif %}"
-                                    data-member-id="{{ member.id }}"
-                                    onclick="updateAttendanceMobile('{{ member.id }}', 'present', '{{ meeting_date }}')">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            <button type="button" 
-                                    class="action-btn absent-btn {% if attendance_data[member.id].absent %}active{% endif %}"
-                                    data-member-id="{{ member.id }}"
-                                    onclick="updateAttendanceMobile('{{ member.id }}', 'absent', '{{ meeting_date }}')">
-                                <i class="fas fa-times"></i>
-                            </button>
-                            <button type="button" 
-                                    class="action-btn clear-btn"
-                                    data-member-id="{{ member.id }}"
-                                    onclick="updateAttendanceMobile('{{ member.id }}', 'clear', '{{ meeting_date }}')">
-                                <i class="fas fa-eraser"></i>
-                            </button>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
+            </form>
         {% else %}
             <div class="empty-state">
                 <div class="empty-icon">
@@ -127,6 +88,52 @@
                 <p>No members found for this cell group</p>
             </div>
         {% endif %}
+    </div>
+    
+    <!-- Submit Button -->
+    {% if members %}
+    <div class="submit-container">
+        <button type="button" class="submit-btn" onclick="submitAttendance()">
+            <i class="fas fa-check-circle"></i>
+            Submit
+        </button>
+    </div>
+    {% endif %}
+    
+    <!-- Feedback Message -->
+    <div id="feedbackMessage" class="feedback-message" style="display: none;"></div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="confirm-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeConfirmModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Attendance</h3>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to submit the attendance for this meeting?</p>
+                <div class="attendance-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Present:</span>
+                        <span class="summary-value present-value" id="confirmPresentCount">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Absent:</span>
+                        <span class="summary-value absent-value" id="confirmAbsentCount">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-btn cancel-btn" onclick="closeConfirmModal()">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button type="button" class="modal-btn confirm-btn" onclick="confirmSubmit()">
+                    <i class="fas fa-check"></i>
+                    Yes, Submit
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -152,477 +159,536 @@
 
 {% block extra_css %}
 <style>
-/* Mobile Attendance Page Styling */
+/* Mobile Attendance - Matching Requested Layout with Dark Theme */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
 .mobile-attendance-container {
-    padding: 1rem;
-    padding-bottom: 6rem; /* Add extra padding to prevent content from being cut off by fixed bottom nav */
-    min-height: 100vh;
     background: #0f172a;
+    min-height: 100vh;
+    padding-bottom: 100px;
 }
 
-/* Mobile Header */
-.mobile-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
+/* Header Section */
+.attendance-header {
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    border: 1px solid #475569;
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.mobile-header::before {
-    content: '';
-    position: absolute;
+    padding: 1.5rem 1.25rem;
+    border-bottom: 1px solid #475569;
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
-    border-radius: 20px 20px 0 0;
-}
-
-.header-content {
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     gap: 1rem;
-    position: relative;
-    z-index: 1;
 }
 
-.header-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+.back-btn {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
+    color: white;
+    text-decoration: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    color: white;
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    font-size: 18px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
-.header-text h1 {
+.back-btn:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
+
+.header-content {
+    flex: 1;
+}
+
+.header-content h1 {
     color: white;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 700;
     margin: 0 0 0.25rem 0;
     line-height: 1.2;
 }
 
-.header-text p {
-    color: #8b949e;
+.header-content p {
+    color: #94a3b8;
     font-size: 0.9rem;
     margin: 0;
     font-weight: 500;
 }
 
-.back-btn {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
-    border: 1px solid #30363d;
-    border-radius: 10px;
-    color: #f0f6fc;
-    text-decoration: none;
+/* Summary Cards */
+.summary-cards {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1;
-}
-
-.back-btn:hover {
-    background: linear-gradient(135deg, #30363d 0%, #21262d 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    color: #f0f6fc;
-    text-decoration: none;
-}
-
-/* Mobile Stats */
-.mobile-stats {
-    margin-bottom: 2rem;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
+    padding: 1.5rem 1.25rem;
+    background: #0f172a;
 }
 
-.stat-card {
+.summary-card {
+    flex: 1;
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
     border: 1px solid #475569;
     border-radius: 16px;
-    padding: 1rem;
+    padding: 1.5rem;
     text-align: center;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    opacity: 0.8;
-    transition: all 0.3s ease;
+.present-card {
+    border-left: 4px solid #10b981;
 }
 
-.stat-card.present::before {
-    background: linear-gradient(90deg, #10b981, #059669);
+.absent-card {
+    border-left: 4px solid #ef4444;
 }
 
-.stat-card.absent::before {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
-}
-
-.stat-card.pending::before {
-    background: linear-gradient(90deg, #f59e0b, #d97706);
-}
-
-.stat-card.total::before {
-    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.stat-card:hover::before {
-    opacity: 1;
-    height: 4px;
-}
-
-.stat-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 0.75rem;
-    font-size: 18px;
-    color: white;
-}
-
-.stat-card.present .stat-icon {
-    background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.stat-card.absent .stat-icon {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.stat-card.pending .stat-icon {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-}
-
-.stat-card.total .stat-icon {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-}
-
-.stat-number {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 0.25rem;
-}
-
-.stat-label {
-    font-size: 0.8rem;
-    color: #8b949e;
-    font-weight: 500;
+.summary-label {
+    color: #94a3b8;
+    font-size: 0.875rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
 }
 
-/* Mobile Members Section */
-.mobile-members-section {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    border: 1px solid #475569;
-    border-radius: 20px;
-    padding: 1.5rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.mobile-members-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3b82f6, #10b981, #ef4444);
-    border-radius: 20px 20px 0 0;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    position: relative;
-    z-index: 1;
-}
-
-.section-header h2 {
+.summary-number {
     color: white;
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
-.section-actions {
+/* Global Action Buttons */
+.global-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
+    padding: 0 1.25rem 1.5rem;
+    background: #0f172a;
 }
 
 .action-btn {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #475569;
-    border-radius: 8px;
-    background: #21262d;
-    color: #f0f6fc;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.3s ease;
+    flex: 1;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    min-height: 44px;
 }
 
-.action-btn:hover {
-    background: #30363d;
-    border-color: #64748b;
-    transform: translateY(-1px);
-}
-
-.bulk-present {
+.all-present-btn {
     background: linear-gradient(135deg, #10b981, #059669);
-    border-color: #059669;
-    color: white;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
 }
 
-.bulk-present:hover {
-    background: linear-gradient(135deg, #059669, #10b981);
+.all-present-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
-.bulk-clear {
+.all-absent-btn {
     background: linear-gradient(135deg, #ef4444, #dc2626);
-    border-color: #dc2626;
-    color: white;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
 }
 
-.bulk-clear:hover {
-    background: linear-gradient(135deg, #dc2626, #ef4444);
+.all-absent-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
-/* Mobile Members List */
-.mobile-members-list {
+.action-btn i {
+    font-size: 0.95rem;
+}
+
+/* Members List Section */
+.members-list-section {
+    padding: 0 1.25rem;
+    background: #0f172a;
+}
+
+.members-list {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    position: relative;
-    z-index: 1;
+    gap: 0.75rem;
 }
 
-.mobile-member-card {
-    background: #21262d;
-    border: 1px solid #30363d;
+.member-item {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
     border-radius: 16px;
     padding: 1.25rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.mobile-member-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    opacity: 0.8;
-    transition: all 0.3s ease;
-}
-
-.mobile-member-card.status-present::before {
-    background: linear-gradient(90deg, #10b981, #059669);
-}
-
-.mobile-member-card.status-absent::before {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
-}
-
-.mobile-member-card.status-pending::before {
-    background: linear-gradient(90deg, #f59e0b, #d97706);
-}
-
-.mobile-member-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.mobile-member-card:hover::before {
-    opacity: 1;
-    height: 4px;
-}
-
-.member-info {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 1rem;
-    position: relative;
-    z-index: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
 }
 
-.member-avatar {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 18px;
-    flex-shrink: 0;
+.member-item:active {
+    transform: scale(0.98);
 }
 
-.member-details {
+.member-info-section {
     flex: 1;
+    min-width: 0;
 }
 
 .member-name {
     color: white;
     font-size: 1.1rem;
     font-weight: 600;
-    margin: 0 0 0.5rem 0;
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
 }
 
-.member-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.meta-item {
-    color: #8b949e;
+.member-id {
+    color: #94a3b8;
     font-size: 0.85rem;
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+}
+
+/* Member Action Icons */
+.member-action-icons {
     display: flex;
     align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.icon-btn {
+    width: 44px;
+    height: 44px;
+    border: 2px solid;
+    border-radius: 12px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 1.25rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.present-icon-btn {
+    border-color: #64748b;
+    color: #64748b;
+}
+
+.present-icon-btn:hover {
+    border-color: #10b981;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.present-icon-btn.active {
+    border-color: #10b981;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+}
+
+.present-icon-btn.active:hover {
+    background: rgba(16, 185, 129, 0.25);
+}
+
+.absent-icon-btn {
+    border-color: #64748b;
+    color: #64748b;
+}
+
+.absent-icon-btn:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.absent-icon-btn.active {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.absent-icon-btn.active:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* Submit Container */
+.submit-container {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(to top, #0f172a 0%, #0f172a 80%, transparent 100%);
+    z-index: 200;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    min-height: 48px;
 }
 
-.meta-item i {
-    font-size: 12px;
-    width: 12px;
+.submit-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
 }
 
-.member-actions {
+.submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.submit-btn i {
+    font-size: 1rem;
+}
+
+/* Feedback Message */
+.feedback-message {
+    position: fixed;
+    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 2px solid #475569;
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    max-width: calc(100% - 2.5rem);
+    text-align: center;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateX(-50%) translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+.feedback-message.success {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.25));
+}
+
+.feedback-message.error {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.25));
+}
+
+/* Confirmation Modal */
+.confirm-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
     position: relative;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 1px solid #475569;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease;
     z-index: 1;
 }
 
-.action-buttons {
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body p {
+    color: #cbd5e1;
+    font-size: 1rem;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.5;
+}
+
+.attendance-summary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
     display: flex;
+    flex-direction: column;
     gap: 0.75rem;
-    justify-content: center;
 }
 
-.action-buttons .action-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+.summary-item {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    padding: 0;
-    border: 2px solid;
-    transition: all 0.3s ease;
 }
 
-.present-btn {
-    background: transparent;
-    border-color: #10b981;
+.summary-label {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.summary-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.present-value {
     color: #10b981;
 }
 
-.present-btn.active {
-    background: #10b981;
-    color: white;
-}
-
-.present-btn:hover {
-    background: #10b981;
-    color: white;
-    transform: scale(1.1);
-}
-
-.absent-btn {
-    background: transparent;
-    border-color: #ef4444;
+.absent-value {
     color: #ef4444;
 }
 
-.absent-btn.active {
-    background: #ef4444;
-    color: white;
+.modal-footer {
+    padding: 1rem 1.5rem 1.5rem;
+    display: flex;
+    gap: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.absent-btn:hover {
-    background: #ef4444;
-    color: white;
-    transform: scale(1.1);
+.modal-btn {
+    flex: 1;
+    padding: 0.875rem 1.25rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    min-height: 44px;
 }
 
-.clear-btn {
-    background: transparent;
-    border-color: #6b7280;
-    color: #6b7280;
+.cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.clear-btn:hover {
-    background: #6b7280;
+.cancel-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.98);
+}
+
+.confirm-btn {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
     color: white;
-    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.confirm-btn:active {
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+    transform: scale(0.98);
+}
+
+.confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
-    padding: 3rem 2rem;
-    background: #21262d;
-    border-radius: 16px;
-    border: 1px solid #30363d;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 20px;
+    border: 1px solid #475569;
 }
 
 .empty-icon {
     width: 80px;
     height: 80px;
     background: linear-gradient(135deg, #30363d, #21262d);
-    color: #8b949e;
+    color: #94a3b8;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -640,89 +706,65 @@
 }
 
 .empty-state p {
-    color: #8b949e;
+    color: #94a3b8;
     font-size: 1rem;
     margin: 0;
 }
 
-/* Mobile Responsive Adjustments */
-@media (max-width: 575px) {
-    .mobile-header {
-        padding: 1.25rem;
-        gap: 0.75rem;
+/* Responsive Adjustments */
+@media (max-width: 360px) {
+    .attendance-header {
+        padding: 1.25rem 1rem;
     }
     
-    .header-icon {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
-    }
-    
-    .header-text h1 {
-        font-size: 1.2rem;
-    }
-    
-    .header-text p {
-        font-size: 0.85rem;
-    }
-    
-    .stats-grid {
-        gap: 0.75rem;
-    }
-    
-    .stat-card {
-        padding: 0.875rem;
-    }
-    
-    .stat-icon {
-        width: 35px;
-        height: 35px;
-        font-size: 16px;
-    }
-    
-    .stat-number {
+    .header-content h1 {
         font-size: 1.3rem;
     }
     
-    .stat-label {
-        font-size: 0.75rem;
+    .summary-cards {
+        padding: 1.25rem 1rem;
+        gap: 0.75rem;
     }
     
-    .mobile-members-section {
+    .summary-card {
         padding: 1.25rem;
     }
     
-    .section-header h2 {
-        font-size: 1.2rem;
+    .summary-number {
+        font-size: 2rem;
+    }
+    
+    .global-actions {
+        padding: 0 1rem 1.25rem;
+        gap: 0.75rem;
     }
     
     .action-btn {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.75rem;
+        padding: 0.625rem 1rem;
+        font-size: 0.85rem;
+        min-height: 40px;
     }
     
-    .mobile-member-card {
+    .members-list-section {
+        padding: 0 1rem;
+    }
+    
+    .member-item {
         padding: 1rem;
-    }
-    
-    .member-avatar {
-        width: 45px;
-        height: 45px;
-        font-size: 16px;
     }
     
     .member-name {
         font-size: 1rem;
     }
     
-    .meta-item {
-        font-size: 0.8rem;
+    .icon-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
     }
     
-    .action-buttons .action-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 14px;
+    .member-action-icons {
+        gap: 0.5rem;
     }
 }
 </style>
@@ -730,65 +772,260 @@
 
 {% block extra_js %}
 <script>
-// Update attendance counts
-function updateCounts() {
-    const presentCount = document.querySelectorAll('.status-present').length;
-    const absentCount = document.querySelectorAll('.status-absent').length;
-    const pendingCount = document.querySelectorAll('.status-pending').length;
-    
-    document.getElementById('presentCount-mobile').textContent = presentCount;
-    document.getElementById('absentCount-mobile').textContent = absentCount;
-    document.getElementById('pendingCount-mobile').textContent = pendingCount;
-}
-
-// Update attendance for mobile
-function updateAttendanceMobile(memberId, status, meetingDate) {
-    const memberCard = document.querySelector(`[data-member-id="${memberId}"]`);
-    const presentBtn = memberCard.querySelector('.present-btn');
-    const absentBtn = memberCard.querySelector('.absent-btn');
-    
-    // Remove all status classes
-    memberCard.classList.remove('status-present', 'status-absent', 'status-pending');
-    presentBtn.classList.remove('active');
-    absentBtn.classList.remove('active');
-    
-    // Apply new status
-    if (status === 'present') {
-        memberCard.classList.add('status-present');
+// Make functions globally accessible
+window.markMemberPresent = function(memberId) {
+    try {
+        const memberItem = document.querySelector(`[data-member-id="${memberId}"]`);
+        if (!memberItem) {
+            console.error('Member item not found for ID:', memberId);
+            return;
+        }
+        
+        const checkbox = memberItem.querySelector('.member-checkbox');
+        const presentBtn = memberItem.querySelector('.present-icon-btn');
+        const absentBtn = memberItem.querySelector('.absent-icon-btn');
+        
+        if (!checkbox || !presentBtn || !absentBtn) {
+            console.error('Required elements not found for member:', memberId);
+            return;
+        }
+        
+        // Set checkbox to checked (present)
+        checkbox.checked = true;
+        
+        // Update button states
         presentBtn.classList.add('active');
-    } else if (status === 'absent') {
-        memberCard.classList.add('status-absent');
-        absentBtn.classList.add('active');
-    } else {
-        memberCard.classList.add('status-pending');
+        absentBtn.classList.remove('active');
+        
+        updateCounts();
+    } catch (error) {
+        console.error('Error in markMemberPresent:', error);
     }
+}
+
+// Mark member as absent
+window.markMemberAbsent = function(memberId) {
+    try {
+        const memberItem = document.querySelector(`[data-member-id="${memberId}"]`);
+        if (!memberItem) {
+            console.error('Member item not found for ID:', memberId);
+            return;
+        }
+        
+        const checkbox = memberItem.querySelector('.member-checkbox');
+        const presentBtn = memberItem.querySelector('.present-icon-btn');
+        const absentBtn = memberItem.querySelector('.absent-icon-btn');
+        
+        if (!checkbox || !presentBtn || !absentBtn) {
+            console.error('Required elements not found for member:', memberId);
+            return;
+        }
+        
+        // Set checkbox to unchecked (absent)
+        checkbox.checked = false;
+        
+        // Update button states
+        presentBtn.classList.remove('active');
+        absentBtn.classList.add('active');
+        
+        updateCounts();
+    } catch (error) {
+        console.error('Error in markMemberAbsent:', error);
+    }
+}
+
+// Mark all present
+window.markAllPresent = function() {
+    const checkboxes = document.querySelectorAll('.member-checkbox');
+    const presentButtons = document.querySelectorAll('.present-icon-btn');
+    const absentButtons = document.querySelectorAll('.absent-icon-btn');
     
-    // Update counts
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    
+    presentButtons.forEach(btn => {
+        btn.classList.add('active');
+    });
+    
+    absentButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
     updateCounts();
+}
+
+// Mark all absent
+window.markAllAbsent = function() {
+    const checkboxes = document.querySelectorAll('.member-checkbox');
+    const presentButtons = document.querySelectorAll('.present-icon-btn');
+    const absentButtons = document.querySelectorAll('.absent-icon-btn');
     
-    // Here you would typically make an API call to save the attendance
-    console.log(`Updated ${memberId} to ${status} for ${meetingDate}`);
-}
-
-// Mark all members as present
-function markAllPresent() {
-    const memberCards = document.querySelectorAll('.mobile-member-card');
-    memberCards.forEach(card => {
-        const memberId = card.getAttribute('data-member-id');
-        updateAttendanceMobile(memberId, 'present', '{{ meeting_date }}');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
     });
-}
-
-// Clear all attendance
-function clearAllAttendance() {
-    const memberCards = document.querySelectorAll('.mobile-member-card');
-    memberCards.forEach(card => {
-        const memberId = card.getAttribute('data-member-id');
-        updateAttendanceMobile(memberId, 'clear', '{{ meeting_date }}');
+    
+    presentButtons.forEach(btn => {
+        btn.classList.remove('active');
     });
+    
+    absentButtons.forEach(btn => {
+        btn.classList.add('active');
+    });
+    
+    updateCounts();
 }
 
-// Initialize counts on page load
+// Update counts
+function updateCounts() {
+    const checkedBoxes = document.querySelectorAll('.member-checkbox:checked');
+    const presentCount = checkedBoxes.length;
+    const totalMembers = document.querySelectorAll('.member-checkbox').length;
+    const absentCount = totalMembers - presentCount;
+    
+    const presentCountEl = document.getElementById('presentCount-mobile');
+    const absentCountEl = document.getElementById('absentCount-mobile');
+    
+    if (presentCountEl) presentCountEl.textContent = presentCount;
+    if (absentCountEl) absentCountEl.textContent = absentCount;
+}
+
+// Show confirmation modal
+window.submitAttendance = function() {
+    // Update modal summary
+    const checkedBoxes = document.querySelectorAll('.member-checkbox:checked');
+    const presentCount = checkedBoxes.length;
+    const totalMembers = document.querySelectorAll('.member-checkbox').length;
+    const absentCount = totalMembers - presentCount;
+    
+    document.getElementById('confirmPresentCount').textContent = presentCount;
+    document.getElementById('confirmAbsentCount').textContent = absentCount;
+    
+    // Show modal
+    const modal = document.getElementById('confirmModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Close confirmation modal
+window.closeConfirmModal = function() {
+    const modal = document.getElementById('confirmModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Confirm and submit attendance
+window.confirmSubmit = function() {
+    try {
+        const confirmBtn = document.querySelector('.confirm-btn');
+        const memberCheckboxes = document.querySelectorAll('.member-checkbox');
+        
+        if (!confirmBtn) {
+            console.error('Confirm button not found');
+            return;
+        }
+        
+        if (memberCheckboxes.length === 0) {
+            showFeedback('No members found to submit', 'error');
+            return;
+        }
+        
+        // Disable confirm button
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Submitting...</span>';
+        
+        // Collect attendance data
+        const attendance = [];
+        memberCheckboxes.forEach(checkbox => {
+            const memberId = checkbox.getAttribute('data-member-id');
+            if (!memberId) {
+                console.warn('Checkbox missing member ID');
+                return;
+            }
+            const status = checkbox.checked ? 'present' : 'absent';
+            attendance.push({
+                member_id: memberId,
+                status: status
+            });
+        });
+        
+        if (attendance.length === 0) {
+            showFeedback('No attendance data to submit', 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
+            return;
+        }
+        
+        console.log('Submitting attendance:', attendance);
+        
+        // Send to server
+        const meetingDate = '{{ meeting_date }}';
+        fetch(`/bulk_update_attendance/${encodeURIComponent(meetingDate)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ attendance: attendance })
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Server error');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                // Close modal
+                closeConfirmModal();
+                showFeedback(data.message, 'success');
+                // Reload page after 1.5 seconds
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showFeedback(data.message || 'Error submitting attendance', 'error');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting attendance:', error);
+            showFeedback(error.message || 'Network error. Please try again.', 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
+        });
+    } catch (error) {
+        console.error('Error in confirmSubmit:', error);
+        showFeedback('An error occurred. Please try again.', 'error');
+        const confirmBtn = document.querySelector('.confirm-btn');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
+        }
+    }
+}
+
+// Show feedback message
+function showFeedback(message, type) {
+    const feedbackEl = document.getElementById('feedbackMessage');
+    if (feedbackEl) {
+        feedbackEl.textContent = message;
+        feedbackEl.className = `feedback-message ${type}`;
+        feedbackEl.style.display = 'block';
+        
+        setTimeout(() => {
+            feedbackEl.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateCounts();
 });
