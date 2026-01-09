@@ -27,6 +27,10 @@
     <div class="row g-4">
         {% for tutorial in tutorials %}
         <div class="col-md-6">
+            {% set pdf_url = tutorial.file_url or tutorial.pdf_url or tutorial.url or tutorial.file_path %}
+            {% if pdf_url and pdf_url|trim|length > 0 %}
+            <a href="{{ pdf_url }}" target="_blank" rel="noopener noreferrer" class="tutorial-link">
+            {% endif %}
             <div class="tutorial-card-desktop">
                 <div class="tutorial-header">
                     <div class="tutorial-icon">
@@ -48,6 +52,9 @@
                     </small>
                 </div>
             </div>
+            {% if pdf_url %}
+            </a>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
@@ -153,6 +160,27 @@
 .tutorial-footer small {
     color: #8b949e;
     font-size: 0.8rem;
+}
+
+.tutorial-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.tutorial-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+.tutorial-link .tutorial-card-desktop {
+    cursor: pointer;
+}
+
+.tutorial-link:hover .tutorial-card-desktop {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: #1F6FEB;
 }
 
 

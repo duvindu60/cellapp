@@ -28,6 +28,7 @@
     </div>
     
     <!-- Global Action Buttons -->
+    {% if can_mark_attendance %}
     <div class="global-actions">
         <button type="button" class="action-btn all-present-btn" onclick="markAllPresent()">
             <i class="fas fa-check-double"></i>
@@ -38,6 +39,7 @@
             All Absent
         </button>
     </div>
+    {% endif %}
     
     <!-- Members List -->
     <div class="members-list-section">
@@ -56,15 +58,17 @@
                             <button type="button" 
                                     class="icon-btn present-icon-btn {% if attendance_data[member.id].present %}active{% endif %}"
                                     data-member-id="{{ member.id }}"
-                                    onclick="markMemberPresent('{{ member.id }}')"
-                                    title="Mark as Present">
+                                    onclick="{% if can_mark_attendance %}markMemberPresent('{{ member.id }}'){% else %}showAttendanceLockedMessage(){% endif %}"
+                                    title="{% if can_mark_attendance %}Mark as Present{% else %}Attendance is locked{% endif %}"
+                                    {% if not can_mark_attendance %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
                                 <i class="fas fa-check-circle"></i>
                             </button>
                             <button type="button" 
                                     class="icon-btn absent-icon-btn {% if not attendance_data[member.id].present %}active{% endif %}"
                                     data-member-id="{{ member.id }}"
-                                    onclick="markMemberAbsent('{{ member.id }}')"
-                                    title="Mark as Absent">
+                                    onclick="{% if can_mark_attendance %}markMemberAbsent('{{ member.id }}'){% else %}showAttendanceLockedMessage(){% endif %}"
+                                    title="{% if can_mark_attendance %}Mark as Absent{% else %}Attendance is locked{% endif %}"
+                                    {% if not can_mark_attendance %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
                                 <i class="fas fa-times-circle"></i>
                             </button>
                         </div>
@@ -90,8 +94,23 @@
         {% endif %}
     </div>
     
+    <!-- Attendance Locked Warning -->
+    {% if not can_mark_attendance %}
+    <div class="submit-container">
+        <div class="alert alert-warning" style="margin: 15px; padding: 15px; border-radius: 10px; background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-lock" style="font-size: 20px;"></i>
+                <div>
+                    <h6 style="margin: 0 0 5px 0; font-weight: 600;">Attendance Locked</h6>
+                    <p style="margin: 0; font-size: 14px; opacity: 0.95;">Attendance can only be marked until Wednesday. This week's attendance is now closed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     <!-- Submit Button -->
-    {% if members %}
+    {% if members and can_mark_attendance %}
     <div class="submit-container">
         <button type="button" class="submit-btn" onclick="submitAttendance()">
             <i class="fas fa-check-circle"></i>
@@ -892,6 +911,11 @@ function updateCounts() {
 
 // Show confirmation modal
 window.submitAttendance = function() {
+    {% if not can_mark_attendance %}
+    showAttendanceLockedMessage();
+    return;
+    {% endif %}
+    
     // Update modal summary
     const checkedBoxes = document.querySelectorAll('.member-checkbox:checked');
     const presentCount = checkedBoxes.length;
@@ -1009,6 +1033,11 @@ window.confirmSubmit = function() {
             confirmBtn.innerHTML = '<i class="fas fa-check"></i><span>Yes, Submit</span>';
         }
     }
+}
+
+// Show attendance locked message
+window.showAttendanceLockedMessage = function() {
+    showFeedback('Attendance can only be marked until Wednesday. This week\'s attendance is now closed.', 'error');
 }
 
 // Show feedback message

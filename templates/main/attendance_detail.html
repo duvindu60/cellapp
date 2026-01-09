@@ -742,15 +742,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <button type="button" 
                                         class="icon-btn-desktop present-icon-btn-desktop {% if attendance_data[member.id].present %}active{% endif %}"
                                         data-member-id="{{ member.id }}"
-                                        onclick="markMemberPresentDesktop(this)"
-                                        title="Mark as Present">
+                                        onclick="{% if can_mark_attendance %}markMemberPresentDesktop(this){% else %}showAttendanceLockedMessage(){% endif %}"
+                                        title="{% if can_mark_attendance %}Mark as Present{% else %}Attendance is locked{% endif %}"
+                                        {% if not can_mark_attendance %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
                                     <i class="fas fa-check-circle"></i>
                                 </button>
                                 <button type="button" 
                                         class="icon-btn-desktop absent-icon-btn-desktop {% if not attendance_data[member.id].present %}active{% endif %}"
                                         data-member-id="{{ member.id }}"
-                                        onclick="markMemberAbsentDesktop(this)"
-                                        title="Mark as Absent">
+                                        onclick="{% if can_mark_attendance %}markMemberAbsentDesktop(this){% else %}showAttendanceLockedMessage(){% endif %}"
+                                        title="{% if can_mark_attendance %}Mark as Absent{% else %}Attendance is locked{% endif %}"
+                                        {% if not can_mark_attendance %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
                                     <i class="fas fa-times-circle"></i>
                                 </button>
                             </div>
@@ -777,8 +779,23 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endif %}
     </div>
     
+    <!-- Attendance Locked Warning -->
+    {% if not can_mark_attendance %}
+    <div class="desktop-submit-container">
+        <div class="alert alert-warning" style="margin: 20px 0; padding: 20px; border-radius: 10px; background: linear-gradient(135deg, #f39c12, #e67e22); color: white; border: none; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <i class="fas fa-lock" style="font-size: 24px;"></i>
+                <div>
+                    <h5 style="margin: 0 0 5px 0; font-weight: 600;">Attendance Locked</h5>
+                    <p style="margin: 0; opacity: 0.95;">Attendance can only be marked until Wednesday. This week's attendance is now closed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     <!-- Submit Button -->
-    {% if members %}
+    {% if members and can_mark_attendance %}
     <div class="desktop-submit-container">
         <button type="button" class="desktop-submit-btn" onclick="submitAttendanceDesktop()">
             <i class="fas fa-check-circle"></i>
@@ -1496,6 +1513,11 @@ function updateCountsDesktop() {
 
 // Show confirmation modal
 window.submitAttendanceDesktop = function() {
+    {% if not can_mark_attendance %}
+    showAttendanceLockedMessage();
+    return;
+    {% endif %}
+    
     const checkedBoxes = document.querySelectorAll('.member-checkbox-desktop:checked');
     const presentCount = checkedBoxes.length;
     const totalMembers = document.querySelectorAll('.member-checkbox-desktop').length;
@@ -1516,6 +1538,11 @@ window.closeConfirmModalDesktop = function() {
     if (modal) {
         modal.style.display = 'none';
     }
+}
+
+// Show attendance locked message
+window.showAttendanceLockedMessage = function() {
+    alert('Attendance can only be marked until Wednesday. This week\'s attendance is now closed.');
 }
 
 // Confirm and submit attendance

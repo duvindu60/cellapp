@@ -20,6 +20,48 @@
         </div>
     </div>
 
+    <!-- Attendance Reminder Banner -->
+    {% if attendance_reminder and not attendance_reminder.is_past_deadline and latest_attendance and latest_attendance.status != 'complete' %}
+    <div class="attendance-reminder-banner {% if attendance_reminder.is_urgent %}urgent{% elif attendance_reminder.is_approaching %}approaching{% endif %}" id="attendanceReminderBanner">
+        <div class="reminder-content">
+            <div class="reminder-icon">
+                <i class="fas fa-{% if attendance_reminder.is_urgent %}exclamation-triangle{% else %}clock{% endif %}"></i>
+            </div>
+            <div class="reminder-text">
+                <h4>
+                    {% if attendance_reminder.is_urgent %}
+                        ⚠️ URGENT: Attendance Deadline Approaching!
+                    {% elif attendance_reminder.is_approaching %}
+                        ⏰ Reminder: Mark Your Attendance
+                    {% else %}
+                        📋 Don't Forget: Mark Your Attendance
+                    {% endif %}
+                </h4>
+                <p>
+                    Attendance for <strong>{{ current_attendance_date }}</strong> must be marked before 
+                    <strong id="deadlineDisplay">{{ attendance_reminder.deadline_str }}</strong>
+                </p>
+                <div class="countdown-timer" id="countdownTimer">
+                    <span class="time-unit">
+                        <span class="time-value" id="hoursRemaining">{{ attendance_reminder.hours_remaining }}</span>
+                        <span class="time-label">Hours</span>
+                    </span>
+                    <span class="time-separator">:</span>
+                    <span class="time-unit">
+                        <span class="time-value" id="minutesRemaining">{{ attendance_reminder.minutes_remaining }}</span>
+                        <span class="time-label">Minutes</span>
+                    </span>
+                </div>
+            </div>
+            <div class="reminder-action">
+                <a href="{{ url_for('main.attendance_detail', meeting_date=current_attendance_date) }}" class="btn btn-reminder">
+                    <i class="fas fa-user-check"></i> Mark Attendance Now
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Stats Overview -->
     <div class="stats-overview">
         <div class="stat-card">
@@ -290,6 +332,55 @@ function toggleQuickAccess(type) {
         chevron.classList.remove('rotated');
     }
 }
+
+// Attendance Countdown Timer
+{% if attendance_reminder and not attendance_reminder.is_past_deadline %}
+(function() {
+    const deadline = new Date('{{ attendance_reminder.deadline_iso }}');
+    
+    function updateCountdown() {
+        const now = new Date();
+        const timeRemaining = deadline - now;
+        
+        if (timeRemaining <= 0) {
+            // Deadline passed
+            document.getElementById('countdownTimer').innerHTML = '<span style="color: #ef4444; font-weight: 700;">DEADLINE PASSED</span>';
+            const banner = document.getElementById('attendanceReminderBanner');
+            if (banner) {
+                banner.classList.add('urgent');
+            }
+            return;
+        }
+        
+        const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+        const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+        
+        const hoursEl = document.getElementById('hoursRemaining');
+        const minutesEl = document.getElementById('minutesRemaining');
+        
+        if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+        if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+        
+        // Update urgency classes
+        const banner = document.getElementById('attendanceReminderBanner');
+        if (banner) {
+            if (hours < 6) {
+                banner.classList.add('urgent');
+                banner.classList.remove('approaching');
+            } else if (hours < 24) {
+                banner.classList.add('approaching');
+                banner.classList.remove('urgent');
+            }
+        }
+    }
+    
+    // Update immediately
+    updateCountdown();
+    
+    // Update every minute
+    setInterval(updateCountdown, 60000);
+})();
+{% endif %}
 </script>
 
 {% block extra_css %}

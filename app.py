@@ -3,7 +3,6 @@ from routes.auth import auth_bp
 from routes.main import main_bp
 from routes.api import api_bp
 from config import config
-from utils.activity_logger import get_activity_icon, get_activity_color, format_activity_description
 import os
 from datetime import timedelta
 
@@ -26,13 +25,6 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp)
-    
-    # Make activity logger functions available in templates
-    app.jinja_env.globals.update(
-        get_activity_icon=get_activity_icon,
-        get_activity_color=get_activity_color,
-        format_activity_description=format_activity_description
-    )
     
     return app
 

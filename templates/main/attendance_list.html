@@ -16,16 +16,37 @@
         </div>
     </div>
 
-    <!-- Attendance List -->
-    <div class="attendance-list-card">
-        <div class="card-header">
-            <h3><i class="fas fa-list me-2"></i>Attendance Overview</h3>
-        </div>
-        
-        <div class="attendance-content">
-            {% if attendance_list %}
+    <!-- Tabs Navigation -->
+    <div class="attendance-tabs-container">
+        <ul class="nav nav-tabs" id="attendanceTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="unmarked-tab" data-bs-toggle="tab" data-bs-target="#unmarked" type="button" role="tab">
+                    <i class="fas fa-clock me-2"></i>Unmarked
+                    <span class="badge bg-warning ms-2">{{ unmarked_list|length }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="marked-tab" data-bs-toggle="tab" data-bs-target="#marked" type="button" role="tab">
+                    <i class="fas fa-check-circle me-2"></i>Marked
+                    <span class="badge bg-success ms-2">{{ marked_list|length }}</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="attendanceTabContent">
+        <!-- Unmarked Tab -->
+        <div class="tab-pane fade show active" id="unmarked" role="tabpanel">
+            <div class="attendance-list-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-clock me-2"></i>Incomplete Attendance</h3>
+                </div>
+                
+                <div class="attendance-content">
+                    {% if unmarked_list %}
                 <div class="attendance-grid">
-                    {% for attendance in attendance_list %}
+                    {% for attendance in unmarked_list %}
                         <div class="attendance-item {% if attendance.is_upcoming %}upcoming-meeting{% endif %}">
                             <div class="attendance-header">
                                 <div class="attendance-date">
@@ -55,16 +76,17 @@
                             <div class="attendance-info">
                                 <div class="attendance-count">{{ attendance.count }}/{{ attendance.total }} Members</div>
                                 <div class="attendance-progress">
+                                    {% set percentage = (attendance.count / attendance.total * 100) if attendance.total > 0 else 0 %}
                                     <div class="progress-bar">
-                                        <div class="progress-fill" style="width: {{ (attendance.count / attendance.total * 100) if attendance.total > 0 else 0 }}%"></div>
+                                        <div class="progress-fill" style="--progress-width: {{ percentage }}%; width: var(--progress-width);"></div>
                                     </div>
-                                    <div class="progress-text">{{ "%.0f"|format((attendance.count / attendance.total * 100) if attendance.total > 0 else 0) }}% Complete</div>
+                                    <div class="progress-text">{{ "%.0f"|format(percentage) }}% Complete</div>
                                 </div>
                             </div>
                             <div class="attendance-actions">
                                 {% if not attendance.is_upcoming %}
                                 <a href="{{ url_for('main.attendance_detail', meeting_date=attendance.date) }}" class="btn btn-primary">
-                                    <i class="fas fa-eye"></i> View Details
+                                    <i class="fas fa-edit"></i> Mark Attendance
                                 </a>
                                 {% else %}
                                 <div class="btn btn-secondary" style="opacity: 0.6; cursor: not-allowed; background: #475569; color: #94a3b8;">
@@ -75,15 +97,88 @@
                         </div>
                     {% endfor %}
                 </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <h3>No Attendance Records</h3>
-                    <p>No attendance records have been created yet.</p>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-check-double"></i>
+                            </div>
+                            <h3>All Caught Up!</h3>
+                            <p>All meetings have complete attendance records.</p>
+                        </div>
+                    {% endif %}
                 </div>
-            {% endif %}
+            </div>
+        </div>
+
+        <!-- Marked Tab -->
+        <div class="tab-pane fade" id="marked" role="tabpanel">
+            <div class="attendance-list-card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h3><i class="fas fa-check-circle me-2"></i>Complete Attendance</h3>
+                        <form method="GET" action="{{ url_for('main.attendance_list') }}" class="d-flex gap-2">
+                            <input type="date" name="start_date" class="form-control form-control-sm" 
+                                   placeholder="Start Date" value="{{ filter_start_date or '' }}"
+                                   style="width: 150px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                            <input type="date" name="end_date" class="form-control form-control-sm" 
+                                   placeholder="End Date" value="{{ filter_end_date or '' }}"
+                                   style="width: 150px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            {% if filter_start_date or filter_end_date %}
+                            <a href="{{ url_for('main.attendance_list') }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="attendance-content">
+                    {% if marked_list %}
+                        <div class="attendance-grid">
+                            {% for attendance in marked_list %}
+                                <div class="attendance-item">
+                                    <div class="attendance-header">
+                                        <div class="attendance-date">
+                                            {{ attendance.date }}
+                                        </div>
+                                        <div class="attendance-status complete">
+                                            <i class="fas fa-check-circle"></i> Complete
+                                        </div>
+                                    </div>
+                                    <div class="attendance-info">
+                                        <div class="attendance-count">{{ attendance.count }}/{{ attendance.total }} Members</div>
+                                        <div class="attendance-summary" style="display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.9rem;">
+                                            <span style="color: #10b981;"><i class="fas fa-check"></i> Present: {{ attendance.present_count }}</span>
+                                            <span style="color: #ef4444;"><i class="fas fa-times"></i> Absent: {{ attendance.absent_count }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="attendance-actions">
+                                        <a href="{{ url_for('main.attendance_detail', meeting_date=attendance.date) }}" class="btn btn-primary">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-calendar-times"></i>
+                            </div>
+                            <h3>No Complete Meetings</h3>
+                            <p>No meetings with complete attendance records found.</p>
+                            {% if filter_start_date or filter_end_date %}
+                            <a href="{{ url_for('main.attendance_list') }}" class="btn btn-primary mt-3">
+                                <i class="fas fa-times me-2"></i>Clear Filters
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -372,6 +467,51 @@
 .empty-state p {
     margin: 0;
     font-size: 1rem;
+}
+
+/* Tabs Styling */
+.attendance-tabs-container {
+    margin: 2rem 0 1rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.attendance-tabs-container .nav-tabs {
+    border-bottom: none;
+}
+
+.attendance-tabs-container .nav-link {
+    color: #94a3b8;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+}
+
+.attendance-tabs-container .nav-link:hover {
+    color: #3b82f6;
+    border-bottom-color: rgba(59, 130, 246, 0.3);
+}
+
+.attendance-tabs-container .nav-link.active {
+    color: #3b82f6;
+    background: transparent;
+    border-bottom-color: #3b82f6;
+}
+
+.attendance-tabs-container .badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.form-control-sm {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-control-sm::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 /* Responsive adjustments */

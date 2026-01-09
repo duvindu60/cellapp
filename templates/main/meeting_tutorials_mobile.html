@@ -26,6 +26,10 @@
     {% if tutorials %}
         <div class="tutorials-list">
             {% for tutorial in tutorials %}
+                {% set pdf_url = tutorial.file_url or tutorial.pdf_url or tutorial.url or tutorial.file_path %}
+                {% if pdf_url and pdf_url|trim|length > 0 %}
+                <a href="{{ pdf_url }}" target="_blank" rel="noopener noreferrer" class="tutorial-link">
+                {% endif %}
                 <div class="tutorial-card-mobile">
                     <div class="tutorial-header">
                         <div class="tutorial-icon">
@@ -47,6 +51,9 @@
                         </small>
                     </div>
                 </div>
+                {% if pdf_url %}
+                </a>
+                {% endif %}
             {% endfor %}
         </div>
     {% else %}
@@ -260,6 +267,32 @@
 .tutorial-footer small {
     color: #8b949e;
     font-size: 0.8rem;
+}
+
+.tutorial-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.tutorial-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+.tutorial-link .tutorial-card-mobile {
+    cursor: pointer;
+}
+
+.tutorial-link:hover .tutorial-card-mobile {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    border-color: #64748b;
+}
+
+.tutorial-link:hover .tutorial-card-mobile::before {
+    opacity: 1;
+    height: 4px;
 }
 
 /* Empty State */

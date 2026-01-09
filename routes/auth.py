@@ -37,32 +37,47 @@ def login():
             template_name = f'auth/login{get_template_suffix()}.html'
             return render_template(template_name)
         
-        # Simple authentication - accept any mobile + password for testing
-        if password == '123456':  # Simple password for testing
-            # Login successful
-            session['user'] = {
-                'id': f'user_{mobile}',
-                'mobile': mobile,
-            }
+        try:
+            # Check user table for role_id = 4
+            user_result = supabase.table('users').select('*').eq('role_id', 4).eq('phone_number', mobile).eq('password', password).execute()
             
-            # Log login activity
-            try:
-                from routes.main import get_uuid_from_user_id
-                leader_id = get_uuid_from_user_id(session['user']['id'])
-                log_activity(
-                    leader_id=leader_id,
-                    user_id=session['user']['id'],
-                    activity_type='user_login',
-                    description='User logged in',
-                    details={'mobile': mobile, 'login_time': 'now'}
-                )
-            except Exception as e:
-                print(f"Error logging login activity: {e}")
-            
-            flash("Login successful!", 'success')
-            return redirect(url_for('main.index'))
-        else:
-            flash("Invalid mobile number or password", 'error')
+            if user_result.data and len(user_result.data) > 0:
+                # User found with correct credentials
+                user_data = user_result.data[0]
+                user_id = user_data.get('id')
+                
+                # Store user info in session
+                session['user'] = {
+                    'id': user_id,
+                    'mobile': mobile,
+                    'name': user_data.get('name', 'User'),
+                    'email': user_data.get('email', ''),
+                    'role_id': user_data.get('role_id')
+                }
+                
+                # Log login activity
+                try:
+                    log_activity(
+                        leader_id=user_id,
+                        user_id=user_id,
+                        activity_type='user_login',
+                        description='User logged in',
+                        user_role='leader',
+                        user_name=session['user'].get('name', 'User'),
+                        source='cell_app',
+                        platform='mobile' if mobile else 'web',
+                        details={'mobile': mobile, 'login_time': 'now'}
+                    )
+                except Exception as e:
+                    print(f"Error logging activity: {e}")
+                
+                flash("Login successful!", 'success')
+                return redirect(url_for('main.index'))
+            else:
+                flash("Invalid mobile number or password", 'error')
+        except Exception as e:
+            print(f"Error during login: {e}")
+            flash("An error occurred during login. Please try again.", 'error')
     
     template_name = f'auth/login{get_template_suffix()}.html'
     return render_template(template_name)

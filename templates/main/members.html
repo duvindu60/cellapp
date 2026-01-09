@@ -35,11 +35,16 @@
             {% if members %}
                 <div class="members-list">
                     {% for member in members %}
-                        <a href="{{ url_for('main.member_details', member_id=member.id) }}" class="member-item">
+                        <a href="{{ url_for('main.member_details', member_id=member.id) }}" class="member-item {{ 'potential-leader' if member.potential_leader else '' }}">
                             <div class="member-content">
                                 <div class="member-number">{{ loop.index }}</div>
                                 <div class="member-details">
-                                    <div class="member-name">{{ member.name }}</div>
+                                    <div class="member-name">
+                                        {{ member.name }}
+                                        {% if member.potential_leader %}
+                                            <i class="fas fa-star" style="color: #FFD700; margin-left: 8px; font-size: 0.9em;"></i>
+                                        {% endif %}
+                                    </div>
                                     <div class="member-info">{{ member.phone_number or 'No phone' }}</div>
                                     <div class="member-email">{{ member.email or 'No email' }}</div>
                                 </div>
@@ -290,6 +295,41 @@
 
 .member-item:last-child {
     margin-bottom: 0;
+}
+
+/* Potential Leader Styling */
+.member-item.potential-leader {
+    background: linear-gradient(135deg, #2d1b0e 0%, #1a1005 100%);
+    border: 2px solid #FFD700;
+    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.2);
+}
+
+.member-item.potential-leader:hover {
+    background: linear-gradient(135deg, #3d2b1e 0%, #2a2015 100%);
+    border-color: #FFA500;
+    box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+}
+
+.member-item.potential-leader .member-number {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #1a1005;
+    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.member-item.potential-leader:hover .member-number {
+    background: linear-gradient(135deg, #FFA500, #FFD700);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.member-item.potential-leader .member-arrow {
+    color: #FFD700;
+}
+
+.member-item.potential-leader:hover .member-arrow {
+    color: #FFA500;
+    transform: translateX(3px);
 }
 
 /* Member Item Content */

@@ -1,10 +1,12 @@
 """
-Activity logging utility for tracking all app activities
+Comprehensive Activity Logging Utility
+Tracks all activities from Cell App and Cell Portal
+Supports date-wise, role-wise, and activity-wise tracking
 """
 
 from supabase import create_client, Client
 import os
-from datetime import datetime
+from datetime import datetime, date, time
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
@@ -22,24 +24,95 @@ if not supabase:
     print(f"URL: {url}")
     print(f"Key: {'Present' if key else 'Missing'}")
 else:
-    print("✅ Supabase client initialized successfully in activity_logger.py")
+    print("Supabase client initialized successfully in activity_logger.py")
+
+# Activity category mapping
+ACTIVITY_CATEGORIES = {
+    # Member activities
+    'member_added': 'member',
+    'member_updated': 'member',
+    'member_deleted': 'member',
+    'member_viewed': 'member',
+    'member_imported': 'member',
+    
+    # Attendance activities
+    'attendance_marked': 'attendance',
+    'attendance_updated': 'attendance',
+    'attendance_bulk_updated': 'attendance',
+    'attendance_viewed': 'attendance',
+    'attendance_exported': 'attendance',
+    'attendance_sheet_updated': 'attendance',
+    'attendance_sheet_completed': 'attendance',
+    'attendance_incomplete': 'attendance',
+    
+    # Tutorial activities
+    'tutorial_uploaded': 'tutorial',
+    'tutorial_updated': 'tutorial',
+    'tutorial_deleted': 'tutorial',
+    'tutorial_viewed': 'tutorial',
+    'tutorial_downloaded': 'tutorial',
+    
+    # Meeting activities
+    'meeting_created': 'meeting',
+    'meeting_updated': 'meeting',
+    'meeting_deleted': 'meeting',
+    'meeting_viewed': 'meeting',
+    
+    # Profile activities
+    'profile_updated': 'profile',
+    'profile_viewed': 'profile',
+    'password_changed': 'profile',
+    'settings_updated': 'profile',
+    
+    # System activities
+    'user_login': 'system',
+    'user_logout': 'system',
+    'user_registered': 'system',
+    'session_started': 'system',
+    'session_ended': 'system',
+    'password_reset_requested': 'system',
+    'password_reset_completed': 'system',
+    
+    # Portal activities
+    'report_generated': 'portal',
+    'export_created': 'portal',
+    'bulk_operation_performed': 'portal',
+    'dashboard_viewed': 'portal',
+    'analytics_viewed': 'portal',
+}
 
 def log_activity(
     leader_id: str,
     user_id: str,
     activity_type: str,
     description: str,
-    details: Optional[Dict[str, Any]] = None
+    user_role: str = 'leader',
+    user_name: Optional[str] = None,
+    source: str = 'cell_app',
+    platform: Optional[str] = None,
+    details: Optional[Dict[str, Any]] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    activity_date: Optional[date] = None,
+    is_important: bool = False,
+    is_system: bool = False
 ) -> bool:
     """
-    Log an activity to the database
+    Log a comprehensive activity to the database
     
     Args:
         leader_id: UUID of the leader
-        user_id: User ID from session (not stored in DB due to table constraints)
+        user_id: User ID from session/auth
         activity_type: Type of activity (member_added, attendance_marked, etc.)
         description: Human-readable description
-        details: Optional additional details as JSON (not stored in DB due to table constraints)
+        user_role: Role of the user (leader, admin, super_admin, etc.)
+        user_name: Name of the user who performed the action
+        source: Source of activity ('cell_app' or 'cell_portal')
+        platform: Platform used ('web', 'mobile', 'api', 'admin_panel')
+        details: Optional activity-specific details as JSON
+        metadata: Optional metadata (IP address, user agent, etc.)
+        activity_date: Date of the activity (defaults to today)
+        is_important: Mark as important activity
+        is_system: Mark as system-generated activity
     
     Returns:
         bool: True if successful, False otherwise
@@ -48,31 +121,32 @@ def log_activity(
         print("Warning: Supabase client not initialized, activity not logged")
         return False
     
-    # Map new activity types to allowed ones
-    activity_type_mapping = {
-        'user_login': 'profile_updated',  # Map login to profile update
-        'member_added': 'member_added',
-        'member_updated': 'member_updated', 
-        'member_deleted': 'member_deleted',
-        'attendance_marked': 'attendance_marked',
-        'attendance_updated': 'attendance_updated',
-        'attendance_sheet_updated': 'attendance_updated',  # Map to attendance_updated
-        'tutorial_uploaded': 'tutorial_uploaded',
-        'tutorial_updated': 'tutorial_uploaded',  # Map to tutorial_uploaded
-        'attendance_incomplete': 'attendance_updated',  # Map to attendance_updated
-        'meeting_created': 'profile_updated',  # Map to profile_updated
-        'profile_updated': 'profile_updated'
-    }
+    # Get activity category
+    activity_category = ACTIVITY_CATEGORIES.get(activity_type, 'system')
     
-    # Use mapped activity type
-    mapped_type = activity_type_mapping.get(activity_type, 'profile_updated')
+    # Use current date/time if not provided
+    now = datetime.now()
+    if activity_date is None:
+        activity_date = now.date()
     
     try:
         activity_data = {
             'leader_id': leader_id,
-            'activity_type': mapped_type,
+            'user_id': user_id,
+            'user_role': user_role,
+            'user_name': user_name,
+            'activity_type': activity_type,
+            'activity_category': activity_category,
             'description': description,
-            'created_at': datetime.now().isoformat()
+            'source': source,
+            'platform': platform or ('mobile' if platform is None else 'web'),
+            'activity_date': activity_date.isoformat(),
+            'activity_time': now.time().isoformat(),
+            'created_at': now.isoformat(),
+            'details': details if details else {},
+            'metadata': metadata if metadata else {},
+            'is_important': is_important,
+            'is_system': is_system
         }
         
         result = supabase.table('activities').insert(activity_data).execute()
@@ -80,15 +154,28 @@ def log_activity(
         
     except Exception as e:
         print(f"Error logging activity: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
-def get_recent_activities(leader_id: str, limit: int = 10) -> list:
+def get_recent_activities(
+    leader_id: str,
+    limit: int = 10,
+    activity_type: Optional[str] = None,
+    activity_category: Optional[str] = None,
+    user_role: Optional[str] = None,
+    source: Optional[str] = None
+) -> list:
     """
-    Get recent activities for a leader
+    Get recent activities with optional filters
     
     Args:
         leader_id: UUID of the leader
         limit: Maximum number of activities to return
+        activity_type: Filter by activity type
+        activity_category: Filter by activity category
+        user_role: Filter by user role
+        source: Filter by source (cell_app or cell_portal)
     
     Returns:
         list: List of recent activities
@@ -97,17 +184,186 @@ def get_recent_activities(leader_id: str, limit: int = 10) -> list:
         return []
     
     try:
-        result = supabase.table('activities')\
+        query = supabase.table('activities')\
             .select('*')\
-            .eq('leader_id', leader_id)\
-            .order('created_at', desc=True)\
-            .limit(limit)\
-            .execute()
+            .eq('leader_id', leader_id)
         
+        if activity_type:
+            query = query.eq('activity_type', activity_type)
+        if activity_category:
+            query = query.eq('activity_category', activity_category)
+        if user_role:
+            query = query.eq('user_role', user_role)
+        if source:
+            query = query.eq('source', source)
+        
+        result = query.order('created_at', desc=True).limit(limit).execute()
         return result.data if result.data else []
         
     except Exception as e:
         print(f"Error fetching activities: {e}")
+        return []
+
+def get_activities_by_date(
+    leader_id: str,
+    activity_date: date,
+    activity_type: Optional[str] = None,
+    user_role: Optional[str] = None
+) -> list:
+    """
+    Get activities for a specific date (date-wise tracking)
+    
+    Args:
+        leader_id: UUID of the leader
+        activity_date: Date to filter activities
+        activity_type: Optional filter by activity type
+        user_role: Optional filter by user role
+    
+    Returns:
+        list: List of activities for the date
+    """
+    if not supabase:
+        return []
+    
+    try:
+        query = supabase.table('activities')\
+            .select('*')\
+            .eq('leader_id', leader_id)\
+            .eq('activity_date', activity_date.isoformat())
+        
+        if activity_type:
+            query = query.eq('activity_type', activity_type)
+        if user_role:
+            query = query.eq('user_role', user_role)
+        
+        result = query.order('activity_time', desc=True).execute()
+        return result.data if result.data else []
+        
+    except Exception as e:
+        print(f"Error fetching activities by date: {e}")
+        return []
+
+def get_activities_by_role(
+    leader_id: str,
+    user_role: str,
+    limit: int = 50,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> list:
+    """
+    Get activities by user role (role-wise tracking)
+    
+    Args:
+        leader_id: UUID of the leader
+        user_role: Role to filter (leader, admin, etc.)
+        limit: Maximum number of activities to return
+        start_date: Optional start date filter
+        end_date: Optional end date filter
+    
+    Returns:
+        list: List of activities by role
+    """
+    if not supabase:
+        return []
+    
+    try:
+        query = supabase.table('activities')\
+            .select('*')\
+            .eq('leader_id', leader_id)\
+            .eq('user_role', user_role)
+        
+        if start_date:
+            query = query.gte('activity_date', start_date.isoformat())
+        if end_date:
+            query = query.lte('activity_date', end_date.isoformat())
+        
+        result = query.order('created_at', desc=True).limit(limit).execute()
+        return result.data if result.data else []
+        
+    except Exception as e:
+        print(f"Error fetching activities by role: {e}")
+        return []
+
+def get_activities_by_type(
+    leader_id: str,
+    activity_type: str,
+    limit: int = 50,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> list:
+    """
+    Get activities by activity type (activity-wise tracking)
+    
+    Args:
+        leader_id: UUID of the leader
+        activity_type: Type of activity to filter
+        limit: Maximum number of activities to return
+        start_date: Optional start date filter
+        end_date: Optional end date filter
+    
+    Returns:
+        list: List of activities by type
+    """
+    if not supabase:
+        return []
+    
+    try:
+        query = supabase.table('activities')\
+            .select('*')\
+            .eq('leader_id', leader_id)\
+            .eq('activity_type', activity_type)
+        
+        if start_date:
+            query = query.gte('activity_date', start_date.isoformat())
+        if end_date:
+            query = query.lte('activity_date', end_date.isoformat())
+        
+        result = query.order('created_at', desc=True).limit(limit).execute()
+        return result.data if result.data else []
+        
+    except Exception as e:
+        print(f"Error fetching activities by type: {e}")
+        return []
+
+def get_activities_by_category(
+    leader_id: str,
+    activity_category: str,
+    limit: int = 50,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> list:
+    """
+    Get activities by category (member, attendance, tutorial, etc.)
+    
+    Args:
+        leader_id: UUID of the leader
+        activity_category: Category to filter
+        limit: Maximum number of activities to return
+        start_date: Optional start date filter
+        end_date: Optional end date filter
+    
+    Returns:
+        list: List of activities by category
+    """
+    if not supabase:
+        return []
+    
+    try:
+        query = supabase.table('activities')\
+            .select('*')\
+            .eq('leader_id', leader_id)\
+            .eq('activity_category', activity_category)
+        
+        if start_date:
+            query = query.gte('activity_date', start_date.isoformat())
+        if end_date:
+            query = query.lte('activity_date', end_date.isoformat())
+        
+        result = query.order('created_at', desc=True).limit(limit).execute()
+        return result.data if result.data else []
+        
+    except Exception as e:
+        print(f"Error fetching activities by category: {e}")
         return []
 
 def get_todays_activities(leader_id: str) -> list:
@@ -120,152 +376,74 @@ def get_todays_activities(leader_id: str) -> list:
     Returns:
         list: List of today's activities
     """
+    today = date.today()
+    return get_activities_by_date(leader_id, today)
+
+def get_activity_statistics(
+    leader_id: str,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> Dict[str, Any]:
+    """
+    Get activity statistics (counts by type, category, role, etc.)
+    
+    Args:
+        leader_id: UUID of the leader
+        start_date: Optional start date
+        end_date: Optional end date
+    
+    Returns:
+        dict: Statistics dictionary
+    """
     if not supabase:
-        return []
+        return {}
     
     try:
-        from datetime import datetime, timedelta
+        query = supabase.table('activities')\
+            .select('activity_type, activity_category, user_role, source, activity_date')\
+            .eq('leader_id', leader_id)
         
-        # Get today's date range
-        today = datetime.now().date()
-        start_of_day = datetime.combine(today, datetime.min.time())
-        end_of_day = datetime.combine(today, datetime.max.time())
+        if start_date:
+            query = query.gte('activity_date', start_date.isoformat())
+        if end_date:
+            query = query.lte('activity_date', end_date.isoformat())
         
-        result = supabase.table('activities')\
-            .select('*')\
-            .eq('leader_id', leader_id)\
-            .gte('created_at', start_of_day.isoformat())\
-            .lte('created_at', end_of_day.isoformat())\
-            .order('created_at', desc=True)\
-            .execute()
+        result = query.execute()
+        activities = result.data if result.data else []
         
-        return result.data if result.data else []
+        stats = {
+            'total_activities': len(activities),
+            'by_type': {},
+            'by_category': {},
+            'by_role': {},
+            'by_source': {},
+            'by_date': {}
+        }
+        
+        for activity in activities:
+            # Count by type
+            activity_type = activity.get('activity_type', 'unknown')
+            stats['by_type'][activity_type] = stats['by_type'].get(activity_type, 0) + 1
+            
+            # Count by category
+            category = activity.get('activity_category', 'unknown')
+            stats['by_category'][category] = stats['by_category'].get(category, 0) + 1
+            
+            # Count by role
+            role = activity.get('user_role', 'unknown')
+            stats['by_role'][role] = stats['by_role'].get(role, 0) + 1
+            
+            # Count by source
+            source = activity.get('source', 'unknown')
+            stats['by_source'][source] = stats['by_source'].get(source, 0) + 1
+            
+            # Count by date
+            act_date = activity.get('activity_date', 'unknown')
+            stats['by_date'][act_date] = stats['by_date'].get(act_date, 0) + 1
+        
+        return stats
         
     except Exception as e:
-        print(f"Error fetching today's activities: {e}")
-        return []
+        print(f"Error fetching activity statistics: {e}")
+        return {}
 
-def format_activity_description(activity: dict) -> str:
-    """
-    Format activity for display in the UI
-    
-    Args:
-        activity: Activity dictionary from database
-    
-    Returns:
-        str: Formatted description
-    """
-    activity_type = activity.get('activity_type', '')
-    details = activity.get('details', {})
-    
-    if activity_type == 'user_login':
-        return "User logged in"
-    
-    elif activity_type == 'member_added':
-        member_name = details.get('member_name', 'Unknown')
-        return f"Added new member: {member_name}"
-    
-    elif activity_type == 'member_updated':
-        member_name = details.get('member_name', 'Unknown')
-        field = details.get('field', 'information')
-        return f"Updated {member_name}'s {field}"
-    
-    elif activity_type == 'member_deleted':
-        member_name = details.get('member_name', 'Unknown')
-        return f"Removed member: {member_name}"
-    
-    elif activity_type == 'attendance_marked':
-        meeting_date = details.get('meeting_date', 'Unknown')
-        member_name = details.get('member_name', 'Unknown')
-        status = details.get('status', 'Unknown')
-        return f"Marked {member_name} as {status} for {meeting_date}"
-    
-    elif activity_type == 'attendance_updated':
-        meeting_date = details.get('meeting_date', 'Unknown')
-        member_name = details.get('member_name', 'Unknown')
-        old_status = details.get('old_status', 'Unknown')
-        new_status = details.get('new_status', 'Unknown')
-        return f"Changed {member_name} from {old_status} to {new_status} for {meeting_date}"
-    
-    elif activity_type == 'attendance_sheet_updated':
-        meeting_date = details.get('meeting_date', 'Unknown')
-        total_members = details.get('total_members', 0)
-        present_count = details.get('present_count', 0)
-        return f"Updated attendance sheet for {meeting_date} ({present_count}/{total_members} present)"
-    
-    elif activity_type == 'tutorial_uploaded':
-        tutorial_name = details.get('tutorial_name', 'Unknown')
-        meeting_date = details.get('meeting_date', 'Unknown')
-        return f"Uploaded tutorial: {tutorial_name} for {meeting_date}"
-    
-    elif activity_type == 'tutorial_updated':
-        tutorial_name = details.get('tutorial_name', 'Unknown')
-        meeting_date = details.get('meeting_date', 'Unknown')
-        return f"Updated tutorial: {tutorial_name} for {meeting_date}"
-    
-    elif activity_type == 'attendance_incomplete':
-        meeting_date = details.get('meeting_date', 'Unknown')
-        missing_count = details.get('missing_count', 0)
-        return f"⚠️ Incomplete attendance for {meeting_date} ({missing_count} members not marked)"
-    
-    elif activity_type == 'meeting_created':
-        meeting_date = details.get('meeting_date', 'Unknown')
-        return f"Created meeting for {meeting_date}"
-    
-    elif activity_type == 'profile_updated':
-        return "Updated profile information"
-    
-    else:
-        return activity.get('description', 'Unknown activity')
-
-def get_activity_icon(activity_type: str) -> str:
-    """
-    Get FontAwesome icon for activity type
-    
-    Args:
-        activity_type: Type of activity
-    
-    Returns:
-        str: FontAwesome icon class
-    """
-    icon_map = {
-        'user_login': 'fas fa-sign-in-alt',
-        'member_added': 'fas fa-user-plus',
-        'member_updated': 'fas fa-user-edit',
-        'member_deleted': 'fas fa-user-times',
-        'attendance_marked': 'fas fa-check-circle',
-        'attendance_updated': 'fas fa-edit',
-        'attendance_sheet_updated': 'fas fa-clipboard-list',
-        'tutorial_uploaded': 'fas fa-file-upload',
-        'tutorial_updated': 'fas fa-file-edit',
-        'attendance_incomplete': 'fas fa-exclamation-triangle',
-        'meeting_created': 'fas fa-calendar-plus',
-        'profile_updated': 'fas fa-user-cog'
-    }
-    return icon_map.get(activity_type, 'fas fa-circle')
-
-def get_activity_color(activity_type: str) -> str:
-    """
-    Get color for activity type
-    
-    Args:
-        activity_type: Type of activity
-    
-    Returns:
-        str: Color class or hex code
-    """
-    color_map = {
-        'user_login': '#17a2b8',
-        'member_added': '#28a745',
-        'member_updated': '#17a2b8',
-        'member_deleted': '#dc3545',
-        'attendance_marked': '#28a745',
-        'attendance_updated': '#ffc107',
-        'attendance_sheet_updated': '#007bff',
-        'tutorial_uploaded': '#6f42c1',
-        'tutorial_updated': '#6f42c1',
-        'attendance_incomplete': '#fd7e14',
-        'meeting_created': '#007bff',
-        'profile_updated': '#6c757d'
-    }
-    return color_map.get(activity_type, '#6c757d')

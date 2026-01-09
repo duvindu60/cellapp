@@ -879,11 +879,11 @@
         document.querySelectorAll('.btn, .nav-link').forEach(element => {
             element.addEventListener('touchstart', function() {
                 this.style.transform = 'scale(0.95)';
-            });
+            }, { passive: true });
             
             element.addEventListener('touchend', function() {
                 this.style.transform = 'scale(1)';
-            });
+            }, { passive: true });
         });
 
         // Lazy loading for images
