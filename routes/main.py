@@ -1686,6 +1686,10 @@ def tutorials_list():
         return redirect(url_for('auth.login'))
     
     try:
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = 5  # 5 tutorials per page
+        
         # Get leader ID - use user ID directly
         leader_id = session['user']['id']
         
@@ -1695,13 +1699,12 @@ def tutorials_list():
             # Get user's created date to filter meetings
             user_created_date = get_user_created_date(leader_id)
             
-            # Get meetings from meetings table, filtered by user's creation date
+            # Get ALL meetings from meetings table (no limit yet), filtered by user's creation date
             query = supabase.table('meetings').select('*')
             if user_created_date:
                 query = query.gte('meeting_date', user_created_date.isoformat())
             meetings_result = query\
                 .order('meeting_date', desc=True)\
-                .limit(20)\
                 .execute()
             
             if not meetings_result.data:
@@ -1780,9 +1783,27 @@ def tutorials_list():
             traceback.print_exc()
             tutorial_list = []
         
+        # Calculate pagination
+        total_tutorials = len(tutorial_list)
+        total_pages = (total_tutorials + per_page - 1) // per_page  # Ceiling division
+        
+        # Ensure page is within valid range
+        if page < 1:
+            page = 1
+        elif page > total_pages and total_pages > 0:
+            page = total_pages
+        
+        # Get tutorials for current page
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_tutorials = tutorial_list[start_idx:end_idx]
+        
         template_name = f'main/tutorials_list{get_template_suffix()}.html'
         return render_template(template_name,
-                             tutorial_list=tutorial_list,
+                             tutorial_list=paginated_tutorials,
+                             page=page,
+                             total_pages=total_pages,
+                             total_tutorials=total_tutorials,
                              user=session['user'])
     except Exception as e:
         print(f"Error fetching tutorials list: {e}")
@@ -1798,39 +1819,23 @@ def attendance_list():
         return redirect(url_for('auth.login'))
     
     try:
+        # Get pagination parameters for marked section
+        marked_page = request.args.get('marked_page', 1, type=int)
+        per_page = 5  # 5 attendance records per page
+        
         # Get leader ID - use user ID directly
         leader_id = session['user']['id']
-        
-        # Get date range filter parameters (optional, for marked section)
-        filter_start_date = request.args.get('start_date')
-        filter_end_date = request.args.get('end_date')
         
         # Get user's created date to filter meetings
         user_created_date = get_user_created_date(leader_id)
         
-        # Get meetings from meetings table, filtered by user's creation date
+        # Get ALL meetings from meetings table, filtered by user's creation date
         query = supabase.table('meetings').select('*')
         if user_created_date:
             query = query.gte('meeting_date', user_created_date.isoformat())
         
-        # Apply date range filter if provided (for marked section)
-        if filter_start_date:
-            try:
-                start_date = datetime.strptime(filter_start_date, "%Y-%m-%d").date()
-                query = query.gte('meeting_date', start_date.isoformat())
-            except ValueError:
-                pass
-        
-        if filter_end_date:
-            try:
-                end_date = datetime.strptime(filter_end_date, "%Y-%m-%d").date()
-                query = query.lte('meeting_date', end_date.isoformat())
-            except ValueError:
-                pass
-        
         meetings_result = query\
             .order('meeting_date', desc=True)\
-            .limit(50)\
             .execute()
         
         unmarked_list = []
@@ -1930,17 +1935,29 @@ def attendance_list():
         unmarked_list.sort(key=lambda x: x.get('date_obj', datetime.now().date()), reverse=True)
         marked_list.sort(key=lambda x: x.get('date_obj', datetime.now().date()), reverse=True)
         
-        # Limit marked meetings to 4 by default (unless date filter is applied)
-        if not filter_start_date and not filter_end_date:
-            marked_list = marked_list[:4]
+        # Calculate pagination for marked list
+        total_marked = len(marked_list)
+        total_marked_pages = (total_marked + per_page - 1) // per_page  # Ceiling division
+        
+        # Ensure marked_page is within valid range
+        if marked_page < 1:
+            marked_page = 1
+        elif marked_page > total_marked_pages and total_marked_pages > 0:
+            marked_page = total_marked_pages
+        
+        # Get marked attendance for current page
+        start_idx = (marked_page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_marked_list = marked_list[start_idx:end_idx]
         
         template_name = f'main/attendance_list{get_template_suffix()}.html'
         return render_template(template_name,
                              attendance_list=unmarked_list,  # For backward compatibility
                              unmarked_list=unmarked_list,
-                             marked_list=marked_list,
-                             filter_start_date=filter_start_date,
-                             filter_end_date=filter_end_date,
+                             marked_list=paginated_marked_list,
+                             marked_page=marked_page,
+                             total_marked_pages=total_marked_pages,
+                             total_marked=total_marked,
                              user=session['user'])
     except Exception as e:
         print(f"Error fetching attendance list: {e}")

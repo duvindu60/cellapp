@@ -57,6 +57,52 @@
                         </div>
                     {% endfor %}
                 </div>
+                
+                <!-- Pagination Controls -->
+                {% if total_pages > 1 %}
+                <div class="pagination-container">
+                    <div class="pagination">
+                        {% if page > 1 %}
+                            <a href="{{ url_for('main.tutorials_list', page=1) }}" class="page-btn" title="First Page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                            <a href="{{ url_for('main.tutorials_list', page=page-1) }}" class="page-btn" title="Previous Page">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        {% else %}
+                            <span class="page-btn disabled">
+                                <i class="fas fa-angle-double-left"></i>
+                            </span>
+                            <span class="page-btn disabled">
+                                <i class="fas fa-angle-left"></i>
+                            </span>
+                        {% endif %}
+                        
+                        <span class="page-info">
+                            Page <strong>{{ page }}</strong> of <strong>{{ total_pages }}</strong>
+                        </span>
+                        
+                        {% if page < total_pages %}
+                            <a href="{{ url_for('main.tutorials_list', page=page+1) }}" class="page-btn" title="Next Page">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="{{ url_for('main.tutorials_list', page=total_pages) }}" class="page-btn" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        {% else %}
+                            <span class="page-btn disabled">
+                                <i class="fas fa-angle-right"></i>
+                            </span>
+                            <span class="page-btn disabled">
+                                <i class="fas fa-angle-double-right"></i>
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="pagination-summary">
+                        Showing {{ (page-1)*5 + 1 }} to {{ [page*5, total_tutorials]|min }} of {{ total_tutorials }} tutorials
+                    </div>
+                </div>
+                {% endif %}
             {% else %}
                 <div class="empty-state">
                     <div class="empty-state-icon">
@@ -333,6 +379,69 @@
     font-size: 0.9rem;
 }
 
+/* Pagination Styles */
+.pagination-container {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #475569;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.page-btn:hover:not(.disabled) {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+.page-btn.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.page-info {
+    padding: 0.4rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+}
+
+.page-info strong {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.pagination-summary {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
     .tutorials-list-page {
@@ -356,6 +465,25 @@
     
     .tutorial-item {
         padding: 1rem;
+    }
+    
+    .pagination {
+        gap: 0.4rem;
+    }
+    
+    .page-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+    
+    .page-info {
+        padding: 0.3rem 0.8rem;
+        font-size: 0.75rem;
+    }
+    
+    .pagination-summary {
+        font-size: 0.75rem;
     }
 }
 </style>
