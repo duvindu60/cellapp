@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from supabase import create_client, Client
 import os
+import bcrypt
 from dotenv import load_dotenv
 from utils.activity_logger import log_activity
 from utils.device_detector import get_template_suffix
@@ -38,42 +39,50 @@ def login():
             return render_template(template_name)
         
         try:
-            # Check user table for role_id = 4
-            user_result = supabase.table('users').select('*').eq('role_id', 4).eq('phone_number', mobile).eq('password', password).execute()
+            # Fetch user by phone_number and role_id (without password check)
+            user_result = supabase.table('users').select('*').eq('role_id', 4).eq('phone_number', mobile).execute()
             
             if user_result.data and len(user_result.data) > 0:
-                # User found with correct credentials
                 user_data = user_result.data[0]
-                user_id = user_data.get('id')
+                stored_password = user_data.get('password', '')
                 
-                # Store user info in session
-                session['user'] = {
-                    'id': user_id,
-                    'mobile': mobile,
-                    'name': user_data.get('name', 'User'),
-                    'email': user_data.get('email', ''),
-                    'role_id': user_data.get('role_id')
-                }
-                
-                # Log login activity
-                try:
-                    log_activity(
-                        leader_id=user_id,
-                        user_id=user_id,
-                        activity_type='user_login',
-                        description='User logged in',
-                        user_role='leader',
-                        user_name=session['user'].get('name', 'User'),
-                        source='cell_app',
-                        platform='mobile' if mobile else 'web',
-                        details={'mobile': mobile, 'login_time': 'now'}
-                    )
-                except Exception as e:
-                    print(f"Error logging activity: {e}")
-                
-                flash("Login successful!", 'success')
-                return redirect(url_for('main.index'))
+                # Verify password using bcrypt
+                if stored_password and bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
+                    # Password is correct
+                    user_id = user_data.get('id')
+                    
+                    # Store user info in session
+                    session['user'] = {
+                        'id': user_id,
+                        'mobile': mobile,
+                        'name': user_data.get('name', 'User'),
+                        'email': user_data.get('email', ''),
+                        'role_id': user_data.get('role_id')
+                    }
+                    
+                    # Log login activity
+                    try:
+                        log_activity(
+                            leader_id=user_id,
+                            user_id=user_id,
+                            activity_type='user_login',
+                            description='User logged in',
+                            user_role='leader',
+                            user_name=session['user'].get('name', 'User'),
+                            source='cell_app',
+                            platform='mobile' if mobile else 'web',
+                            details={'mobile': mobile, 'login_time': 'now'}
+                        )
+                    except Exception as e:
+                        print(f"Error logging activity: {e}")
+                    
+                    flash("Login successful!", 'success')
+                    return redirect(url_for('main.index'))
+                else:
+                    # Password is incorrect
+                    flash("Invalid mobile number or password", 'error')
             else:
+                # User not found
                 flash("Invalid mobile number or password", 'error')
         except Exception as e:
             print(f"Error during login: {e}")

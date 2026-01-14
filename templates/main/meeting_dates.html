@@ -596,6 +596,110 @@ body {
         padding: 1rem;
     }
 }
+
+/* Pagination Controls */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-pages {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.page-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0.5rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.page-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.page-info {
+    display: inline-block;
+}
+
+/* Hide items by default for pagination */
+.meeting-item-paginated {
+    display: none;
+}
+
+.meeting-item-paginated.active {
+    display: block;
+}
+
+/* Responsive Pagination */
+@media (max-width: 768px) {
+    .pagination-controls {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .pagination-btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .page-btn {
+        min-width: 36px;
+        height: 36px;
+        font-size: 0.8rem;
+    }
+}
 </style>
 {% endblock %}
 
@@ -696,11 +800,14 @@ body {
             <div class="timeline-container">
                 <div class="timeline-header">
                     <h2>Recent Meetings</h2>
-                    <span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600;">{{ recent_meetings|length }} Meeting{% if recent_meetings|length != 1 %}s{% endif %}</span>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600;">{{ recent_meetings|length }} Meeting{% if recent_meetings|length != 1 %}s{% endif %}</span>
+                        <span id="pageInfo" class="page-info" style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 500;"></span>
+                    </div>
                 </div>
-                <div class="timeline">
+                <div class="timeline" id="meetingsTimeline">
                     {% for meeting in recent_meetings %}
-                    <div class="timeline-item">
+                    <div class="timeline-item meeting-item-paginated" data-meeting-index="{{ loop.index0 }}">
                         <div class="timeline-content">
                             <div class="meeting-card">
                                 <div class="meeting-header">
@@ -736,6 +843,25 @@ body {
                         </div>
                     </div>
                     {% endfor %}
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="pagination-controls" id="paginationControls" style="display: none;">
+                    <button class="pagination-btn" id="prevBtn" onclick="changePage(-1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Previous</span>
+                    </button>
+                    
+                    <div class="pagination-pages" id="paginationPages"></div>
+                    
+                    <button class="pagination-btn" id="nextBtn" onclick="changePage(1)">
+                        <span>Next</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             {% endif %}
@@ -774,6 +900,174 @@ body {
         </div>
     </div>
 </div>
+
+<script>
+// Desktop Pagination Logic
+const MEETINGS_PER_PAGE = 5;
+let currentPage = 1;
+let totalPages = 1;
+let totalMeetings = 0;
+
+function initPagination() {
+    const meetingItems = document.querySelectorAll('.meeting-item-paginated');
+    totalMeetings = meetingItems.length;
+    totalPages = Math.ceil(totalMeetings / MEETINGS_PER_PAGE);
+    
+    // Only show pagination if more than 5 meetings
+    if (totalMeetings > MEETINGS_PER_PAGE) {
+        document.getElementById('paginationControls').style.display = 'flex';
+        renderPaginationButtons();
+        showPage(1);
+    } else {
+        // Show all meetings if 5 or less
+        meetingItems.forEach(item => item.classList.add('active'));
+        updatePageInfo();
+    }
+}
+
+function showPage(page) {
+    currentPage = page;
+    const meetingItems = document.querySelectorAll('.meeting-item-paginated');
+    const startIndex = (page - 1) * MEETINGS_PER_PAGE;
+    const endIndex = startIndex + MEETINGS_PER_PAGE;
+    
+    // Hide all items
+    meetingItems.forEach(item => item.classList.remove('active'));
+    
+    // Show items for current page
+    meetingItems.forEach((item, index) => {
+        if (index >= startIndex && index < endIndex) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Update button states
+    updatePaginationButtons();
+    updatePageInfo();
+    
+    // Scroll to timeline top
+    const timeline = document.getElementById('meetingsTimeline');
+    if (timeline) {
+        timeline.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function changePage(direction) {
+    const newPage = currentPage + direction;
+    if (newPage >= 1 && newPage <= totalPages) {
+        showPage(newPage);
+    }
+}
+
+function goToPage(page) {
+    if (page >= 1 && page <= totalPages) {
+        showPage(page);
+    }
+}
+
+function renderPaginationButtons() {
+    const pagesContainer = document.getElementById('paginationPages');
+    pagesContainer.innerHTML = '';
+    
+    // Determine which page numbers to show
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    // Adjust if we're near the start or end
+    if (currentPage <= 3) {
+        endPage = Math.min(5, totalPages);
+    }
+    if (currentPage >= totalPages - 2) {
+        startPage = Math.max(1, totalPages - 4);
+    }
+    
+    // Add first page button if not visible
+    if (startPage > 1) {
+        const firstBtn = createPageButton(1);
+        pagesContainer.appendChild(firstBtn);
+        
+        if (startPage > 2) {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.color = 'var(--text-secondary)';
+            ellipsis.style.padding = '0 0.5rem';
+            pagesContainer.appendChild(ellipsis);
+        }
+    }
+    
+    // Add page buttons
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = createPageButton(i);
+        pagesContainer.appendChild(pageBtn);
+    }
+    
+    // Add last page button if not visible
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.color = 'var(--text-secondary)';
+            ellipsis.style.padding = '0 0.5rem';
+            pagesContainer.appendChild(ellipsis);
+        }
+        
+        const lastBtn = createPageButton(totalPages);
+        pagesContainer.appendChild(lastBtn);
+    }
+    
+    updatePaginationButtons();
+}
+
+function createPageButton(pageNum) {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn';
+    btn.textContent = pageNum;
+    btn.onclick = () => goToPage(pageNum);
+    return btn;
+}
+
+function updatePaginationButtons() {
+    // Update prev/next button states
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (prevBtn) prevBtn.disabled = currentPage === 1;
+    if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+    
+    // Update active page button
+    const pageButtons = document.querySelectorAll('.page-btn');
+    pageButtons.forEach(btn => {
+        const pageNum = parseInt(btn.textContent);
+        if (pageNum === currentPage) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Re-render pagination buttons to update range
+    if (totalPages > 5) {
+        renderPaginationButtons();
+    }
+}
+
+function updatePageInfo() {
+    const pageInfo = document.getElementById('pageInfo');
+    if (pageInfo) {
+        const startItem = totalMeetings > 0 ? ((currentPage - 1) * MEETINGS_PER_PAGE + 1) : 0;
+        const endItem = Math.min(currentPage * MEETINGS_PER_PAGE, totalMeetings);
+        
+        if (totalMeetings > 0) {
+            pageInfo.textContent = `Showing ${startItem}-${endItem} of ${totalMeetings}`;
+        } else {
+            pageInfo.textContent = '';
+        }
+    }
+}
+
+// Initialize pagination when DOM is loaded
+document.addEventListener('DOMContentLoaded', initPagination);
+</script>
 {% endblock %}
 
 {% block mobile_nav %}

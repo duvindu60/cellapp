@@ -50,36 +50,58 @@
         {% set recent_meetings = meetings|selectattr('is_upcoming', 'equalto', false)|list %}
         {% if recent_meetings %}
         <div class="content-card" style="margin-top: 1.5rem;">
-            <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center justify-content-between mb-3">
                 <h2>Recent Meetings</h2>
                 <span class="badge bg-primary">{{ recent_meetings|length }} Meeting{% if recent_meetings|length != 1 %}s{% endif %}</span>
             </div>
             
-            <div class="list-group">
-                {% for meeting in recent_meetings %}
-                <div class="list-group-item d-flex align-items-center meeting-item">
-                    <div class="feature-icon me-3 meeting-icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1 meeting-date">{{ meeting.date }}</h6>
-                        <p class="meeting-type">{{ meeting.meeting_type }}</p>
-                        {% if meeting.description %}
-                        <p class="meeting-description" style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.25rem;">{{ meeting.description }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="text-end d-flex flex-column gap-2">
-                        <div class="d-flex gap-2">
-                            <a href="{{ url_for('main.meeting_tutorials', meeting_date=meeting.date) }}" class="btn-custom-primary" title="View Tutorials">
-                                <i class="fas fa-book"></i>
-                            </a>
-                            <a href="{{ url_for('main.attendance_detail', meeting_date=meeting.date) }}" class="btn-custom-success" title="Mark Attendance">
-                                <i class="fas fa-user-check"></i>
-                            </a>
+            <!-- Pagination Info -->
+            <div class="swipe-hint" style="text-align: center; margin-bottom: 1rem; color: #64748b; font-size: 0.875rem;">
+                <i class="fas fa-hand-pointer" style="margin-right: 0.5rem;"></i>
+                <span>Swipe to navigate</span>
+            </div>
+            
+            <!-- Swiper Container -->
+            <div class="swiper meetingsSwiper">
+                <div class="swiper-wrapper">
+                    {% set meetings_per_page = 5 %}
+                    {% set total_pages = (recent_meetings|length / meetings_per_page)|round(0, 'ceil')|int %}
+                    
+                    {% for page_num in range(total_pages) %}
+                    <div class="swiper-slide">
+                        <div class="meetings-page">
+                            {% set start_idx = page_num * meetings_per_page %}
+                            {% set end_idx = start_idx + meetings_per_page %}
+                            
+                            {% for meeting in recent_meetings[start_idx:end_idx] %}
+                            <div class="meeting-item">
+                                <div class="feature-icon meeting-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="meeting-content">
+                                    <h6 class="meeting-date">{{ meeting.date }}</h6>
+                                    <p class="meeting-type">{{ meeting.meeting_type }}</p>
+                                    {% if meeting.description %}
+                                    <p class="meeting-description">{{ meeting.description }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="meeting-actions-mobile">
+                                    <a href="{{ url_for('main.meeting_tutorials', meeting_date=meeting.date) }}" class="btn-custom-primary" title="View Tutorials">
+                                        <i class="fas fa-book"></i>
+                                    </a>
+                                    <a href="{{ url_for('main.attendance_detail', meeting_date=meeting.date) }}" class="btn-custom-success" title="Mark Attendance">
+                                        <i class="fas fa-user-check"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+                
+                <!-- Pagination Dots -->
+                <div class="swiper-pagination"></div>
             </div>
         </div>
         {% endif %}
@@ -104,6 +126,91 @@
         </a>
     </div>
 </div>
+
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+<script>
+// Initialize Swiper for Mobile Meetings
+document.addEventListener('DOMContentLoaded', function() {
+    const swiperElement = document.querySelector('.meetingsSwiper');
+    
+    if (swiperElement) {
+        const swiper = new Swiper('.meetingsSwiper', {
+            // Pagination settings
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+                dynamicBullets: true,
+                dynamicMainBullets: 3,
+            },
+            
+            // Touch settings
+            touchRatio: 1,
+            threshold: 10,
+            shortSwipes: true,
+            longSwipes: true,
+            longSwipesRatio: 0.5,
+            longSwipesMs: 300,
+            
+            // Navigation behavior
+            loop: false,
+            speed: 400,
+            effect: 'slide',
+            
+            // Accessibility
+            grabCursor: true,
+            watchSlidesProgress: true,
+            
+            // Prevent accidental swipes
+            preventInteractionOnTransition: false,
+            
+            // Resistance for boundary
+            resistance: true,
+            resistanceRatio: 0.85,
+            
+            // Keyboard control
+            keyboard: {
+                enabled: true,
+                onlyInViewport: true,
+            },
+            
+            // Mouse wheel control (optional)
+            mousewheel: {
+                enabled: false,
+            },
+            
+            // Auto height
+            autoHeight: false,
+            
+            // Events
+            on: {
+                init: function() {
+                    console.log('Swiper initialized');
+                    // Hide swipe hint after initialization
+                    const hint = document.querySelector('.swipe-hint');
+                    if (hint) {
+                        setTimeout(() => {
+                            hint.style.transition = 'opacity 0.5s ease';
+                            hint.style.opacity = '0';
+                            setTimeout(() => {
+                                hint.style.display = 'none';
+                            }, 500);
+                        }, 3000);
+                    }
+                },
+                slideChange: function() {
+                    console.log('Slide changed to:', this.activeIndex + 1);
+                    // Add haptic feedback if available
+                    if (navigator.vibrate) {
+                        navigator.vibrate(10);
+                    }
+                },
+            },
+        });
+    }
+});
+</script>
 {% endblock %}
 
 {% block mobile_nav %}
@@ -126,6 +233,9 @@
 {% endblock %}
 
 {% block extra_css %}
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
 <style>
 /* Mobile Meeting Dates Page Container */
 .meeting-dates-page {
@@ -515,6 +625,151 @@
     color: #cbd5e1;
     font-size: 1rem;
     margin-bottom: 0;
+}
+
+/* Swiper Container Styles */
+.meetingsSwiper {
+    width: 100%;
+    padding-bottom: 3rem;
+    margin: 0;
+}
+
+.swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.meetings-page {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Updated Meeting Item for Swiper */
+.meetings-page .meeting-item {
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.meetings-page .meeting-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    border-color: #3b82f6;
+}
+
+.meetings-page .meeting-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    flex-shrink: 0;
+}
+
+.meetings-page .meeting-content {
+    width: 100%;
+    text-align: center;
+}
+
+.meetings-page .meeting-date {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.meetings-page .meeting-type {
+    color: #cbd5e1;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+.meetings-page .meeting-description {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+}
+
+.meetings-page .meeting-actions-mobile {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* Swiper Pagination Dots */
+.swiper-pagination {
+    position: relative;
+    margin-top: 1.5rem;
+    bottom: 0 !important;
+}
+
+.swiper-pagination-bullet {
+    width: 12px;
+    height: 12px;
+    background: #475569;
+    opacity: 1;
+    transition: all 0.3s ease;
+}
+
+.swiper-pagination-bullet-active {
+    background: #3b82f6;
+    width: 32px;
+    border-radius: 6px;
+}
+
+/* Swipe Hint Animation */
+.swipe-hint {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Hide hint after first swipe */
+.swiper-initialized ~ .swipe-hint {
+    display: none;
+}
+
+/* Adjust for very small screens */
+@media (max-width: 480px) {
+    .meetings-page .meeting-item {
+        padding: 1.25rem;
+    }
+    
+    .meetings-page .meeting-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 22px;
+    }
+    
+    .meetings-page .meeting-date {
+        font-size: 1.1rem;
+    }
 }
 </style>
 {% endblock %}
