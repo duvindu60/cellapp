@@ -30,15 +30,11 @@ venv.bak/
 
 # Environment Variables
 .env
-<<<<<<< HEAD
 .env.*
-=======
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-<<<<<<< HEAD
 .env.production
 
 # Production credentials (DO NOT COMMIT)
@@ -47,8 +43,6 @@ PRODUCTION_CREDENTIALS.txt
 # But keep the example file
 !env.example
 !.env.example
-=======
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 
 # IDE
 .vscode/

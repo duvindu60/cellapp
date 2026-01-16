@@ -22,6 +22,9 @@ jobs:
           username: ${{ secrets.AZURE_VM_USER }}
           key: ${{ secrets.AZURE_VM_SSH_KEY }}
           port: 22
+          debug: true
+          key_path: ""
+          passphrase: ""
           script: |
             echo "Starting deployment..."
             
