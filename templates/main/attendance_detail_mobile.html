@@ -982,6 +982,11 @@ window.confirmSubmit = function() {
             return;
         }
         
+<<<<<<< HEAD
+=======
+        console.log('Submitting attendance:', attendance);
+        
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         // Send to server
         const meetingDate = '{{ meeting_date }}';
         fetch(`/bulk_update_attendance/${encodeURIComponent(meetingDate)}`, {
@@ -992,6 +997,10 @@ window.confirmSubmit = function() {
             body: JSON.stringify({ attendance: attendance })
         })
         .then(response => {
+<<<<<<< HEAD
+=======
+            console.log('Response status:', response.status);
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
             if (!response.ok) {
                 return response.json().then(data => {
                     throw new Error(data.message || 'Server error');
@@ -1000,6 +1009,10 @@ window.confirmSubmit = function() {
             return response.json();
         })
         .then(data => {
+<<<<<<< HEAD
+=======
+            console.log('Response data:', data);
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
             if (data.success) {
                 // Close modal
                 closeConfirmModal();

@@ -57,6 +57,7 @@ A modern Flask web application with mobile number + OTP authentication, built wi
 
 ## 🚀 Production Deployment
 
+<<<<<<< HEAD
 ### Azure VM with GitHub Actions (Recommended)
 
 This application is configured for automated deployment to Azure VM using GitHub Actions.
@@ -80,6 +81,9 @@ This application is configured for automated deployment to Azure VM using GitHub
 
 ### Manual Deployment with Gunicorn
 
+=======
+### Using Gunicorn (Recommended)
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 ```bash
 # Install gunicorn
 pip install gunicorn
@@ -89,7 +93,11 @@ gunicorn -w 4 -b 0.0.0.0:8000 wsgi:application
 ```
 
 ### Environment Variables
+<<<<<<< HEAD
 Create a `.env` file (copy from `env.example`):
+=======
+Create a `.env` file:
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 ```env
 SECRET_KEY=your-secret-key-here
 SUPABASE_URL=your-supabase-url
@@ -101,6 +109,7 @@ FLASK_ENV=production
 
 ```
 cellapp/
+<<<<<<< HEAD
 ├── app.py                      # Main Flask application
 ├── wsgi.py                    # WSGI entry point for production
 ├── config.py                  # Configuration management
@@ -133,6 +142,25 @@ cellapp/
 │   └── device_detector.py
 └── database/                  # Database migrations
     └── migrations/
+=======
+├── app.py                 # Main Flask application
+├── wsgi.py               # WSGI entry point for production
+├── config.py             # Configuration management
+├── requirements.txt      # Python dependencies
+├── DEPLOYMENT.md         # Production deployment guide
+├── routes/               # Application routes (blueprints)
+│   ├── auth.py          # Authentication routes
+│   ├── main.py          # Main application routes
+│   └── api.py           # API routes
+├── templates/            # HTML templates
+│   ├── base.html        # Base template
+│   └── auth/            # Authentication templates
+│       └── login.html   # Login page
+└── static/              # Static assets
+    ├── css/
+    ├── js/
+    └── manifest.json
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 ```
 
 ## 🎨 UI Features
@@ -152,6 +180,7 @@ cellapp/
 ## 📚 Documentation
 
 - **Setup Guide**: This README
+<<<<<<< HEAD
 - **Deployment Guide**: [DEPLOYMENT.md](DEPLOYMENT.md) - Complete Azure VM deployment instructions
 - **Environment Variables**: [env.example](env.example) - Template for environment configuration
 - **Architecture**: [ARCHITECTURE_DOCUMENTATION.md](ARCHITECTURE_DOCUMENTATION.md)
@@ -166,6 +195,10 @@ cellapp/
 | `cellapp.service` | Systemd service configuration |
 | `.github/workflows/deploy.yml` | GitHub Actions CI/CD workflow |
 | `env.example` | Environment variables template |
+=======
+- **Deployment Guide**: See `DEPLOYMENT.md`
+- **Environment Variables**: See `env_example.txt`
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 
 ## 🆘 Support
 

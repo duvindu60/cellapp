@@ -18,6 +18,16 @@ url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_ANON_KEY")
 supabase: Client = create_client(url, key) if url and key else None
 
+<<<<<<< HEAD
+=======
+# Debug: Check if Supabase is initialized
+if not supabase:
+    print("Warning: Supabase client not initialized in activity_logger.py")
+    print(f"URL: {url}")
+    print(f"Key: {'Present' if key else 'Missing'}")
+else:
+    print("Supabase client initialized successfully in activity_logger.py")
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 
 # Activity category mapping
 ACTIVITY_CATEGORIES = {
@@ -111,9 +121,13 @@ def log_activity(
         bool: True if successful, False otherwise
     """
     if not supabase:
+<<<<<<< HEAD
         import logging
         logger = logging.getLogger(__name__)
         logger.warning("Supabase client not initialized, activity not logged")
+=======
+        print("Warning: Supabase client not initialized, activity not logged")
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return False
     
     # Get activity category
@@ -148,10 +162,16 @@ def log_activity(
         return True
         
     except Exception as e:
+<<<<<<< HEAD
         # Log error securely without exposing stack trace
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to log activity: {str(e)}")
+=======
+        print(f"Error logging activity: {e}")
+        import traceback
+        traceback.print_exc()
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return False
 
 def get_recent_activities(
@@ -197,9 +217,13 @@ def get_recent_activities(
         return result.data if result.data else []
         
     except Exception as e:
+<<<<<<< HEAD
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching activities: {str(e)}")
+=======
+        print(f"Error fetching activities: {e}")
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return []
 
 def get_activities_by_date(
@@ -238,9 +262,13 @@ def get_activities_by_date(
         return result.data if result.data else []
         
     except Exception as e:
+<<<<<<< HEAD
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching activities by date: {str(e)}")
+=======
+        print(f"Error fetching activities by date: {e}")
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return []
 
 def get_activities_by_role(
@@ -281,9 +309,13 @@ def get_activities_by_role(
         return result.data if result.data else []
         
     except Exception as e:
+<<<<<<< HEAD
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching activities by role: {str(e)}")
+=======
+        print(f"Error fetching activities by role: {e}")
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return []
 
 def get_activities_by_type(
@@ -324,9 +356,13 @@ def get_activities_by_type(
         return result.data if result.data else []
         
     except Exception as e:
+<<<<<<< HEAD
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching activities by type: {str(e)}")
+=======
+        print(f"Error fetching activities by type: {e}")
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return []
 
 def get_activities_by_category(
@@ -367,9 +403,13 @@ def get_activities_by_category(
         return result.data if result.data else []
         
     except Exception as e:
+<<<<<<< HEAD
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching activities by category: {str(e)}")
+=======
+        print(f"Error fetching activities by category: {e}")
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return []
 
 def get_todays_activities(leader_id: str) -> list:
@@ -450,8 +490,12 @@ def get_activity_statistics(
         return stats
         
     except Exception as e:
+<<<<<<< HEAD
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching activity statistics: {str(e)}")
+=======
+        print(f"Error fetching activity statistics: {e}")
+>>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return {}
 
