@@ -1,11 +1,7 @@
-<<<<<<< HEAD
 from flask import Flask, session
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-=======
-from flask import Flask, session, request, g
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 from routes.auth import auth_bp
 from routes.main import main_bp
 from routes.api import api_bp
@@ -13,7 +9,6 @@ from config import config
 import os
 from datetime import timedelta
 
-<<<<<<< HEAD
 # Initialize extensions
 csrf = CSRFProtect()
 limiter = Limiter(
@@ -22,26 +17,38 @@ limiter = Limiter(
     storage_uri="memory://",
 )
 
-=======
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 def create_app(config_name=None):
     """Application factory pattern"""
     app = Flask(__name__)
     
     # Load configuration
     config_name = config_name or os.getenv('FLASK_ENV', 'default')
-    app.config.from_object(config[config_name])
+    config_obj = config[config_name]
+    app.config.from_object(config_obj)
     
-<<<<<<< HEAD
-    # Session configuration - secure defaults
-    app.config['SESSION_COOKIE_SECURE'] = app.config.get('SESSION_COOKIE_SECURE', True)
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Stronger CSRF protection
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Reduced from 1 hour
+    # CRITICAL: Ensure SECRET_KEY is set before CSRF initialization
+    if not app.config.get('SECRET_KEY'):
+        raise ValueError("SECRET_KEY must be set in configuration!")
+    
+    # Session configuration - explicitly use config class values
+    # This ensures DevelopmentConfig.SESSION_COOKIE_SECURE=False is respected
+    app.config['SESSION_COOKIE_SECURE'] = getattr(config_obj, 'SESSION_COOKIE_SECURE', True)
+    app.config['SESSION_COOKIE_HTTPONLY'] = getattr(config_obj, 'SESSION_COOKIE_HTTPONLY', True)
+    app.config['SESSION_COOKIE_SAMESITE'] = getattr(config_obj, 'SESSION_COOKIE_SAMESITE', 'Strict')
+    app.config['PERMANENT_SESSION_LIFETIME'] = getattr(config_obj, 'PERMANENT_SESSION_LIFETIME', timedelta(minutes=30))
     app.config['SESSION_COOKIE_NAME'] = 'cellapp_session'
     
-    # Initialize CSRF protection
+    # Debug: Print session config in development
+    if app.config.get('DEBUG'):
+        print(f"[DEBUG] Session Config - SECURE: {app.config['SESSION_COOKIE_SECURE']}, "
+              f"HTTPONLY: {app.config['SESSION_COOKIE_HTTPONLY']}, "
+              f"SAMESITE: {app.config['SESSION_COOKIE_SAMESITE']}")
+    
+    # Initialize CSRF protection (must be after SECRET_KEY is set)
     csrf.init_app(app)
+    
+    # Exempt API routes from CSRF protection (standard practice for APIs)
+    csrf.exempt(api_bp)
     
     # Initialize rate limiter
     limiter.init_app(app)
@@ -70,15 +77,6 @@ def create_app(config_name=None):
         
         return response
     
-=======
-    # Session configuration
-    app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)  # 1 hour
-    app.config['SESSION_COOKIE_NAME'] = 'cellapp_session'
-    
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
     # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -91,10 +89,6 @@ app = create_app()
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     # NEVER use debug=True in production
     debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(host="0.0.0.0", port=5001, debug=debug_mode)
-=======
-    app.run(host="0.0.0.0", port=5001, debug=True)
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397

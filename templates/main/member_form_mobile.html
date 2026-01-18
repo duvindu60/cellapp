@@ -15,6 +15,7 @@
     <!-- Mobile Form Card -->
     <div class="form-card">
         <form id="memberForm" action="{{ url_for('main.update_member', member_id=member.id) if member and member.id else url_for('main.add_member') }}" method="POST" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <!-- Hidden fields for auto-generated data -->
             <input type="hidden" name="leader_id" value="{{ session.user.id if session.user else '' }}">
             

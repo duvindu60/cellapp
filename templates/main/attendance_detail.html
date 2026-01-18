@@ -430,12 +430,15 @@ function updateAttendanceMobile(memberId, status, meetingDate) {
         }
     });
     
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    
     fetch(`/update_attendance/${encodeURIComponent(meetingDate)}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `member_id=${memberId}&status=${status}`
+        body: `member_id=${memberId}&status=${status}&csrf_token=${encodeURIComponent(csrfToken)}`
     })
     .then(response => response.json())
     .then(data => {
@@ -1586,10 +1589,14 @@ window.confirmSubmitDesktop = function() {
         }
         
         const meetingDate = '{{ meeting_date }}';
+        // Get CSRF token from meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
         fetch(`/bulk_update_attendance/${encodeURIComponent(meetingDate)}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({ attendance: attendance })
         })

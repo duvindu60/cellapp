@@ -1,33 +1,115 @@
-<<<<<<< HEAD
 from flask import Blueprint, render_template, session, redirect, url_for, flash, request, jsonify, abort
 from supabase import create_client, Client
 from datetime import datetime, timedelta
 import os
 import re
 import logging
+from functools import wraps
 from dotenv import load_dotenv
 from utils.activity_logger import log_activity
 from utils.device_detector import get_template_suffix
-from utils.security import (
-    login_required, validate_ownership, sanitize_input,
-    validate_phone_number, validate_name, validate_age,
-    validate_date_format, validate_status, allowed_file,
-    secure_filename_custom
-)
 
 # Configure secure logging
 logger = logging.getLogger(__name__)
-=======
-from flask import Blueprint, render_template, session, redirect, url_for, flash, request, jsonify
-from supabase import create_client, Client
-from datetime import datetime, timedelta
-import os
-import hashlib
-import re
-from dotenv import load_dotenv
-from utils.activity_logger import log_activity
-from utils.device_detector import get_template_suffix
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
+
+# Inline security functions (replacing utils/security module)
+def login_required(f):
+    """Decorator to require login for routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('auth.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def validate_ownership(supabase, table, record_id, owner_field):
+    """Validate that a record belongs to the current user"""
+    try:
+        leader_id = session.get('user', {}).get('id')
+        if not leader_id:
+            return None
+        result = supabase.table(table).select('*').eq('id', record_id).eq(owner_field, leader_id).execute()
+        if result.data and len(result.data) > 0:
+            return result.data[0]
+        return None
+    except Exception as e:
+        logger.error(f"Error validating ownership: {str(e)}")
+        return None
+
+def sanitize_input(value, max_length=1000):
+    """Sanitize input by stripping and limiting length"""
+    if not value:
+        return None
+    sanitized = str(value).strip()
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length]
+    return sanitized
+
+def validate_phone_number(phone_str):
+    """Validate phone number format (10-15 digits)"""
+    if not phone_str:
+        return None
+    phone = phone_str.strip()
+    if re.match(r'^[0-9]{10,15}$', phone):
+        return phone
+    return None
+
+def validate_name(name_str):
+    """Validate name format (2-100 characters, letters and spaces only)"""
+    if not name_str:
+        return None
+    name = name_str.strip()
+    if re.match(r'^[A-Za-z\s]{2,100}$', name):
+        return name
+    return None
+
+def validate_age(age_str):
+    """Validate age (1-120)"""
+    if not age_str:
+        return None
+    try:
+        age = int(age_str.strip())
+        if 1 <= age <= 120:
+            return age
+    except ValueError:
+        pass
+    return None
+
+def validate_date_format(date_str, format_str="%Y-%m-%d"):
+    """Validate date format"""
+    if not date_str:
+        return None
+    try:
+        return datetime.strptime(date_str.strip(), format_str).date()
+    except ValueError:
+        return None
+
+def validate_status(status_str, allowed_values):
+    """Validate status against allowed values"""
+    if not status_str:
+        return None
+    status = status_str.strip().lower()
+    if status in allowed_values:
+        return status
+    return None
+
+def allowed_file(filename, allowed_extensions=None):
+    """Check if file extension is allowed"""
+    if not filename:
+        return False
+    if allowed_extensions is None:
+        allowed_extensions = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+def secure_filename_custom(filename):
+    """Generate a secure filename"""
+    import hashlib
+    import time
+    if not filename:
+        return None
+    name_hash = hashlib.md5((filename + str(time.time())).encode()).hexdigest()[:8]
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'txt'
+    return f"{name_hash}.{ext}"
 # Load environment variables
 load_dotenv()
 # Supabase configuration
@@ -64,44 +146,8 @@ def get_user_created_date(user_id):
                 # Extract just the date part for comparison with meeting_date
                 return user_created_at.date() if hasattr(user_created_at, 'date') else user_created_at
     except Exception as e:
-<<<<<<< HEAD
         logger.error(f"Error fetching user created_at: {str(e)}")
     return None
-
-=======
-        print(f"Error fetching user created_at: {e}")
-    return None
-
-# Helper function to convert user ID to UUID format
-def get_uuid_from_user_id(user_id):
-    """Get the leader_id from the leaders table based on user_id"""
-    try:
-        result = supabase.table('leaders').select('id').eq('user_id', user_id).execute()
-        if result.data and len(result.data) > 0:
-            return result.data[0]['id']
-        else:
-            # If no leader found, create one with a generated UUID
-            print(f"No leader found for user_id: {user_id}, creating one...")
-            import uuid
-            leader_id = str(uuid.uuid4())
-            leader_data = {
-                'id': leader_id,
-                'user_id': user_id,
-                'name': 'Cell Leader',
-                'email': ''
-            }
-            result = supabase.table('leaders').insert(leader_data).execute()
-            if result.data:
-                return result.data[0]['id']
-            else:
-                raise Exception("Failed to create leader record")
-    except Exception as e:
-        print(f"Error getting leader_id for user_id {user_id}: {e}")
-        # Fallback to old method for backward compatibility
-        hash_object = hashlib.md5(user_id.encode())
-        hex_digest = hash_object.hexdigest()
-        return f"{hex_digest[:8]}-{hex_digest[8:12]}-{hex_digest[12:16]}-{hex_digest[16:20]}-{hex_digest[20:32]}"
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
 # Create blueprint
 main_bp = Blueprint('main', __name__)
 
@@ -297,15 +343,6 @@ def index():
                     .execute()
                 
                 has_tutorials = len(tutorials_result.data) > 0 if tutorials_result.data else False
-<<<<<<< HEAD
-=======
-                print(f"Next meeting date: {next_meeting_date.isoformat()}")
-                print(f"Tutorials found for next meeting: {has_tutorials}")
-                print(f"Tutorials data: {tutorials_result.data}")
-                
-                # For now, skip placeholder creation until we fix the column issue
-                # We'll just show the status based on existing tutorials
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
                 
             except Exception as e:
                 print(f"Error checking tutorials: {e}")
@@ -447,15 +484,6 @@ def index():
                 # Count how many members have attendance records
                 attendance_count = len(attendance_result.data) if attendance_result.data else 0
                 
-<<<<<<< HEAD
-=======
-                # Debug logging
-                print(f"Current Attendance Date: {current_attendance_date.isoformat()}")
-                print(f"Total members (created <= meeting date): {total_members}")
-                print(f"Attendance records found: {attendance_count}")
-                print(f"Attendance data: {attendance_result.data}")
-                
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
                 # Determine status based on completion
                 if attendance_count == total_members:
                     attendance_status = 'complete'
@@ -463,18 +491,9 @@ def index():
                     attendance_status = 'partial'
                 else:
                     attendance_status = 'incomplete'
-<<<<<<< HEAD
             else:
                 # No members found, set default status
                 attendance_status = 'incomplete'
-=======
-                
-                print(f"Calculated attendance status: {attendance_status}")
-            else:
-                # No members found, set default status
-                attendance_status = 'incomplete'
-                print("No members found for this leader")
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
             
             # Set latest attendance data for display using current attendance date
             latest_attendance = {
@@ -961,7 +980,6 @@ def attendance_detail(meeting_date):
         return redirect(url_for('main.meeting_dates'))
 
 @main_bp.route('/update_attendance/<meeting_date>', methods=['POST'])
-<<<<<<< HEAD
 @login_required
 def update_attendance(meeting_date):
     """Update attendance for a specific member and meeting date"""
@@ -972,32 +990,16 @@ def update_attendance(meeting_date):
         
         if not member_id or not status:
             return jsonify({'success': False, 'message': 'Missing or invalid data'}), 400
-=======
-def update_attendance(meeting_date):
-    """Update attendance for a specific member and meeting date"""
-    if 'user' not in session:
-        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
-    
-    try:
-        member_id = request.form.get('member_id')
-        status = request.form.get('status')  # 'present', 'absent', 'clear'
-        
-        if not member_id or not status:
-            return jsonify({'success': False, 'message': 'Missing required data'}), 400
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         
         # Get leader ID - use user ID directly
         leader_id = session['user']['id']
         
-<<<<<<< HEAD
         # AUTHORIZATION CHECK: Verify member belongs to this leader
         member_check = validate_ownership(supabase, 'cell_members', member_id, 'leader_id')
         if not member_check:
             logger.warning(f"Unauthorized attendance update: user={leader_id}, member={member_id}")
             return jsonify({'success': False, 'message': 'Unauthorized access'}), 403
         
-=======
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         # Convert meeting_date string to proper date format
         from datetime import datetime
         try:
@@ -1401,7 +1403,6 @@ def member_details(member_id):
         flash(f'Error loading member details: {str(e)}', 'error')
         return redirect(url_for('main.members'))
 @main_bp.route('/add_member', methods=['POST'])
-<<<<<<< HEAD
 @login_required
 def add_member():
     # INPUT VALIDATION using security utilities
@@ -1426,35 +1427,6 @@ def add_member():
     
     # If there are validation errors, return to form with errors
     if form_errors:
-=======
-def add_member():
-    if 'user' not in session:
-        return redirect(url_for('auth.login'))
-    # Form validation
-    form_errors = {}
-    name = request.form.get('name', '').strip()
-    age = request.form.get('age', '').strip()
-    phone_number = request.form.get('phone_number', '').strip()
-    # Validate required fields
-    if not name:
-        form_errors['name'] = 'Full name is required'
-    elif not re.match(r'^[A-Za-z\s]{2,100}$', name):
-        form_errors['name'] = 'Name must be 2-100 characters and contain only letters and spaces'
-    # Validate age if provided
-    if age:
-        try:
-            age_int = int(age)
-            if age_int < 1 or age_int > 120:
-                form_errors['age'] = 'Age must be between 1 and 120'
-        except ValueError:
-            form_errors['age'] = 'Age must be a valid number'
-    # Validate phone number if provided
-    if phone_number and not re.match(r'^[0-9]{10,15}$', phone_number):
-        form_errors['phone_number'] = 'Phone number must be 10-15 digits'
-    # If there are validation errors, return to form with errors
-    if form_errors:
-        # Get leader's branch_id and country for autofill
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         leader_id = session['user']['id']
         leader_branch_id = None
         leader_country = None
@@ -1464,11 +1436,7 @@ def add_member():
                 leader_branch_id = user_result.data[0].get('branch_id')
                 leader_country = user_result.data[0].get('country')
         except Exception as e:
-<<<<<<< HEAD
             logger.error(f"Error fetching leader info: {str(e)}")
-=======
-            print(f"Error fetching leader's branch_id and country: {e}")
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         
         template_name = f'main/member_form{get_template_suffix()}.html'
         return render_template(template_name, 
@@ -1476,13 +1444,8 @@ def add_member():
                              form_errors=form_errors,
                              leader_branch_id=leader_branch_id,
                              leader_country=leader_country)
-<<<<<<< HEAD
     
     try:
-=======
-    try:
-        # Use the user ID directly as leader_id (since role_id = 4 users ARE leaders)
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         leader_id = session['user']['id']
         
         # Get leader's branch_id and country for autofill
@@ -1494,54 +1457,31 @@ def add_member():
                 leader_branch_id = user_result.data[0].get('branch_id')
                 leader_country = user_result.data[0].get('country')
         except Exception as e:
-<<<<<<< HEAD
             logger.error(f"Error fetching leader info: {str(e)}")
-=======
-            print(f"Error fetching leader's branch_id and country: {e}")
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         
         # Get form values or use leader's values for autofill
         country = request.form.get('country') or leader_country
         branch_id = request.form.get('branch_id') or leader_branch_id
         cell_category = request.form.get('cell_category') or None
-<<<<<<< HEAD
         church = request.form.get('church') == 'true'
-=======
-        church = request.form.get('church') == 'true'  # Convert checkbox to boolean
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         
         # Prepare member data
         member_data = {
             'leader_id': leader_id,
             'name': name,
-<<<<<<< HEAD
             'age': age,
             'gender': request.form.get('gender') or None,
             'phone_number': phone_number,
-=======
-            'age': int(age) if age else None,
-            'gender': request.form.get('gender') or None,
-            'phone_number': phone_number or None,
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
             'zone': request.form.get('zone') or None,
             'country': country,
             'branch_id': branch_id,
             'cell_category': cell_category,
             'church': church
         }
-<<<<<<< HEAD
         
         # Insert into database
         result = supabase.table('cell_members').insert(member_data).execute()
         
-=======
-        # Insert into database
-        print(f"Attempting to insert member with leader_id: {leader_id}")
-        print(f"Member data: {member_data}")
-        # Try to insert the member
-        result = supabase.table('cell_members').insert(member_data).execute()
-        print(f"Insert result: {result.data}")
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         if result.data:
             # Log activity
             log_activity(
@@ -1553,34 +1493,13 @@ def add_member():
                 user_name=session['user'].get('name', 'Leader'),
                 source='cell_app',
                 platform='web',
-<<<<<<< HEAD
                 details={'member_id': result.data[0]['id'] if result.data else None}  # No PII
-=======
-                details={
-                    'member_name': name,
-                    'member_id': result.data[0]['id'] if result.data else None
-                }
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
             )
             flash('Member added successfully!', 'success')
             return redirect(url_for('main.members'))
         else:
             flash('Error adding member to database', 'error')
-<<<<<<< HEAD
             logger.error(f"Failed to add member to database for leader={leader_id}")
-=======
-            # Get leader's branch_id and country for autofill
-            leader_id = session['user']['id']
-            leader_branch_id = None
-            leader_country = None
-            try:
-                user_result = supabase.table('users').select('branch_id, country').eq('id', leader_id).execute()
-                if user_result.data and len(user_result.data) > 0:
-                    leader_branch_id = user_result.data[0].get('branch_id')
-                    leader_country = user_result.data[0].get('country')
-            except Exception as e:
-                print(f"Error fetching leader's branch_id and country: {e}")
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
             
             template_name = f'main/member_form{get_template_suffix()}.html'
             return render_template(template_name, 
@@ -1589,15 +1508,9 @@ def add_member():
                                  leader_branch_id=leader_branch_id,
                                  leader_country=leader_country)
     except Exception as e:
-<<<<<<< HEAD
         logger.error(f"Error adding member: {str(e)}")
         flash('An error occurred while adding the member', 'error')
-        
-=======
         error_msg = str(e)
-        flash(f'Error adding member: {error_msg}', 'error')
-        # Get leader's branch_id and country for autofill
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         leader_id = session['user']['id']
         leader_branch_id = None
         leader_country = None
@@ -1607,11 +1520,7 @@ def add_member():
                 leader_branch_id = user_result.data[0].get('branch_id')
                 leader_country = user_result.data[0].get('country')
         except Exception as e:
-<<<<<<< HEAD
             logger.error(f"Error fetching leader info: {str(e)}")
-=======
-            print(f"Error fetching leader's branch_id and country: {e}")
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         
         template_name = f'main/member_form{get_template_suffix()}.html'
         return render_template(template_name, 
@@ -1620,7 +1529,6 @@ def add_member():
                              leader_branch_id=leader_branch_id,
                              leader_country=leader_country)
 @main_bp.route('/update_member/<member_id>', methods=['POST'])
-<<<<<<< HEAD
 @login_required
 def update_member(member_id):
     try:
@@ -1642,15 +1550,6 @@ def update_member(member_id):
         age = validate_age(request.form.get('age')) if request.form.get('age') else None
         phone_number = validate_phone_number(request.form.get('phone_number')) if request.form.get('phone_number') else None
         
-=======
-def update_member(member_id):
-    if 'user' not in session:
-        return redirect(url_for('auth.login'))
-    try:
-        # Use the user ID directly as leader_id
-        leader_id = session['user']['id']
-        
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         # Get leader's branch_id and country for autofill
         leader_branch_id = None
         leader_country = None
@@ -1660,17 +1559,12 @@ def update_member(member_id):
                 leader_branch_id = user_result.data[0].get('branch_id')
                 leader_country = user_result.data[0].get('country')
         except Exception as e:
-<<<<<<< HEAD
             logger.error(f"Error fetching leader info: {str(e)}")
-=======
-            print(f"Error fetching leader's branch_id and country: {e}")
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         
         # Get form values or use leader's values for autofill
         country = request.form.get('country') or leader_country
         branch_id = request.form.get('branch_id') or leader_branch_id
         cell_category = request.form.get('cell_category') or None
-<<<<<<< HEAD
         church = request.form.get('church') == 'true'
         
         member_data = {
@@ -1678,45 +1572,26 @@ def update_member(member_id):
             'age': age,
             'gender': request.form.get('gender') or None,
             'phone_number': phone_number,
-=======
-        church = request.form.get('church') == 'true'  # Convert checkbox to boolean
-        
-        member_data = {
-            'name': request.form.get('name'),
-            'age': int(request.form.get('age')) if request.form.get('age') else None,
-            'gender': request.form.get('gender') or None,
-            'phone_number': request.form.get('phone_number') or None,
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
             'zone': request.form.get('zone') or None,
             'country': country,
             'branch_id': branch_id,
             'cell_category': cell_category,
             'church': church
         }
-<<<<<<< HEAD
         
         # UPDATE with ownership check
         result = supabase.table('cell_members').update(member_data).eq('id', member_id).eq('leader_id', leader_id).execute()
         
-=======
-        result = supabase.table('cell_members').update(member_data).eq('id', member_id).eq('leader_id', leader_id).execute()
-        # Log activity
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         if result.data:
             log_activity(
                 leader_id=leader_id,
                 user_id=leader_id,
                 activity_type='member_updated',
-<<<<<<< HEAD
                 description=f'Updated member: {name}',
-=======
-                description=f'Updated member: {member_data["name"]}',
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
                 user_role='leader',
                 user_name=session['user'].get('name', 'Leader'),
                 source='cell_app',
                 platform='web',
-<<<<<<< HEAD
                 details={'member_id': member_id}  # No PII
             )
             flash('Member updated successfully!', 'success')
@@ -1747,36 +1622,6 @@ def delete_member(member_id):
         # DELETE with ownership check
         result = supabase.table('cell_members').delete().eq('id', member_id).eq('leader_id', leader_id).execute()
         
-=======
-                details={
-                    'member_name': member_data['name'],
-                    'member_id': member_id
-                }
-            )
-        flash('Member updated successfully!', 'success')
-        return redirect(url_for('main.member_details', member_id=member_id))
-    except Exception as e:
-        print(f"Error updating member: {e}")
-        flash(f'Error updating member: {str(e)}', 'error')
-        return redirect(url_for('main.member_details', member_id=member_id))
-@main_bp.route('/delete_member/<member_id>', methods=['POST'])
-def delete_member(member_id):
-    if 'user' not in session:
-        return redirect(url_for('auth.login'))
-    try:
-        # Use the user ID directly as leader_id
-        leader_id = session['user']['id']
-        
-        # First get member details for logging
-        member_result = supabase.table('cell_members').select('name').eq('id', member_id).eq('leader_id', leader_id).execute()
-        if not member_result.data:
-            flash('Member not found', 'error')
-            return redirect(url_for('main.members'))
-        member_name = member_result.data[0]['name']
-        # Delete the member
-        result = supabase.table('cell_members').delete().eq('id', member_id).eq('leader_id', leader_id).execute()
-        # Log activity
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         if result.data:
             log_activity(
                 leader_id=leader_id,
@@ -1787,7 +1632,6 @@ def delete_member(member_id):
                 user_name=session['user'].get('name', 'Leader'),
                 source='cell_app',
                 platform='web',
-<<<<<<< HEAD
                 details={'member_id': member_id}  # No PII
             )
             flash(f'Member {member_name} deleted successfully!', 'success')
@@ -1799,18 +1643,6 @@ def delete_member(member_id):
     except Exception as e:
         logger.error(f"Error deleting member: {str(e)}")
         flash('An error occurred while deleting the member', 'error')
-=======
-                details={
-                    'member_name': member_name,
-                    'member_id': member_id
-                }
-            )
-        flash(f'Member {member_name} deleted successfully!', 'success')
-        return redirect(url_for('main.members'))
-    except Exception as e:
-        print(f"Error deleting member: {e}")
-        flash(f'Error deleting member: {str(e)}', 'error')
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
         return redirect(url_for('main.members'))
 @main_bp.route('/meeting-tutorials/<meeting_date>')
 def meeting_tutorials(meeting_date):

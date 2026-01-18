@@ -160,6 +160,7 @@
                 <span class="close" onclick="closeFlagModal()">&times;</span>
             </div>
             <form id="flagForm" method="POST" action="{{ url_for('main.flag_member', member_id=member.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="issue_type">Issue Type <span class="text-muted">(Optional)</span></label>
@@ -851,11 +852,15 @@ document.addEventListener('DOMContentLoaded', function() {
             originalLabel.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 5px;"></i>Updating...';
             this.disabled = true;
             
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            
             // Send AJAX request
             fetch(`/toggle_potential_leader/${memberId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     potential_leader: isChecked

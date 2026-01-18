@@ -11,6 +11,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     {% block extra_css %}{% endblock %}
     
@@ -903,18 +904,6 @@
             
         // Service Worker removed for development mode
             
-<<<<<<< HEAD
-=======
-            // Performance monitoring
-            if ('performance' in window) {
-                window.addEventListener('load', () => {
-                    setTimeout(() => {
-                        const perfData = performance.getEntriesByType('navigation')[0];
-                        console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
-                    }, 0);
-                });
-            }
->>>>>>> 20dac40646ecb456f1bdc39aa36c2952699ee397
             
         // Auto-dismiss alerts after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
